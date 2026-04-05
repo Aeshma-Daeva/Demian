@@ -1,17 +1,12 @@
-# Proprioceptor local model
+# Proprioceptor model
 transformers>=4.47.0
 accelerate>=1.1.0
-optimum>=1.21.0  # GPTQ quantization support
-auto-gptq>=0.7.1  # GPTQ for 4-bit Gemma2
+optimum>=1.21.0
+auto-gptq>=0.7.1
 
-# Gemma Scope SAEs (optional — without it, SAE features stay empty but system works)
-# sae-lens>=3.0.0  # uncomment when available
-
-# Thinker remote
+# Utils
 requests
-
-# Config
 pyyaml
 
 # Development
-torch>=2.4.0  # or your CUDA version
+torch>=2.4.0

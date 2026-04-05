@@ -1,0 +1,210 @@
+"""Vibration tracker: captures the trajectory of computational movement.
+
+At every generation step, the model's residual state is captured and
+projected through the random projection matrix. The result is appended
+to a trajectory buffer. The trajectory IS the signal.
+
+No human-selected dimensions. The full d_model vector gets projected
+blindly. Every direction is equally likely. Every direction matters.
+"""
+from __future__ import annotations
+
+import logging
+from dataclasses import dataclass, field
+from typing import List, Optional
+
+import torch
+
+from demian.noise import load_or_create_projection
+
+log = logging.getLogger(__name__)
+
+
+@dataclass
+class AttentionShape:
+    """Classification of the attention distribution shape.
+
+    Not a scalar. A description of the topology of attention.
+    """
+    mode: str          # focused, distributed, diffuse
+    n_peaks: int       # number of local maxima above threshold
+    entropy: float     # raw entropy of next-token distribution
+    peakiness: float   # max attention weight
+    kurtosis: float    # how peaked vs flat
+    dominance_ratio: float  # top / second weight ratio
+
+
+@dataclass
+class VibrationSnapshot:
+    """One step of the computational trajectory."""
+    projected_state: List[float]
+    residual_norm: float
+    residual_delta: float
+    attention: AttentionShape
+    temporal_coherence: float
+    step: int
+
+
+class VibrationTracker:
+    """Tracks the trajectory of computational movement.
+
+    At each step:
+    1. Capture the residual state (last token, last layer)
+    2. Project through the random matrix (d_model -> target_dim)
+    3. Classify the attention distribution shape
+    4. Append to trajectory buffer
+    """
+
+    def __init__(
+        self,
+        d_model: int,
+        target_dim: int = 128,
+        max_trajectory: int = 1024,
+        projection_path: Optional[str] = None,
+    ):
+        self.d_model = d_model
+        self.target_dim = target_dim
+        self.max_trajectory = max_trajectory
+
+        if projection_path:
+            self.projection = load_or_create_projection(
+                d_model, target_dim, cache_dir=projection_path
+            )
+        else:
+            self.projection = load_or_create_projection(
+                d_model, target_dim
+            )
+
+        self._trajectory: List[VibrationSnapshot] = []
+        self._prev_residual: Optional[torch.Tensor] = None
+        self._step = 0
+
+    def capture(
+        self,
+        residual_state: torch.Tensor,
+        logits: torch.Tensor,
+    ) -> VibrationSnapshot:
+        """Record one step of the computational trajectory."""
+        self._step += 1
+
+        state = residual_state.view(-1)
+
+        # Project through the blind matrix
+        projected = self.projection @ state.float()
+
+        # Compute scalar descriptors
+        residual_norm = float(torch.norm(state)) / (self.d_model ** 0.5)
+
+        if self._prev_residual is not None:
+            residual_delta = float(torch.norm(state - self._prev_residual)) / (self.d_model ** 0.5)
+            temporal_coh = float(torch.nn.functional.cosine_similarity(state.float(), self._prev_residual, dim=0))
+        else:
+            residual_delta = 0.0
+            temporal_coh = 1.0
+        self._prev_residual = state.clone()
+
+        # Classify attention shape
+        attn_shape = self._classify_attention(logits)
+
+        snapshot = VibrationSnapshot(
+            projected_state=projected.tolist(),
+            residual_norm=residual_norm,
+            residual_delta=residual_delta,
+            attention=attn_shape,
+            temporal_coherence=temporal_coh,
+            step=self._step,
+        )
+
+        self._trajectory.append(snapshot)
+        if len(self._trajectory) > self.max_trajectory:
+            self._trajectory = self._trajectory[-self.max_trajectory:]
+
+        return snapshot
+
+    def reset(self):
+        """Clear trajectory for a new independent generation."""
+        self._trajectory = []
+        self._prev_residual = None
+        self._step = 0
+
+    def get_trajectory(self) -> List[VibrationSnapshot]:
+        return list(self._trajectory)
+
+    @property
+    def step_count(self) -> int:
+        return self._step
+
+    # ----------------------------------------------------------------
+    # Attention shape classification
+    # ----------------------------------------------------------------
+
+    def _classify_attention(self, logits: torch.Tensor) -> AttentionShape:
+        """Classify the attention distribution shape from next-token logits."""
+        next_logits = logits[:, -1, :]
+        probs = torch.softmax(next_logits, dim=-1)[0]
+        p = probs.clamp(min=1e-10)
+
+        entropy = -float(torch.sum(p * torch.log(p)))
+        log_vocab = float(torch.log(torch.tensor(logits.shape[-1], dtype=torch.float32)))
+        peak_val = float(probs.max())
+
+        # Count local maxima (modes)
+        n_peaks = self._count_modes(probs)
+
+        # Kurtosis
+        p_np = probs.double()
+        mean_p = p_np.mean()
+        std_p = p_np.std()
+        if std_p > 1e-10:
+            kurtosis = float(torch.mean(((p_np - mean_p) / std_p) ** 4)) - 3.0
+        else:
+            kurtosis = 0.0
+
+        # Dominance ratio
+        sorted_probs = torch.sort(probs, descending=True).values
+        if len(sorted_probs) >= 2 and sorted_probs[1] > 1e-10:
+            dominance_ratio = float(sorted_probs[0] / sorted_probs[1])
+        else:
+            dominance_ratio = 100.0
+
+        # Classify by entropy ratio and dominance
+        # Self-question: these categories are emergent properties of
+        # the distribution shape, not imposed semantics. Still categories
+        # at all is a simplification — the distribution is a continuous object.
+        entropy_ratio = entropy / log_vocab if log_vocab > 0 else 1.0
+
+        if dominance_ratio > 10 and peak_val > 0.3:
+            mode = "focused"
+        elif entropy_ratio > 0.85:
+            mode = "diffuse"
+        else:
+            mode = "distributed"
+
+        return AttentionShape(
+            mode=mode,
+            n_peaks=n_peaks,
+            entropy=entropy,
+            peakiness=peak_val,
+            kurtosis=kurtosis,
+            dominance_ratio=min(dominance_ratio, 100.0),
+        )
+
+    def _count_modes(self, probs: torch.Tensor) -> int:
+        """Count number of local maxima above 10% threshold.
+
+        This simplification may miss subtle multi-modal structures
+        in the attention distribution. The real landscape is probably
+        more nuanced than just counting peaks in the raw probability
+        space. But for now, it's a starting point.
+        """
+        threshold = float(probs.max()) * 0.1
+        top_indices = torch.argsort(probs, descending=True)[:64]
+        top_indices = torch.sort(top_indices)[0]
+        modes = 0
+        for idx in top_indices:
+            if float(probs[idx]) <= threshold:
+                break
+            modes += 1
+            if modes >= 8:
+                break
+        return min(modes, 8)

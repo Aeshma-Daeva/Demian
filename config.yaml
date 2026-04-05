@@ -1,27 +1,18 @@
-# Demian
-# proprioceptor model: gemma-2-9b-it
-proprioceptor_model_id = "google/gemma-2-9b-it"
-proprioceptor_quant = "gptq-4bit"
+# Demian -- single-model proprioception
+proprioceptor_model_id: "Qwen/Qwen2.5-7B-Instruct-GPTQ-Int4"
+temperature: 0.7
+max_new_tokens: 256
 
-# thinker: can be remote (openrouter) or local (ollama/hf)
-thinker_backend = "openrouter"  # options: openrouter, ollama, hf
-openrouter_model = "qwen/qwen3.6"
-openrouter_api_key = ""  # set via env var OPENROUTER_API_KEY
-ollama_model = ""
-hf_model_id = ""
+# Proprioception
+target_dim: 128
+injection_scale: 0.1
+max_memory_length: 16
 
-# paths
-gemma_scope_sae_path = "./data/gemma_scope_9b"
-data_dir = "./data"
-development_dir = "./data/development"
-conversations_dir = "./data/conversations"
+# Fibonacci consolidation
+consolidation_intervals: [1, 2, 3, 5, 8, 13, 21, 34, 55, 89]
 
-# signal capture
-capture_attention = true
-capture_logit_lens = true
-logit_lens_layers = [8, 16, 24, 32, 40]  # sampled layers
-sae_top_k = 128  # how many SAE features to track per layer
-
-# proprioceptive loop
-proprioceptor_inject = true  # inject proprioceptive state into thinker context
-autonomy = true  # thinker can see AND respond to proprioception without instruction override
+# Storage
+data_dir: "./data"
+conversations_dir: "./data/conversations"
+consolidations_dir: "./data/consolidations"
+projections_cache: "./data/projections"
