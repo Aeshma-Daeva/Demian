@@ -84,12 +84,10 @@ def generate_with_proprioception(
 
         # Record for injection on NEXT step
         if proprio_inject:
-            proj_state = torch.tensor(
-                snapshot.projected_state,
-                dtype=torch.float32,
-                device="cpu",
-            )
-            injector.record_step(proj_state)
+            # Pass the raw residual, NOT the projected state.
+            # The injector sends it through K/V projections which expect
+            # d_model input. The projection is for tracking only.
+            injector.record_step(residual.detach().cpu())
 
         # Sample next token
         probs = torch.softmax(logits / max(temperature, 1e-8), dim=-1)

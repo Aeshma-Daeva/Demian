@@ -29,6 +29,12 @@ class NousInjector:
     Each stored state becomes an extra attention position.
     The model can't tell "this came from text" vs "this came from my
     own computation" — and that's the point. Both are just context.
+
+    Design note: we store the RAW residual state (d_model dimensions),
+    not the random-projected version. The raw state goes through the
+    model's own K/V projections the same way token embeddings do.
+    The random projection is orthogonal — it's only for trajectory
+    tracking, storage, and dream synthesis.
     """
 
     def __init__(
@@ -104,15 +110,8 @@ class NousInjector:
                         v_proj = candidate
                         break
 
-            # Handle combined qkv projection
-            if k_proj is None and v_proj is None and hasattr(attn, "c_attn"):
-                # GPT-2 style: single linear for Q, K, V
-                qkv_linear = getattr(attn, "c_attn")
-                hidden_size = config.hidden_size
-                # Q: 0:hidden, K: hidden:2*hidden, V: 2*hidden:3*hidden
-                k_proj = QKVShim(qkv_linear, hidden_size, "k")
-                v_proj = QKVShim(qkv_linear, hidden_size, "v")
-
+            # Skip layers where we can't find separate K/V — this covers
+            # Qwen2, Llama, Mistral which all have separate k_proj/v_proj
             if k_proj and v_proj:
                 self._key_projections.append(k_proj)
                 self._value_projections.append(v_proj)
@@ -120,147 +119,92 @@ class NousInjector:
         if not self._key_projections:
             log.warning("No K/V projections found. Cache injection disabled.")
 
-    def record_step(self, projected_state: torch.Tensor):
-        """Store a projected state for future injection."""
-        if projected_state.device.type == "cpu":
-            state = projected_state
-        else:
-            state = projected_state.cpu()
+    def record_step(self, residual_state: torch.Tensor):
+        """Store a raw residual state for future injection.
 
-        self._memory.append(state)
+        This takes the raw d_model-dimensional residual from the vibrate
+        tracker. No projection, no reconstruction. The raw state goes
+        through the model's own K/V — exactly like a token embedding.
+        """
+        self._memory.append(residual_state.cpu())
         if len(self._memory) > self.max_memory_length:
             self._memory = self._memory[-self.max_memory_length:]
 
     def inject(self, past_key_values) -> None:
         """Append proprioceptive states into the KV cache.
 
-        Works in-place on DynamicCache or tuple-of-tuples cache objects.
+        For each stored residual and each layer:
+        1. Pass the residual through the layer's K projection → new K
+        2. Pass through the layer's V projection → new V
+        3. Append to the seq_len dimension
 
-        For each memory entry and each layer:
-        1. Expand projected state back to d_model via pseudo-inverse
-        2. Pass through layer's K projection → new key vector
-        3. Pass through layer's V projection → new value vector
-        4. Append to the position dimension of that layer's cache
+        The raw residual goes through K/V — the same path token
+        embeddings take. No reconstruction, no pseudo-inverse,
+        no projection boundary issues.
 
-        Self-question: am I corrupting the KV cache structure?
-        The added entries have a different origin than token-derived entries,
-        but the attention mechanism doesn't know or care about provenance.
-        Q · K^T is Q · K^T regardless of where K came from.
+        Self-question: am I still corrupting the KV cache structure?
+        The added entries are proprioceptive, not from tokens. But
+        attention doesn't care about provenance. Q · K^T is Q · K^T
+        regardless of where K came from.
         """
         if not self._memory or not self._key_projections:
             return
 
-        device = past_key_values[0][0].device
-        dtype = past_key_values[0][0].dtype
+        for layer_idx in range(min(len(self._key_projections), len(past_key_values))):
+            k_proj = self._key_projections[layer_idx]
+            v_proj = self._value_projections[layer_idx]
 
-        for mem_state in self._memory:
-            # Expand back to d_model
-            expanded = self._expand_to_dmodel(mem_state).to(device).to(dtype)
+            key_states, value_states = past_key_values[layer_idx]
+            device = key_states.device
+            dtype = key_states.dtype
 
-            for layer_idx in range(min(len(self._key_projections), len(past_key_values))):
-                k_proj = self._key_projections[layer_idx]
-                v_proj = self._value_projections[layer_idx]
+            k_new = []
+            v_new = []
+            for mem_state in self._memory:
+                raw = mem_state.to(device).to(dtype)
 
-                # Project through this layer's projections
-                # Shape: hidden -> qkv_size -> reshaped to (1, n_heads, head_dim)
-                k_new = self._project_for_cache(k_proj, expanded, device, dtype)
-                v_new = self._project_for_cache(v_proj, expanded, device, dtype)
+                # The K/V projections expect d_model input
+                k_entry = k_proj(raw)
+                v_entry = v_proj(raw)
 
-                # past_key_values[layer] = (key, value)
-                # key shape: (batch, n_heads, seq_len, head_dim)
-                key_states, value_states = past_key_values[layer_idx]
+                # Reshape for multi-head: (1, n_kv_heads, 1, head_dim)
+                k_entry = _reshape_for_cache(k_entry, self.model.config)
+                v_entry = _reshape_for_cache(v_entry, self.model.config)
 
-                # Add seq_len dimension
-                k_new = k_new.unsqueeze(0)  # -> (1, n_heads, 1, head_dim)
-                v_new = v_new.unsqueeze(0)
+                k_new.append(k_entry)
+                v_new.append(v_entry)
 
-                # Concatenate along seq_len dimension
-                new_key = torch.cat([key_states, k_new], dim=2)
-                new_value = torch.cat([value_states, v_new], dim=2)
+            concat_keys = torch.cat(k_new, dim=2)
+            concat_values = torch.cat(v_new, dim=2)
 
-                # Update the cache - different cache types have different APIs
-                if hasattr(past_key_values, "key_cache"):
-                    # DynamicCache style
-                    past_key_values.key_cache[layer_idx] = new_key
-                    past_key_values.value_cache[layer_idx] = new_value
-                else:
-                    # Tuple style - reconstruct the tuple
-                    if isinstance(past_key_values, tuple):
-                        # Can't mutate tuples directly, need to work around this
-                        past_key_values[layer_idx] = (new_key, new_value)
-
-    def _project_for_cache(self, proj, expanded, device, dtype):
-        """Project a d_model vector through a projection layer and reshape."""
-        projected = proj(expanded)
-
-        # Determine head shape from output size
-        out_features = proj.out_features
-        hidden_size = self.model.config.hidden_size
-        n_heads = self.model.config.num_attention_heads
-        head_dim = hidden_size // n_heads
-
-        # For Qwen: k_proj output is (n_kv_heads * head_dim)
-        # May use grouped query attention
-        if hasattr(self.model.config, "num_key_value_heads"):
-            n_heads = self.model.config.num_key_value_heads
-
-        projected = projected.view(1, n_heads, head_dim)
-
-        return projected.to(device).to(dtype)
-
-    def _expand_to_dmodel(self, projected: torch.Tensor) -> torch.Tensor:
-        """Expand a projected state back to d_model dimensions.
-
-        Uses pseudo-inverse of the random projection matrix.
-        This is a minimum-norm reconstruction — the simplest full
-        state that would produce this projection.
-
-        Self-question: this is lossy. We're reconstructing 3584
-        dimensions from 128. The pseudo-inverse gives ONE possible
-        reconstruction, but there are infinitely many. Does this
-        matter? The K/V projections will interpret whatever we give
-        them through their own transformation. The injected state
-        might carry artifacts from the reconstruction. This could
-        be noise for the attention mechanism.
-
-        Alternative: just zero-pad (target_dim values at indices 0..target_dim-1,
-        zeros elsewhere). This is even simpler but puts all the signal
-        into specific dimensions, which gives the model positional
-        information it probably shouldn't have.
-
-        The pseudo-inverse spreads the signal across all dimensions,
-        which seems more respectful of the model's existing structure.
-        Going with pseudo-inverse for now, but this is worth revisiting.
-        """
-        P = self.tracker.projection  # (target_dim, d_model)
-        # Pseudo-inverse: P^+ = P^T (P P^T)^-1
-        P_pinv = P.T @ torch.inverse(P @ P.T)
-        return P_pinv @ projected
+            # Update cache
+            if hasattr(past_key_values, "key_cache"):
+                past_key_values.key_cache[layer_idx] = torch.cat(
+                    [key_states, concat_keys], dim=2
+                )
+                past_key_values.value_cache[layer_idx] = torch.cat(
+                    [value_states, concat_values], dim=2
+                )
+            else:
+                past_key_values[layer_idx] = (
+                    torch.cat([key_states, concat_keys], dim=2),
+                    torch.cat([value_states, concat_values], dim=2),
+                )
 
     def reset(self):
         """Clear the memory buffer."""
         self._memory = []
 
 
-class QKVShim(nn.Linear):
-    """Adapter for GPT-2 style combined qkv linear into separate K/V."""
-    def __init__(self, qkv_linear: nn.Linear, hidden_size: int, component: str):
-        # component: "k" or "v"
-        super().__init__(qkv_linear.in_features, hidden_size, bias=False)
-        self._qkv = qkv_linear
-        self._component = component
-        self.hidden_size = hidden_size
+def _reshape_for_cache(proj_output, config) -> torch.Tensor:
+    """Reshape a K or V project's output for cache injection.
 
-    def _select_slice(self, x):
-        qkv = self._qkv(x)
-        if self._component == "k":
-            return qkv[self.hidden_size:self.hidden_size * 2]
-        else:
-            return qkv[self.hidden_size * 2:]
+    Output shape needs to be (batch, n_heads, 1, head_dim) for appending
+    as a single sequence position.
 
-    def forward(self, x):
-        return self._select_slice(x)
-
-    @property
-    def out_features(self):
-        return self.hidden_size
+    For Qwen2 (Grouped Query Attention): k_proj output dimension is
+    (n_kv_heads * head_dim), not (n_heads * head_dim).
+    """
+    n_heads = getattr(config, "num_key_value_heads", config.num_attention_heads)
+    head_dim = config.hidden_size // config.num_attention_heads
+    return proj_output.view(1, n_heads, 1, head_dim)
