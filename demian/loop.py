@@ -11,7 +11,6 @@ Computation flows through its own computation.
 from __future__ import annotations
 
 import logging
-from typing import Optional
 
 import torch
 
@@ -45,7 +44,6 @@ def generate_with_proprioception(
         (generated_text, snapshots) — full vibration trajectory
     """
     tracker.reset()
-    injector.reset()
     model.eval()
 
     input_ids = tokenizer(prompt, return_tensors="pt")["input_ids"].to(device)

@@ -42,6 +42,7 @@ def main():
     temperature = args.temp if args.temp is not None else cfg.get("temperature", 0.7)
     max_new_tokens = cfg.get("max_new_tokens", 256)
     target_dim = args.target_dim or cfg.get("target_dim", 128)
+    injection_scale = cfg.get("injection_scale", 0.1)
 
     log.info("Loading model: %s", model_id)
     tokenizer = AutoTokenizer.from_pretrained(model_id, trust_remote_code=True)
@@ -66,11 +67,13 @@ def main():
         model=model,
         tracker=tracker,
         max_memory_length=cfg.get("max_memory_length", 16),
+        injection_scale=cfg.get("injection_scale", 0.1),
     )
 
     consolidator = FibonacciConsolidator(
         tracker=tracker,
         target_dim=target_dim,
+        fibonacci_intervals=cfg.get("consolidation_intervals", [1, 2, 3, 5, 8, 13, 21, 34, 55, 89]),
     )
 
     dream = DreamSynthesizer(consolidator)

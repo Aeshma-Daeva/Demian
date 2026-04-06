@@ -5,7 +5,7 @@ import torch
 import tempfile
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from demian.rhythm import FibonacciConsolidator, CompressedTrajectory, _FIB
+from demian.rhythm import FibonacciConsolidator, CompressedTrajectory
 from demian.vibration import VibrationTracker
 
 
@@ -20,7 +20,8 @@ def _setup():
 
 
 def test_fib_set():
-    assert _FIB == {1, 2, 3, 5, 8, 13, 21, 34, 55, 89}
+    tracker, consol = _setup()
+    assert consol._fibonacci_intervals == {1, 2, 3, 5, 8, 13, 21, 34, 55, 89}
     print("  PASS test_fib_set")
 
 
@@ -53,9 +54,10 @@ def test_markov_chain():
     tracker, consol = _setup()
     modes = ["focused", "focused", "distributed", "diffuse", "diffuse"]
     transitions = consol._markov_chain(modes)
-    assert any("focused->focused" in t for t in transitions)
-    assert any("focused->distributed" in t for t in transitions)
-    assert any("distributed->diffuse" in t for t in transitions)
+    assert isinstance(transitions, dict)
+    assert "focused" in transitions
+    assert transitions["focused"]["distributed"] > 0
+    assert transitions["distributed"]["diffuse"] > 0
     print("  PASS test_markov_chain")
 
 

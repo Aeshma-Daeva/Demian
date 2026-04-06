@@ -13,7 +13,7 @@ the conversation text. No tokenization, no embedding lookup.
 from __future__ import annotations
 
 import logging
-from typing import List, Optional
+from typing import List
 
 import torch
 import torch.nn as nn
@@ -42,10 +42,16 @@ class NousInjector:
         model: nn.Module,
         tracker: VibrationTracker,
         max_memory_length: int = 16,
+        injection_scale: float = 0.1,
     ):
         self.model = model
         self.tracker = tracker
         self.max_memory_length = max_memory_length
+        self.injection_scale = injection_scale
+        if not 0 < injection_scale <= 1.0:
+            raise ValueError(
+                f"injection_scale must be in (0, 1], got {injection_scale}"
+            )
         self._key_projections: List[nn.Linear] = []
         self._value_projections: List[nn.Linear] = []
         self._memory: List[torch.Tensor] = []
@@ -161,7 +167,7 @@ class NousInjector:
             k_new = []
             v_new = []
             for mem_state in self._memory:
-                raw = mem_state.to(device).to(dtype)
+                raw = mem_state.to(device).to(dtype) * self.injection_scale
 
                 # The K/V projections expect d_model input
                 k_entry = k_proj(raw)

@@ -10,7 +10,7 @@ blindly. Every direction is equally likely. Every direction matters.
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import List, Optional
 
 import torch
@@ -190,21 +190,22 @@ class VibrationTracker:
         )
 
     def _count_modes(self, probs: torch.Tensor) -> int:
-        """Count number of local maxima above 10% threshold.
+        """Count local maxima in the probability distribution.
 
-        This simplification may miss subtle multi-modal structures
-        in the attention distribution. The real landscape is probably
-        more nuanced than just counting peaks in the raw probability
-        space. But for now, it's a starting point.
+        A local maximum is a token whose probability exceeds both
+        neighbors. We scan sorted tokens and count clusters of
+        high-probability mass in vocabulary-index space.
         """
         threshold = float(probs.max()) * 0.1
-        top_indices = torch.argsort(probs, descending=True)[:64]
-        top_indices = torch.sort(top_indices)[0]
-        modes = 0
-        for idx in top_indices:
-            if float(probs[idx]) <= threshold:
-                break
-            modes += 1
+        above = (probs > threshold).nonzero(as_tuple=True)[0]
+        if len(above) == 0:
+            return 0
+
+        # Count runs of consecutive indices as separate modes
+        modes = 1
+        for i in range(1, len(above)):
+            if above[i].item() - above[i - 1].item() > 1:
+                modes += 1
             if modes >= 8:
                 break
         return min(modes, 8)

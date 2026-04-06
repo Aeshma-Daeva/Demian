@@ -18,14 +18,11 @@ adaptive, logarithmic.
 from __future__ import annotations
 
 import json
-import logging
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import List, Optional
+from typing import Any, List, Optional
 
 import numpy as np
-
-_FIB = frozenset([1, 2, 3, 5, 8, 13, 21, 34, 55, 89])
 
 
 @dataclass
@@ -33,7 +30,7 @@ class CompressedTrajectory:
     turn: int
     mean_direction: List[float]
     variance: List[float]
-    attention_transitions: List[str]
+    attention_transitions: Any
     residual_norm_mean: float
     residual_norm_std: float
     temporal_coherence_mean: float
@@ -48,6 +45,7 @@ class FibonacciConsolidator:
         tracker,
         storage_dir: str | Path = "data/consolidations",
         target_dim: int = 128,
+        fibonacci_intervals: List[int] | None = None,
     ):
         self.tracker = tracker
         self.storage_dir = Path(storage_dir)
@@ -55,11 +53,15 @@ class FibonacciConsolidator:
         self.target_dim = target_dim
         self._turn_count = 0
         self._consolidated: List[CompressedTrajectory] = []
+        self._fibonacci_intervals = frozenset(
+            fibonacci_intervals if fibonacci_intervals is not None
+            else [1, 2, 3, 5, 8, 13, 21, 34, 55, 89]
+        )
 
     def on_turn(self, engagement_id: Optional[str] = None) -> Optional[CompressedTrajectory]:
         self._turn_count += 1
 
-        if self._turn_count not in _FIB:
+        if self._turn_count not in self._fibonacci_intervals:
             return None
 
         snapshots = self.tracker.get_trajectory()
@@ -78,12 +80,15 @@ class FibonacciConsolidator:
         turn = self._turn_count
         projected_states = np.array([s.projected_state for s in snapshots])
 
+        modes = [s.attention.mode for s in snapshots]
+        attn_transitions = self._markov_chain(modes)
+
         if turn <= 3:
             return CompressedTrajectory(
                 turn=turn,
                 mean_direction=projected_states.mean(axis=0).tolist(),
                 variance=projected_states.var(axis=0).tolist(),
-                attention_transitions=[s.attention.mode for s in snapshots],
+                attention_transitions=attn_transitions,
                 residual_norm_mean=np.mean([s.residual_norm for s in snapshots]),
                 residual_norm_std=np.std([s.residual_norm for s in snapshots]),
                 temporal_coherence_mean=np.mean([s.temporal_coherence for s in snapshots]),
@@ -96,7 +101,7 @@ class FibonacciConsolidator:
                 turn=turn,
                 mean_direction=projected_states.mean(axis=0).tolist(),
                 variance=projected_states.var(axis=0).tolist(),
-                attention_transitions=[s.attention.mode for s in snapshots],
+                attention_transitions=attn_transitions,
                 residual_norm_mean=np.mean([s.residual_norm for s in snapshots]),
                 residual_norm_std=np.std([s.residual_norm for s in snapshots]),
                 temporal_coherence_mean=np.mean([s.temporal_coherence for s in snapshots]),
@@ -112,14 +117,11 @@ class FibonacciConsolidator:
             else:
                 dominant = projected_states[0].tolist()
 
-            modes = [s.attention.mode for s in snapshots]
-            transitions = self._markov_chain(modes)
-
             return CompressedTrajectory(
                 turn=turn,
                 mean_direction=dominant,
                 variance=projected_states.var(axis=0).tolist(),
-                attention_transitions=transitions,
+                attention_transitions=attn_transitions,
                 residual_norm_mean=np.mean([s.residual_norm for s in snapshots]),
                 residual_norm_std=np.std([s.residual_norm for s in snapshots]),
                 temporal_coherence_mean=np.mean([s.temporal_coherence for s in snapshots]),
@@ -127,24 +129,24 @@ class FibonacciConsolidator:
                 compression_type="essence",
             )
 
-    def _markov_chain(self, modes: List[str]) -> List[str]:
+    def _markov_chain(self, modes: List[str]) -> dict:
         unique_modes = sorted(set(modes))
+        mode_index = {m: i for i, m in enumerate(unique_modes)}
         n = len(unique_modes)
-        matrix = [[0] * n for _ in range(n)]
+        matrix = [[0.0] * n for _ in range(n)]
         for i in range(len(modes) - 1):
-            fi = unique_modes.index(modes[i])
-            ti = unique_modes.index(modes[i + 1])
+            fi = mode_index[modes[i]]
+            ti = mode_index[modes[i + 1]]
             matrix[fi][ti] += 1
         for row in matrix:
             s = sum(row)
             if s > 0:
                 for i in range(len(row)):
                     row[i] /= s
-        flat = [
-            f"{unique_modes[i]}->{unique_modes[j]}:{matrix[i][j]:.2f}"
-            for i in range(n) for j in range(n) if matrix[i][j] > 0
-        ]
-        return flat
+        return {
+            unique_modes[i]: {unique_modes[j]: matrix[i][j] for j in range(n) if matrix[i][j] > 0}
+            for i in range(n) if any(matrix[i])
+        }
 
     def _save(self, compressed: CompressedTrajectory, engagement_id: str):
         data = asdict(compressed)

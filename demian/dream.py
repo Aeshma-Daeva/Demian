@@ -14,8 +14,7 @@ That's closer to biological dreaming than any other metaphor.
 from __future__ import annotations
 
 import logging
-from pathlib import Path
-from typing import Optional
+from typing import List, Optional
 
 import numpy as np
 import torch
@@ -35,6 +34,7 @@ class DreamSynthesizer:
     ):
         self.consolidator = consolidator
         self.min_engagements = min_engagements
+        self._consolidations: List[CompressedTrajectory] = []
 
     def synthesize(
         self,
@@ -45,17 +45,19 @@ class DreamSynthesizer:
         Returns:
             Tendency vector or None if insufficient data.
         """
-        consolidations = self.consolidator.load_consolidations(engagement_id)
+        self._consolidations = self.consolidator.load_consolidations(engagement_id)
 
-        if len(consolidations) < self.min_engagements:
+        if len(self._consolidations) < self.min_engagements:
             return None
 
         directions = []
         weights = []
-        for c in consolidations:
+        for c in self._consolidations:
             if c.mean_direction:
                 directions.append(c.mean_direction)
-                weights.append(c.turn)
+                # Weight by trajectory length (how much thinking happened),
+                # not by turn number (which resets each session).
+                weights.append(c.trajectory_length)
 
         if not directions:
             return None
@@ -70,7 +72,7 @@ class DreamSynthesizer:
     @property
     def dream_summary(self) -> Optional[str]:
         """Human-readable summary. Model does NOT consume this."""
-        consolidations = self.consolidator.load_consolidations()
+        consolidations = self._consolidations
         if not consolidations:
             return None
 

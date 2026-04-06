@@ -17,7 +17,7 @@ def generate_projection(
     target_dim: int = 128,
     seed: int | None = None,
 ) -> torch.Tensor:
-    """Generate a random projection matrix via QR decomposition.
+    """Generate a random projection matrix via normalized random Gaussian.
 
     Args:
         d_model: source dimensionality (model hidden_size)
