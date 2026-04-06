@@ -1,5 +1,5 @@
 # Demian -- single-model proprioception
-proprioceptor_model_id: "Qwen/Qwen2.5-7B-Instruct-GPTQ-Int4"
+proprioceptor_model_id: "Qwen/Qwen2.5-3B-Instruct"
 temperature: 0.7
 max_new_tokens: 256
 

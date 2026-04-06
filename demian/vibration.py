@@ -90,7 +90,8 @@ class VibrationTracker:
         state = residual_state.view(-1)
 
         # Project through the blind matrix
-        projected = self.projection @ state.float()
+        proj = self.projection.to(state.device)
+        projected = proj @ state.float()
 
         # Compute scalar descriptors
         residual_norm = float(torch.norm(state)) / (self.d_model ** 0.5)

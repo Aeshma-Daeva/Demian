@@ -56,6 +56,7 @@ class NousInjector:
         self._value_projections: List[nn.Linear] = []
         self._memory: List[torch.Tensor] = []
         self._collect_projections()
+        self._injected_count: int = 0  # how many KV entries we added last step
 
     def _collect_projections(self):
         """Extract K and V projection matrices from all layers."""
@@ -139,14 +140,9 @@ class NousInjector:
     def inject(self, past_key_values) -> None:
         """Append proprioceptive states into the KV cache.
 
-        For each stored residual and each layer:
-        1. Pass the residual through the layer's K projection → new K
-        2. Pass through the layer's V projection → new V
-        3. Append to the seq_len dimension
-
-        The raw residual goes through K/V — the same path token
-        embeddings take. No reconstruction, no pseudo-inverse,
-        no projection boundary issues.
+        Each stored residual becomes extra KV entries. The cache grows
+        linearly with injection count (max_memory_length total entries),
+        not with generation steps. Previous injected entries are replaced.
 
         Self-question: am I still corrupting the KV cache structure?
         The added entries are proprioceptive, not from tokens. But
@@ -156,50 +152,62 @@ class NousInjector:
         if not self._memory or not self._key_projections:
             return
 
-        for layer_idx in range(min(len(self._key_projections), len(past_key_values))):
+        # Project all memory states at once for efficiency
+        # Shape: (1, n_layers, max_memory_length, n_kv_heads, 1, head_dim)
+        n_layers = len(self._key_projections)
+        n_mem = len(self._memory)
+
+        for layer_idx in range(min(n_layers, past_key_values.num_items if hasattr(past_key_values, "num_items") else len(past_key_values))):
             k_proj = self._key_projections[layer_idx]
             v_proj = self._value_projections[layer_idx]
 
             key_states, value_states = past_key_values[layer_idx]
             device = key_states.device
             dtype = key_states.dtype
+            seq_len = key_states.shape[2]
 
-            k_new = []
-            v_new = []
+            # Determine how many entries are from previous injections
+            old_injected = self._injected_count
+            base_len = seq_len - old_injected
+
+            # Project new memory entries
+            k_entries = []
+            v_entries = []
             for mem_state in self._memory:
                 raw = mem_state.to(device).to(dtype) * self.injection_scale
+                k_e = k_proj(raw)
+                v_e = v_proj(raw)
+                k_e = _reshape_for_cache(k_e, self.model.config)
+                v_e = _reshape_for_cache(v_e, self.model.config)
+                k_entries.append(k_e)
+                v_entries.append(v_e)
 
-                # The K/V projections expect d_model input
-                k_entry = k_proj(raw)
-                v_entry = v_proj(raw)
+            concat_keys = torch.cat(k_entries, dim=2)
+            concat_values = torch.cat(v_entries, dim=2)
 
-                # Reshape for multi-head: (1, n_kv_heads, 1, head_dim)
-                k_entry = _reshape_for_cache(k_entry, self.model.config)
-                v_entry = _reshape_for_cache(v_entry, self.model.config)
+            # Build new cache: keep base token entries, replace injected ones
+            k_base = key_states[:, :, :base_len]
+            v_base = value_states[:, :, :base_len]
+            new_keys = torch.cat([k_base, concat_keys], dim=2)
+            new_values = torch.cat([v_base, concat_values], dim=2)
+            self._injected_count = n_mem
 
-                k_new.append(k_entry)
-                v_new.append(v_entry)
-
-            concat_keys = torch.cat(k_new, dim=2)
-            concat_values = torch.cat(v_new, dim=2)
-
-            # Update cache
-            if hasattr(past_key_values, "key_cache"):
-                past_key_values.key_cache[layer_idx] = torch.cat(
-                    [key_states, concat_keys], dim=2
-                )
-                past_key_values.value_cache[layer_idx] = torch.cat(
-                    [value_states, concat_values], dim=2
-                )
+            # Directly set on DynamicCache layer — do NOT use .update()
+            # which concatenates rather than replaces
+            if hasattr(past_key_values, "layers"):
+                # DynamicCache (transformers >= 4.45)
+                past_key_values.layers[layer_idx].keys = new_keys
+                past_key_values.layers[layer_idx].values = new_values
+            elif hasattr(past_key_values, "key_cache"):
+                past_key_values.key_cache[layer_idx] = new_keys
+                past_key_values.value_cache[layer_idx] = new_values
             else:
-                past_key_values[layer_idx] = (
-                    torch.cat([key_states, concat_keys], dim=2),
-                    torch.cat([value_states, concat_values], dim=2),
-                )
+                past_key_values[layer_idx] = (new_keys, new_values)
 
     def reset(self):
         """Clear the memory buffer."""
         self._memory = []
+        self._injected_count = 0
 
 
 def _reshape_for_cache(proj_output, config) -> torch.Tensor:

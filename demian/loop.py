@@ -11,6 +11,8 @@ Computation flows through its own computation.
 from __future__ import annotations
 
 import logging
+import sys
+from typing import Callable, Optional
 
 import torch
 
@@ -18,6 +20,99 @@ from demian.nous import NousInjector
 from demian.vibration import VibrationTracker
 
 log = logging.getLogger(__name__)
+
+# ANSI codes for live display
+_RESET = "\033[0m"
+_DIM = "\033[2m"
+_BOLD = "\033[1m"
+_CYAN = "\033[36m"
+_GREEN = "\033[32m"
+_YELLOW = "\033[33m"
+_RED = "\033[31m"
+_MAGENTA = "\033[35m"
+
+_MODE_COLORS = {
+    "focused": _CYAN,
+    "distributed": _GREEN,
+    "diffuse": _YELLOW,
+}
+
+
+def _translate(snap):
+    """Human translator: raw state → what it means."""
+    mode = snap.attention.mode
+    color = _MODE_COLORS.get(mode, _RESET)
+
+    coh = snap.temporal_coherence
+    if coh > 0.9:
+        coh_desc = "locked-on"
+    elif coh > 0.7:
+        coh_desc = "flowing"
+    elif coh > 0.4:
+        coh_desc = "shifting"
+    else:
+        coh_desc = "drifting"
+
+    rn = snap.residual_norm
+    if rn > 5:
+        rn_desc = "high energy"
+    elif rn > 3:
+        rn_desc = "active"
+    elif rn > 1:
+        rn_desc = "steady"
+    else:
+        rn_desc = "quiet"
+
+    delta = snap.residual_delta
+    if delta > 3:
+        delta_desc = "big jump"
+    elif delta > 1:
+        delta_desc = "moving"
+    else:
+        delta_desc = "settled"
+
+    bar_len = int(min(snap.attention.dominance_ratio * 2, 18))
+    bar = f"{color}{'█' * bar_len}{'░' * (18 - bar_len)}{_RESET}"
+
+    ent = snap.attention.entropy
+    ent_str = f"{ent:.2f}" if ent == ent else "—"  # nan check
+
+    return (
+        f" {color}{mode.upper():>12}{_RESET}  "
+        f"{coh_desc:>9}  {rn_desc:>11}  {delta_desc:>9}  "
+        f"{snap.attention.n_peaks:2d} peaks  {bar}  "
+        f"entropy={ent_str}  "
+        f"kurtosis={snap.attention.kurtosis:+.1f}"
+    )
+
+
+def _trajectory_beats(snapshots):
+    """Summarize the full trajectory into human-readable beats."""
+    if not snapshots:
+        return []
+    beats = []
+    n = len(snapshots)
+    first = snapshots[0]
+    last = snapshots[-1]
+
+    beats.append(
+        f"  started {first.attention.mode} "
+        f"(energy={first.residual_norm:.1f}, coherence={first.temporal_coherence:.2f})"
+    )
+
+    for i in range(1, n):
+        if snapshots[i].attention.mode != snapshots[i - 1].attention.mode:
+            beats.append(
+                f"  \u2192 shifted {snapshots[i-1].attention.mode} "
+                f"to {snapshots[i].attention.mode} "
+                f"at step {i + 1}"
+            )
+
+    beats.append(
+        f"  ended {last.attention.mode} "
+        f"(energy={last.residual_norm:.1f}, coherence={last.temporal_coherence:.2f})"
+    )
+    return beats
 
 
 def generate_with_proprioception(
@@ -30,6 +125,7 @@ def generate_with_proprioception(
     temperature: float = 0.7,
     proprio_inject: bool = True,
     device: str = "cuda",
+    stream: bool = True,
 ) -> tuple[str, list]:
     """Generate text with proprioceptive KV cache injection.
 
@@ -39,6 +135,7 @@ def generate_with_proprioception(
         temperature: sampling temperature
         proprio_inject: whether to inject previous state
         device: compute device
+        stream: if True, print tokens + translated state live
 
     Returns:
         (generated_text, snapshots) — full vibration trajectory
@@ -76,15 +173,12 @@ def generate_with_proprioception(
         # Capture the residual state
         residual = hidden_states[-1][0, -1, :]
 
-        # Track vibration
-        snapshot = tracker.capture(residual, logits)
+        # Track vibration — pass full logits, not just last column
+        snapshot = tracker.capture(residual, out.logits)
         snapshots.append(snapshot)
 
         # Record for injection on NEXT step
         if proprio_inject:
-            # Pass the raw residual, NOT the projected state.
-            # The injector sends it through K/V projections which expect
-            # d_model input. The projection is for tracking only.
             injector.record_step(residual.detach().cpu())
 
         # Sample next token
@@ -101,8 +195,29 @@ def generate_with_proprioception(
         if proprio_inject:
             injector.inject(cache)
 
+        # Streaming output
+        if stream:
+            token_text = tokenizer.decode([token_id])
+            sys.stdout.write(token_text)
+            sys.stdout.flush()
+
+            # Print translated state every 4 tokens
+            if (step + 1) % 4 == 0:
+                sys.stdout.write("\n")
+                sys.stdout.write(_translate(snapshot))
+                sys.stdout.write("\n")
+                sys.stdout.flush()
+
         # Next step: single token input
         input_ids = next_token
+
+    if stream:
+        sys.stdout.write("\n\n")
+        sys.stdout.write(_DIM + "--- what it felt like ---" + _RESET + "\n")
+        for beat in _trajectory_beats(snapshots):
+            sys.stdout.write(beat + "\n")
+        sys.stdout.write(_RESET)
+        sys.stdout.flush()
 
     generated_text = tokenizer.decode(
         generated_ids, skip_special_tokens=True
