@@ -100,6 +100,7 @@ class CompressedTrajectory:
     trajectory_length: int
     compression_type: str
     raw_snapshots: Optional[List[List[float]]] = None
+    raw_residual_mean: Optional[List[float]] = None
 
 
 class FibonacciConsolidator:
@@ -146,6 +147,8 @@ class FibonacciConsolidator:
         modes = [s.attention.mode for s in snapshots]
         attn_transitions = self._markov_chain(modes)
 
+        raw_residual_mean = self._mean_raw_residual(snapshots)
+
         if turn <= 3:
             return CompressedTrajectory(
                 turn=turn,
@@ -158,6 +161,7 @@ class FibonacciConsolidator:
                 trajectory_length=len(snapshots),
                 compression_type="raw",
                 raw_snapshots=[s.projected_state for s in snapshots],
+                raw_residual_mean=raw_residual_mean,
             )
         elif turn <= 8:
             return CompressedTrajectory(
@@ -170,6 +174,7 @@ class FibonacciConsolidator:
                 temporal_coherence_mean=np.mean([s.temporal_coherence for s in snapshots]),
                 trajectory_length=len(snapshots),
                 compression_type="pattern",
+                raw_residual_mean=raw_residual_mean,
             )
         else:
             # Essence: PCA dominant direction + Markov chain of attention modes
@@ -190,7 +195,19 @@ class FibonacciConsolidator:
                 temporal_coherence_mean=np.mean([s.temporal_coherence for s in snapshots]),
                 trajectory_length=len(snapshots),
                 compression_type="essence",
+                raw_residual_mean=raw_residual_mean,
             )
+
+    def _mean_raw_residual(self, snapshots) -> Optional[List[float]]:
+        """Average of raw residual vectors in the trajectory.
+
+        This is a d_model-dimensional vector that can be injected
+        directly into the KV cache without dimension mismatch.
+        """
+        residuals = [s.raw_residual for s in snapshots if s.raw_residual]
+        if not residuals:
+            return None
+        return np.mean(np.array(residuals), axis=0).tolist()
 
     def _markov_chain(self, modes: List[str]) -> dict:
         unique_modes = sorted(set(modes))

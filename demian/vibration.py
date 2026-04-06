@@ -38,6 +38,7 @@ class AttentionShape:
 class VibrationSnapshot:
     """One step of the computational trajectory."""
     projected_state: List[float]
+    raw_residual: List[float]
     residual_norm: float
     residual_delta: float
     attention: AttentionShape
@@ -109,6 +110,7 @@ class VibrationTracker:
 
         snapshot = VibrationSnapshot(
             projected_state=projected.tolist(),
+            raw_residual=state.float().cpu().tolist(),
             residual_norm=residual_norm,
             residual_delta=residual_delta,
             attention=attn_shape,

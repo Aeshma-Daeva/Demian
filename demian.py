@@ -87,8 +87,8 @@ def main():
     dream = DreamSynthesizer(consolidator)
     tendency = dream.synthesize()
     if tendency is not None:
-        log.info("Dream state loaded: vector shape=%s", tendency.shape)
         injector.record_step(tendency.detach().cpu())
+        injector._damped_residual = tendency.detach().cpu().clone()
         summary = dream.dream_summary
         if summary:
             log.info("Dream summary:\n%s", summary)

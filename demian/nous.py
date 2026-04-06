@@ -165,7 +165,7 @@ class NousInjector:
         if not self._memory or not self._key_projections:
             return
 
-        # Dampen: EMA between latest residual and previously injected state
+        # Dampen: EMA between latest residual and previously injected state.
         current = self._memory[-1].cpu().float()
         if self._damped_residual is None:
             self._damped_residual = current
@@ -187,16 +187,13 @@ class NousInjector:
             old_injected = self._injected_count
             base_len = seq_len - old_injected
 
-            # Inject the damped single vector for each memory position
-            # This gives the model a "momentum" version of its own state
+            # Inject each memory entry using the EMA-smoothed residual.
             k_entries = []
             v_entries = []
-            for mem_state in self._memory:
-                # Blend each memory entry with the damped trajectory
-                local_damped = (1 - damping) * mem_state.cpu().float() + damping * self._damped_residual
-                raw = local_damped.to(device).to(dtype) * self.injection_scale
-                k_e = k_proj(raw)
-                v_e = v_proj(raw)
+            vec = self._damped_residual.to(device).to(dtype) * self.injection_scale
+            for _ in self._memory:
+                k_e = k_proj(vec)
+                v_e = v_proj(vec)
                 k_e = _reshape_for_cache(k_e, self.model.config)
                 v_e = _reshape_for_cache(v_e, self.model.config)
                 k_entries.append(k_e)

@@ -53,10 +53,11 @@ class DreamSynthesizer:
         directions = []
         weights = []
         for c in self._consolidations:
-            if c.mean_direction:
-                directions.append(c.mean_direction)
-                # Weight by trajectory length (how much thinking happened),
-                # not by turn number (which resets each session).
+            # Prefer raw_residualMean (d_model-dim) for injection.
+            # Fall back to mean_direction (projected-dim) if unavailable.
+            raw_dir = getattr(c, "raw_residual_mean", None)
+            if c.raw_residual_mean:
+                directions.append(c.raw_residual_mean)
                 weights.append(c.trajectory_length)
 
         if not directions:
