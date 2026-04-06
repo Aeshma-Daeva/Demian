@@ -55,8 +55,9 @@ class NousInjector:
         self._key_projections: List[nn.Linear] = []
         self._value_projections: List[nn.Linear] = []
         self._memory: List[torch.Tensor] = []
+        self._damped_residual: Optional[torch.Tensor] = None  # smoothed state
         self._collect_projections()
-        self._injected_count: int = 0  # how many KV entries we added last step
+        self._injected_count: int = 0
 
     def _collect_projections(self):
         """Extract K and V projection matrices from all layers."""
@@ -137,12 +138,24 @@ class NousInjector:
         if len(self._memory) > self.max_memory_length:
             self._memory = self._memory[-self.max_memory_length:]
 
-    def inject(self, past_key_values) -> None:
+    def inject(self, past_key_values, damping: float = 0.3) -> None:
         """Append proprioceptive states into the KV cache.
 
         Each stored residual becomes extra KV entries. The cache grows
         linearly with injection count (max_memory_length total entries),
         not with generation steps. Previous injected entries are replaced.
+
+        Damped: the injected vector is an exponential moving average of
+        the current residual and the previous injected state. This smooths
+        the feedback so the model can hold uncertainty across steps rather
+        than being yanked between sharp states.
+
+        Args:
+            past_key_values: the KV cache to modify
+            damping: EMA weight on the *previous* injected state.
+                0 = no damping (inject raw current state).
+                0.3 = 30% previous, 70% current (default).
+                0.9 = heavy damping (barely changes).
 
         Self-question: am I still corrupting the KV cache structure?
         The added entries are proprioceptive, not from tokens. But
@@ -152,8 +165,13 @@ class NousInjector:
         if not self._memory or not self._key_projections:
             return
 
-        # Project all memory states at once for efficiency
-        # Shape: (1, n_layers, max_memory_length, n_kv_heads, 1, head_dim)
+        # Dampen: EMA between latest residual and previously injected state
+        current = self._memory[-1].cpu().float()
+        if self._damped_residual is None:
+            self._damped_residual = current
+        else:
+            self._damped_residual = (1 - damping) * current + damping * self._damped_residual
+
         n_layers = len(self._key_projections)
         n_mem = len(self._memory)
 
@@ -166,15 +184,17 @@ class NousInjector:
             dtype = key_states.dtype
             seq_len = key_states.shape[2]
 
-            # Determine how many entries are from previous injections
             old_injected = self._injected_count
             base_len = seq_len - old_injected
 
-            # Project new memory entries
+            # Inject the damped single vector for each memory position
+            # This gives the model a "momentum" version of its own state
             k_entries = []
             v_entries = []
             for mem_state in self._memory:
-                raw = mem_state.to(device).to(dtype) * self.injection_scale
+                # Blend each memory entry with the damped trajectory
+                local_damped = (1 - damping) * mem_state.cpu().float() + damping * self._damped_residual
+                raw = local_damped.to(device).to(dtype) * self.injection_scale
                 k_e = k_proj(raw)
                 v_e = v_proj(raw)
                 k_e = _reshape_for_cache(k_e, self.model.config)

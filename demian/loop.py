@@ -17,6 +17,7 @@ from typing import Callable, Optional
 import torch
 
 from demian.nous import NousInjector
+from demian.rhythm import InjectionScheduler
 from demian.vibration import VibrationTracker
 
 log = logging.getLogger(__name__)
@@ -126,6 +127,8 @@ def generate_with_proprioception(
     proprio_inject: bool = True,
     device: str = "cuda",
     stream: bool = True,
+    scheduler: Optional[InjectionScheduler] = None,
+    damping: float = 0.3,
 ) -> tuple[str, list]:
     """Generate text with proprioceptive KV cache injection.
 
@@ -136,6 +139,8 @@ def generate_with_proprioception(
         proprio_inject: whether to inject previous state
         device: compute device
         stream: if True, print tokens + translated state live
+        scheduler: optional Fibonacci-spaced injection scheduler
+        damping: EMA weight on previous injected state (0 = raw, 0.3 = default)
 
     Returns:
         (generated_text, snapshots) — full vibration trajectory
@@ -193,7 +198,11 @@ def generate_with_proprioception(
 
         # Inject proprioceptive states for next step
         if proprio_inject:
-            injector.inject(cache)
+            # Skip injection if scheduler says no (Fibonacci spacing)
+            if scheduler is not None and not scheduler.should_inject(step):
+                pass
+            else:
+                injector.inject(cache, damping=damping)
 
         # Streaming output
         if stream:

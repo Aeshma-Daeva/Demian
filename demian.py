@@ -12,7 +12,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 from demian.vibration import VibrationTracker
 from demian.nous import NousInjector
 from demian.loop import generate_with_proprioception
-from demian.rhythm import FibonacciConsolidator
+from demian.rhythm import FibonacciConsolidator, InjectionScheduler
 from demian.dream import DreamSynthesizer
 
 log = logging.getLogger(__name__)
@@ -69,6 +69,14 @@ def main():
         max_memory_length=cfg.get("max_memory_length", 16),
         injection_scale=cfg.get("injection_scale", 0.1),
     )
+
+    scheduler = InjectionScheduler(
+        max_steps=max_new_tokens,
+        base_gap=2,
+        max_gap=13,
+    )
+
+    damping = cfg.get("injection_damping", 0.3)
 
     consolidator = FibonacciConsolidator(
         tracker=tracker,
@@ -127,6 +135,8 @@ def main():
                 temperature=temperature,
                 proprio_inject=not args.no_inject,
                 device=str(model.device),
+                scheduler=scheduler,
+                damping=damping,
             )
 
             print()

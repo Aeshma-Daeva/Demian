@@ -5,8 +5,9 @@ max_new_tokens: 256
 
 # Proprioception
 target_dim: 128
-injection_scale: 0.1
+injection_scale: 0.02
 max_memory_length: 16
+injection_damping: 0.3
 
 # Fibonacci consolidation
 consolidation_intervals: [1, 2, 3, 5, 8, 13, 21, 34, 55, 89]

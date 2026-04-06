@@ -14,15 +14,78 @@ Early turns need frequent compression — the model doesn't know its
 computational shape yet. Later, the shape has been established.
 Fibonacci is one of many valid schedules. Worth trying: power-law,
 adaptive, logarithmic.
+
+The golden ratio (phi) also drives injection rhythm within a single
+generation turn — see InjectionScheduler below. An irrational pulse
+keeps the model from settling into mechanical prediction patterns.
 """
 from __future__ import annotations
 
 import json
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any, List, Optional
+from typing import Any, Generator, List, Optional
 
 import numpy as np
+
+# The golden ratio — irrational, non-repeating
+GOLDEN_RATIO = (1 + np.sqrt(5)) / 2  # approximately 1.618033988749895
+
+
+def generate_fibonacci_schedule(max_steps: int = 256, base_gap: int = 2, max_gap: int = 13) -> set[int]:
+    """Generate a Fibonacci-spaced injection schedule.
+
+    Injection occurs at steps separated by growing Fibonacci intervals:
+    2, 3, 5, 8, 13, then cap at max_gap and repeat. The non-repeating
+    rhythm means the model cannot settle into a mechanical pattern
+    around when injection will occur.
+
+    Args:
+        max_steps: total generation steps to plan for
+        base_gap: starting gap before first injection
+        max_gap: largest gap before schedule loops
+
+    Returns:
+        Set of step indices (0-based) where injection should occur.
+    """
+    # Build Fibonacci sequence up to max_gap
+    fib = [1, base_gap]
+    while fib[-1] + fib[-2] <= max_gap:
+        fib.append(fib[-1] + fib[-2])
+    fib = fib[1:]  # skip initial 1
+
+    schedule: set[int] = set()
+    step = 0
+    fib_idx = 0
+    while step < max_steps:
+        gap = fib[fib_idx % len(fib)]
+        step += gap
+        if step < max_steps and step > 0:
+            schedule.add(step)
+        fib_idx += 1
+    return schedule
+
+
+class InjectionScheduler:
+    """Decides WHEN to inject proprioceptive feedback.
+
+    The schedule follows Fibonacci intervals: early steps get dense
+    injection (the model is orienting to its new input), later steps
+    get breathing room. A full cycle repeats every N steps.
+
+    This replaces the old behaviour of injecting every single step.
+    """
+
+    def __init__(
+        self,
+        max_steps: int = 256,
+        base_gap: int = 2,
+        max_gap: int = 13,
+    ):
+        self._schedule = generate_fibonacci_schedule(max_steps, base_gap, max_gap)
+
+    def should_inject(self, step: int) -> bool:
+        return step in self._schedule
 
 
 @dataclass
