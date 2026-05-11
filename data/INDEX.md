@@ -125,9 +125,11 @@ Use with:
   - [../tests/test_v9_capsule_continuity.py](/home/xenith/demian/tests/test_v9_capsule_continuity.py)
 - Main artifact:
   - [substrate_lab/v9_capsule_continuity_20260511/summary.json](/home/xenith/demian/data/substrate_lab/v9_capsule_continuity_20260511/summary.json)
+  - [../docs/assets/capsule_continuity.svg](/home/xenith/demian/docs/assets/capsule_continuity.svg)
 - Current read:
   - canonical v9 and v9 five-channel both resume exactly from full internal-state capsule under the deterministic probe
   - surface-only replay fails to reproduce continuation in both cases
+  - the compact sweep covers seeds 94, 95, and 96 with 16:16 and 24:24 pause/resume windows; all full capsule runs remain exact or near-exact and all surface-only arms are worse than full capsule resume
   - this is evidence for internal-state continuity, not yet evidence for compressed capsule continuity
 
 ### Canonical v9 three-channel baseline

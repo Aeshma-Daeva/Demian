@@ -95,10 +95,11 @@
       "status": "active_evidence",
       "primary_summary": "data/substrate_lab/v9_capsule_continuity_20260511/summary.json",
       "artifacts": [
-        "data/substrate_lab/v9_capsule_continuity_20260511/summary.json"
+        "data/substrate_lab/v9_capsule_continuity_20260511/summary.json",
+        "docs/assets/capsule_continuity.svg"
       ],
       "claim_ids": ["C19"],
-      "interpretation": "Canonical v9 and v9 five-channel resume from full internal-state capsules while surface-only replay fails under the deterministic probe."
+      "interpretation": "Canonical v9 and v9 five-channel resume from full internal-state capsules while surface-only replay fails under the deterministic probe; the compact sweep covers seeds 94, 95, and 96 across 16:16 and 24:24 windows."
     },
     {
       "id": "v8_multi_ablation_20260507",

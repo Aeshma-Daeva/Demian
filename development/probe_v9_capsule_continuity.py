@@ -218,6 +218,96 @@ def run_capsule_probe(
     }
 
 
+def parse_int_list(value: str) -> list[int]:
+    return [int(part.strip()) for part in value.split(",") if part.strip()]
+
+
+def parse_window_list(value: str) -> list[tuple[int, int]]:
+    windows: list[tuple[int, int]] = []
+    for part in value.split(","):
+        item = part.strip()
+        if not item:
+            continue
+        if ":" in item:
+            left, right = item.split(":", 1)
+            windows.append((int(left), int(right)))
+        else:
+            steps = int(item)
+            windows.append((steps, steps))
+    return windows
+
+
+def build_runs(
+    *,
+    hidden_size: int,
+    seed: int,
+    pause_steps: int,
+    resume_steps: int,
+    device_name: str,
+) -> list[dict[str, Any]]:
+    return [
+        run_capsule_probe(
+            "demian_native_v9",
+            lambda size: DemianNativeV9Substrate(size),
+            ("fast", "slow", "control"),
+            hidden_size,
+            seed,
+            pause_steps,
+            resume_steps,
+            device_name,
+        ),
+        run_capsule_probe(
+            "v9_five_channel",
+            default_v9_five_channel,
+            ("fast", "slow", "control", "message", "carrier"),
+            hidden_size,
+            seed,
+            pause_steps,
+            resume_steps,
+            device_name,
+        ),
+    ]
+
+
+def aggregate_sweep(sweep_runs: list[dict[str, Any]]) -> dict[str, Any]:
+    by_label: dict[str, list[dict[str, Any]]] = {}
+    for run in sweep_runs:
+        by_label.setdefault(run["label"], []).append(run)
+
+    aggregate: dict[str, Any] = {}
+    for label, runs in by_label.items():
+        full_cosines = [
+            run["arms"]["full_capsule"]["final_cosine_vs_uninterrupted"]
+            for run in runs
+        ]
+        surface_cosines = [
+            run["arms"]["surface_only"]["final_cosine_vs_uninterrupted"]
+            for run in runs
+        ]
+        full_gaps = [
+            run["arms"]["full_capsule"]["mean_step_gap_vs_uninterrupted"]
+            for run in runs
+        ]
+        surface_gaps = [
+            run["arms"]["surface_only"]["mean_step_gap_vs_uninterrupted"]
+            for run in runs
+        ]
+        aggregate[label] = {
+            "n_runs": len(runs),
+            "full_capsule_min_final_cosine": float(np.min(full_cosines)),
+            "surface_only_max_final_cosine": float(np.max(surface_cosines)),
+            "full_capsule_max_mean_gap": float(np.max(full_gaps)),
+            "surface_only_min_mean_gap": float(np.min(surface_gaps)),
+            "all_full_capsules_exact_or_near_exact": bool(
+                np.min(full_cosines) > 0.999 and np.max(full_gaps) < 1e-6
+            ),
+            "all_surface_only_worse_than_full_capsule": bool(
+                all(surface > full for surface, full in zip(surface_gaps, full_gaps))
+            ),
+        }
+    return aggregate
+
+
 def default_v9_five_channel(hidden_size: int) -> ExperimentalV9MessageCarrier:
     return ExperimentalV9MessageCarrier(
         hidden_size,
@@ -233,8 +323,26 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--hidden-size", type=int, default=32)
     parser.add_argument("--seed", type=int, default=94)
+    parser.add_argument(
+        "--seeds",
+        default=None,
+        help="Optional comma-separated seed sweep, for example 94,95,96.",
+    )
     parser.add_argument("--pause-steps", type=int, default=64)
     parser.add_argument("--resume-steps", type=int, default=64)
+    parser.add_argument(
+        "--windows",
+        default=None,
+        help=(
+            "Optional comma-separated pause:resume windows, for example 16:16,24:24. "
+            "A single integer means pause and resume use the same length."
+        ),
+    )
+    parser.add_argument(
+        "--include-sweep-runs",
+        action="store_true",
+        help="Include every sweep arm in the JSON. By default only compact aggregate evidence is saved.",
+    )
     parser.add_argument("--device", default="cpu")
     parser.add_argument("--out", default="data/substrate_lab/v9_capsule_continuity_20260511/summary.json")
     return parser.parse_args()
@@ -242,35 +350,46 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
+    runs = build_runs(
+        hidden_size=args.hidden_size,
+        seed=args.seed,
+        pause_steps=args.pause_steps,
+        resume_steps=args.resume_steps,
+        device_name=args.device,
+    )
     payload = {
         "experiment": "v9-capsule-continuity",
         "description": (
             "Capsule resume probe on canonical v9 and v9 five-channel; "
             "full state resume is compared with surface-only and component-only resumes."
         ),
-        "runs": [
-            run_capsule_probe(
-                "demian_native_v9",
-                lambda hidden_size: DemianNativeV9Substrate(hidden_size),
-                ("fast", "slow", "control"),
-                args.hidden_size,
-                args.seed,
-                args.pause_steps,
-                args.resume_steps,
-                args.device,
-            ),
-            run_capsule_probe(
-                "v9_five_channel",
-                default_v9_five_channel,
-                ("fast", "slow", "control", "message", "carrier"),
-                args.hidden_size,
-                args.seed,
-                args.pause_steps,
-                args.resume_steps,
-                args.device,
-            ),
-        ],
+        "runs": runs,
     }
+    if args.seeds or args.windows:
+        seeds = parse_int_list(args.seeds) if args.seeds else [args.seed]
+        windows = parse_window_list(args.windows) if args.windows else [(args.pause_steps, args.resume_steps)]
+        sweep_runs: list[dict[str, Any]] = []
+        for seed in seeds:
+            for pause_steps, resume_steps in windows:
+                sweep_runs.extend(
+                    build_runs(
+                        hidden_size=args.hidden_size,
+                        seed=seed,
+                        pause_steps=pause_steps,
+                        resume_steps=resume_steps,
+                        device_name=args.device,
+                    )
+                )
+        payload["sweep"] = {
+            "seeds": seeds,
+            "windows": [
+                {"pause_steps": pause_steps, "resume_steps": resume_steps}
+                for pause_steps, resume_steps in windows
+            ],
+            "aggregate": aggregate_sweep(sweep_runs),
+        }
+        if args.include_sweep_runs:
+            payload["sweep"]["runs"] = sweep_runs
     out_path = Path(args.out)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")

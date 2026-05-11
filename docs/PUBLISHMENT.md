@@ -80,6 +80,9 @@ The public repo needs three layers.
 - what the strongest current result is
 - which files to inspect first
 - how to reproduce one small artifact
+- show one compact 2D result figure before the long repo tour; currently use
+  `docs/assets/capsule_continuity.svg`, not the immature 3D/Blender line, as
+  the front-page visual anchor
 
 ### Evidence Ledger
 

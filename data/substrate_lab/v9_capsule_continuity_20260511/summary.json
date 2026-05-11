@@ -208,5 +208,42 @@
         "binding_active": 1.0
       }
     }
-  ]
+  ],
+  "sweep": {
+    "seeds": [
+      94,
+      95,
+      96
+    ],
+    "windows": [
+      {
+        "pause_steps": 16,
+        "resume_steps": 16
+      },
+      {
+        "pause_steps": 24,
+        "resume_steps": 24
+      }
+    ],
+    "aggregate": {
+      "demian_native_v9": {
+        "n_runs": 6,
+        "full_capsule_min_final_cosine": 0.9999998807907104,
+        "surface_only_max_final_cosine": 0.09100709855556488,
+        "full_capsule_max_mean_gap": 0.0,
+        "surface_only_min_mean_gap": 0.2262487313710153,
+        "all_full_capsules_exact_or_near_exact": true,
+        "all_surface_only_worse_than_full_capsule": true
+      },
+      "v9_five_channel": {
+        "n_runs": 6,
+        "full_capsule_min_final_cosine": 0.9999998807907104,
+        "surface_only_max_final_cosine": 0.1752406656742096,
+        "full_capsule_max_mean_gap": 0.0,
+        "surface_only_min_mean_gap": 0.27455845288932323,
+        "all_full_capsules_exact_or_near_exact": true,
+        "all_surface_only_worse_than_full_capsule": true
+      }
+    }
+  }
 }

@@ -271,9 +271,11 @@ Promotion rule:
   - [development/probe_v9_capsule_continuity.py](/home/xenith/demian/development/probe_v9_capsule_continuity.py)
   - [tests/test_v9_capsule_continuity.py](/home/xenith/demian/tests/test_v9_capsule_continuity.py)
   - [data/substrate_lab/v9_capsule_continuity_20260511/summary.json](/home/xenith/demian/data/substrate_lab/v9_capsule_continuity_20260511/summary.json)
+  - [docs/assets/capsule_continuity.svg](/home/xenith/demian/docs/assets/capsule_continuity.svg)
 - Notes:
   - canonical v9 full capsule cosine: `0.99999994`; surface-only cosine: `0.09100710`
   - v9 five-channel full capsule cosine: `1.0`; surface-only cosine: `-0.03007574`
+  - compact sweep: seeds `94,95,96`; windows `16:16` and `24:24`; full capsule min cosine `0.99999988` for both substrates; all surface-only arms are worse than full capsule resume
   - the current full capsule restores the full internal tensor state; this is not yet a compression claim
   - component-only arms suggest canonical v9 continuity is strongly concentrated in `slow`, while v9 five-channel continuity is distributed across `carrier`, `message`, and `slow`
 - What would falsify this:

@@ -29,6 +29,8 @@ It compares uninterrupted continuation with:
 
 ## Compact Readout
 
+![Capsule continuity sweep](assets/capsule_continuity.svg)
+
 | Substrate | Full capsule cosine | Surface-only cosine | Best component-only read |
 | --- | ---: | ---: | --- |
 | `demian_native_v9` | `0.99999994` | `0.09100710` | `slow_only`: `0.99973315` |
@@ -40,6 +42,11 @@ Mean trajectory gap also separates the arms:
 | --- | ---: | ---: |
 | `demian_native_v9` | `0.0` | `0.25749409` |
 | `v9_five_channel` | `0.0` | `0.30981059` |
+
+The current smoke sweep uses seeds `94,95,96` and pause/resume windows `16:16`
+and `24:24`. In all 6 runs per substrate, full capsule resume remains exact
+or near-exact (`min cosine > 0.999`, `max mean gap = 0.0`), and surface-only
+replay is worse than full capsule resume.
 
 ## Interpretation
 
@@ -58,3 +65,10 @@ capsule can preserve the same continuation advantage.
 - test whether `slow`, `message`, and `carrier` can be reduced to a small
   structured code while preserving resume quality
 - keep this separate from v7.4 until the v9/v9-five-channel behavior is stable
+
+## Reproduce
+
+```bash
+./venv/bin/python development/probe_v9_capsule_continuity.py --hidden-size 16 --pause-steps 24 --resume-steps 24 --seeds 94,95,96 --windows 16:16,24:24
+./venv/bin/python -m pytest tests/test_v9_capsule_continuity.py -q
+```

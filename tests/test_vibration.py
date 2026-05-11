@@ -1,12 +1,10 @@
 """Tests for vibration tracker."""
 import torch
-import tempfile
 import os
 import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from demian.vibration import VibrationTracker
-from demian.noise import generate_projection
 
 
 def _tracker():
@@ -23,7 +21,9 @@ def test_capture():
     snap = t.capture(residual, logits)
     assert snap.step == 1
     assert len(snap.projected_state) == 16
-    assert snap.attention.mode in ("focused", "distributed", "diffuse")
+    assert snap.attention is snap.shape
+    assert snap.shape.attention_dim > 0.0
+    assert snap.shape.peakiness > 0.0
     print("  PASS test_capture")
 
 
@@ -47,7 +47,9 @@ def test_focused_attention():
     logits = torch.zeros(1, 1, 50)
     logits[0, 0, 10] = 10.0  # one dominant token
     snap = t.capture(torch.randn(64), logits)
-    assert snap.attention.mode == "focused"
+    assert snap.shape.peakiness > 0.99
+    assert snap.shape.dominance_ratio > 50.0
+    assert snap.shape.attention_dim < 2.0
     print("  PASS test_focused_attention")
 
 
@@ -55,7 +57,9 @@ def test_diffuse_attention():
     t = _tracker()
     logits = torch.randn(1, 1, 50) * 0.01  # nearly uniform
     snap = t.capture(torch.randn(64), logits)
-    assert snap.attention.mode == "diffuse"
+    assert snap.shape.peakiness < 0.03
+    assert snap.shape.dominance_ratio < 1.1
+    assert snap.shape.attention_dim > 45.0
     print("  PASS test_diffuse_attention")
 
 

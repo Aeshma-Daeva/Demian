@@ -4,6 +4,19 @@ Demian is an experimental lab for self-referential AI dynamics and architecture 
 
 The project is not aimed at productizing a chatbot, chasing benchmarks, or optimizing for human-facing output quality. The working goal is to study how frozen and semi-adaptive AI systems behave when their own internal state, recurrence, memory, and inter-agent coupling become the substrate of continued evolution, then extract the mechanisms that matter enough to build a custom substrate.
 
+## At A Glance
+
+Demian is publishable today as an ongoing research notebook with a clear evidence ledger, not as a finished architecture announcement.
+
+Current public center:
+
+- **Primary line:** v9 five-channel substrate work (`fast`, `slow`, `control`, `message`, `carrier`) and the next named `Demian v1` program.
+- **Strongest cautious claim:** fixed-point surface behavior can hide structured internal channel dynamics, so surface labels alone are not enough to judge a substrate.
+- **Fresh side result:** capsule-continuity probes show that full internal-state resume preserves trajectory continuation while surface-only replay fails in canonical v9 and v9 five-channel.
+- **Main boundary:** v9 five-channel is interesting and worth continuing; it is not yet evidence of global superiority over v8 or other baselines.
+
+![Capsule continuity sweep](docs/assets/capsule_continuity.svg)
+
 Public status:
 
 - ongoing computational research notebook
@@ -169,7 +182,7 @@ For the current v9 five-channel / Demian v1 evidence path:
 For the capsule-continuity side thread:
 
 ```bash
-./venv/bin/python development/probe_v9_capsule_continuity.py --hidden-size 16 --pause-steps 24 --resume-steps 24
+./venv/bin/python development/probe_v9_capsule_continuity.py --hidden-size 16 --pause-steps 24 --resume-steps 24 --seeds 94,95,96 --windows 16:16,24:24
 ./venv/bin/python -m pytest tests/test_v9_capsule_continuity.py -q
 ```
 
@@ -213,7 +226,7 @@ See [docs/CURRENT_STATE_AND_ROUTING.md](docs/CURRENT_STATE_AND_ROUTING.md) for c
 
 - This repo is an active lab, not a stabilized package.
 - Some older tests and scripts still reflect pre-geometric `mode` terminology.
-- Full pytest on 2026-05-09 had 120 passing tests and 3 unrelated `tests/test_vibration.py` failures from stale `snap.attention.mode` expectations; current API returns unlabeled `SpectralShape`.
+- Full pytest on 2026-05-11 passes locally: `144 passed in 29.68s`.
 - Do not dismiss `FIXED_POINT` regimes as boring by default. Current v9 five-channel evidence shows `surface_fixed_accumulating` can coexist with internal richness and other bounded regimes.
 - archived notes and plans are useful context, but they are not a substitute for checking raw artifacts.
 
