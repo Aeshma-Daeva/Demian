@@ -4,6 +4,13 @@ Demian is an experimental lab for self-referential AI dynamics and architecture 
 
 The project is not aimed at productizing a chatbot, chasing benchmarks, or optimizing for human-facing output quality. The working goal is to study how frozen and semi-adaptive AI systems behave when their own internal state, recurrence, memory, and inter-agent coupling become the substrate of continued evolution, then extract the mechanisms that matter enough to build a custom substrate.
 
+Public status:
+
+- ongoing computational research notebook
+- not a finished architecture claim
+- not evidence that v9 five-channel globally dominates v8 or other baselines
+- strongest current result: fixed-point surface behavior can hide rich channel-internal dynamics, and sparse release gates can be selected without simply becoming always-on coupling
+
 Current focus:
 
 - v9 five-channel experiments (`fast`, `slow`, `control`, `message`, `carrier`) as the active scaffold and evidence line
@@ -121,6 +128,35 @@ There is also a local summarizer:
 
 ```bash
 ./venv/bin/python development/summarize_results.py
+```
+
+## Reproduce A Small Check
+
+This CPU-only check compares canonical `demian_native_v9` against `demian_native_v8`
+on one short seed. It is a smoke test and orientation path, not a full evidence
+rerun:
+
+```bash
+./venv/bin/python -c "from development.substrates.current import compare_current_target; import json; r=compare_current_target(hidden_size=16, steps=16, perturb_step=8, seeds=[94], device='cpu'); print(json.dumps({'seeds': r['seeds'], 'mean_v9_recovery_1.0': r['aggregate'].get('mean_v9_recovery_1.0'), 'mean_v8_recovery_1.0': r['aggregate'].get('mean_v8_recovery_1.0')}, indent=2))"
+```
+
+Expected shape:
+
+```json
+{
+  "seeds": [94],
+  "mean_v9_recovery_1.0": 0.07895439697636498,
+  "mean_v8_recovery_1.0": 0.04398368299007416
+}
+```
+
+The exact values can move with runtime/library details; the public contract is
+that the command runs and returns the listed keys.
+
+For the current v9 five-channel / Demian v1 evidence path:
+
+```bash
+./venv/bin/python -m pytest tests/test_current_substrates.py tests/test_v9_5ch_summary.py -q
 ```
 
 ## Environment

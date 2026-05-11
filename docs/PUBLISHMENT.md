@@ -1,6 +1,6 @@
 # Publishment
 
-Last updated: 2026-05-09
+Last updated: 2026-05-11
 
 ## Position
 
@@ -12,12 +12,18 @@ The strongest value is the experimental lineage and measurement discipline:
 - Mamba recurrence and fixed-point microstructure
 - competition/population dynamics
 - LSTM, GRU, dual-GRU, RNN comparison work
-- custom native substrate lineage through v7, v8, canonical v9, and current v9 five-channel experiments
+- custom native substrate lineage through v7, v8, canonical v9, current v9 five-channel experiments, and the named `Demian v1` program
 - machine-observable metrics, attractor classification, perturbation traces, recurrence geometry, archives, and 3D/Blender trajectory expression
 
 The current public center should be:
 
 > Demian studies machine-internal recurrence and attractor geometry across inherited neural systems and custom substrates. The current line investigates whether multi-channel internal state, message/carrier accumulation, and rare release gates can preserve rich bounded dynamics without collapsing into trivial storage, incoherence, or always-on coupling.
+
+Naming discipline:
+
+- `v9 five-channel` is the active scaffold and evidence line.
+- `v10.0-frozen-evolution` is predecessor evidence, not a new native architecture.
+- `Demian v1` is the next named custom-substrate program.
 
 ## What To Claim
 
@@ -27,9 +33,10 @@ Strong current claims:
 - Mamba-style and custom recurrent systems can show rich microstructure under apparently stable attractor classes
 - the v9 five-channel scaffold preserves multiple bounded regimes, including `surface_fixed_accumulating`, `bounded_strange`, `edge_of_chaos`, and small limit-cycle pockets
 - rare release gates are possible, but current release-local causal effect is still weak
+- the v10.0 predecessor run selected sparse-to-borderline release under eval seed 94, but this still needs held-out seed validation
 - 3D/Blender rendering can serve as a non-textual inspection layer for trajectory geometry
 
-Do not publish v9 as a finished superior architecture yet. The evidence supports that v9-5ch is interesting and worth continuing, not that it dominates v8 or other baselines.
+Do not publish v9 as a finished superior architecture yet. The evidence supports that v9-5ch is interesting and worth continuing, not that it dominates v8 or other baselines. Do not publish Demian v1 as complete; publish it as the next research program.
 
 ## What To Avoid
 
@@ -89,6 +96,7 @@ Each important claim should include:
 The repo should expose two or three golden paths:
 
 - reproduce a compact v9 five-channel run
+- run the small canonical v9-v8 comparison smoke check in `README.md`
 - export a trajectory
 - open or render the Blender expression artifact
 - compare canonical v9 against v8 as a baseline/falsification check
@@ -104,4 +112,3 @@ It is weak when the reader has to trust an interpretation before seeing the meas
 The older research eras should remain available, but they should be marked as ancestry and evidence history, not as the current truth surface.
 
 The correct standard for publication is not product polish, benchmark wins, or human approval. It is clarity of structure, reproducibility of representative probes, and careful separation of observation, inference, and speculation.
-
