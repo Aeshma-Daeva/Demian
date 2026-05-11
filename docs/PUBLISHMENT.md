@@ -83,6 +83,9 @@ The public repo needs three layers.
 - show one compact 2D result figure before the long repo tour; currently use
   `docs/assets/capsule_continuity.svg`, not the immature 3D/Blender line, as
   the front-page visual anchor
+- include deterministic 2D anatomy, neuron-activation, and gate-activation SVGs
+  from `development/render_publication_2d_visuals.py`; these should remain
+  inspection surfaces with explicit source/config notes, not decorative art
 
 ### Evidence Ledger
 

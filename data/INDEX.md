@@ -73,17 +73,23 @@ Use with:
   - [../development/probe_v9_message_carrier_strange.py](/home/xenith/demian/development/probe_v9_message_carrier_strange.py)
   - [../development/evolve_v9_5ch_release.py](/home/xenith/demian/development/evolve_v9_5ch_release.py)
   - [../development/export_v9_5ch_evo_trajectory_3d.py](/home/xenith/demian/development/export_v9_5ch_evo_trajectory_3d.py)
+  - [../development/render_publication_2d_visuals.py](/home/xenith/demian/development/render_publication_2d_visuals.py)
 - Test surface:
   - [../tests/test_v9_5ch_evolution.py](/home/xenith/demian/tests/test_v9_5ch_evolution.py)
+  - [../tests/test_publication_2d_visuals.py](/home/xenith/demian/tests/test_publication_2d_visuals.py)
 - Main artifacts:
   - [evolution/v9_5ch_release_20260509_full/archive.json](/home/xenith/demian/data/evolution/v9_5ch_release_20260509_full/archive.json)
   - [substrate_lab/v9_5ch_evo_trajectory_3d_20260509_full/trajectory_3d.json](/home/xenith/demian/data/substrate_lab/v9_5ch_evo_trajectory_3d_20260509_full/trajectory_3d.json)
   - [substrate_lab/v9_5ch_evo_trajectory_3d_20260509_full/blender_expression/expression.blend](/home/xenith/demian/data/substrate_lab/v9_5ch_evo_trajectory_3d_20260509_full/blender_expression/expression.blend)
   - [substrate_lab/v9_5ch_evo_trajectory_3d_20260509_full/blender_expression/expression_metadata.json](/home/xenith/demian/data/substrate_lab/v9_5ch_evo_trajectory_3d_20260509_full/blender_expression/expression_metadata.json)
+  - [../docs/assets/v9_5ch_anatomy.svg](/home/xenith/demian/docs/assets/v9_5ch_anatomy.svg)
+  - [../docs/assets/v9_5ch_neuron_activations.svg](/home/xenith/demian/docs/assets/v9_5ch_neuron_activations.svg)
+  - [../docs/assets/v9_5ch_gating_activations.svg](/home/xenith/demian/docs/assets/v9_5ch_gating_activations.svg)
 - Current read:
   - full archive ran for 8 generations, 24 population, 192 candidates
   - final archive preserved `surface_fixed_accumulating`, `bounded_strange`, `edge_of_chaos`, and small limit-cycle pockets
   - release duty became rarer in archived candidates, but release effectiveness remains weak
+  - deterministic 2D SVGs expose anatomy, neuron activations, and route/gate activations with quadratic color intensity for GitHub readers
   - use this as the active v9 path-geometry and release-gate artifact, not as proof of global v9 superiority
 
 ### v10.0 frozen four-island evolution predecessor

@@ -71,10 +71,13 @@
         "data/evolution/v9_5ch_release_20260509_full/archive.json",
         "data/substrate_lab/v9_5ch_evo_trajectory_3d_20260509_full/trajectory_3d.json",
         "data/substrate_lab/v9_5ch_evo_trajectory_3d_20260509_full/blender_expression/expression.blend",
-        "data/substrate_lab/v9_5ch_evo_trajectory_3d_20260509_full/blender_expression/expression_metadata.json"
+        "data/substrate_lab/v9_5ch_evo_trajectory_3d_20260509_full/blender_expression/expression_metadata.json",
+        "docs/assets/v9_5ch_anatomy.svg",
+        "docs/assets/v9_5ch_neuron_activations.svg",
+        "docs/assets/v9_5ch_gating_activations.svg"
       ],
       "claim_ids": ["C16", "C17"],
-      "interpretation": "Full v9 five-channel archive preserved multiple bounded regimes and showed release becoming rarer while causal effect remained weak."
+      "interpretation": "Full v9 five-channel archive preserved multiple bounded regimes and showed release becoming rarer while causal effect remained weak; deterministic 2D SVGs expose anatomy, neuron activations, and route/gate activations with quadratic color intensity."
     },
     {
       "id": "v9_v8_compare_20260508",

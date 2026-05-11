@@ -17,6 +17,21 @@ Current public center:
 
 ![Capsule continuity sweep](docs/assets/capsule_continuity.svg)
 
+## Visual Readouts
+
+These 2D figures are generated from deterministic v9 five-channel traces. They
+are meant as inspection surfaces, not decorative illustrations.
+
+![v9 five-channel anatomy](docs/assets/v9_5ch_anatomy.svg)
+
+![v9 five-channel neuron activations](docs/assets/v9_5ch_neuron_activations.svg)
+
+![v9 five-channel gating activations](docs/assets/v9_5ch_gating_activations.svg)
+
+The neuron and gate heatmaps use quadratic color: normalized magnitude is
+squared before it becomes color intensity. This keeps low-amplitude background
+activity visually quiet while strong activations and gates remain visible.
+
 Public status:
 
 - ongoing computational research notebook
