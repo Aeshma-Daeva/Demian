@@ -144,8 +144,14 @@ class FibonacciConsolidator:
         turn = self._turn_count
         projected_states = np.array([s.projected_state for s in snapshots])
 
-        modes = [s.attention.mode for s in snapshots]
-        attn_transitions = self._markov_chain(modes)
+        # Structural state sequence: bin spectral_centroid into 4 regions
+        centroids = [s.shape.spectral_centroid for s in snapshots]
+        centroid_bins = self._bin_centroids(centroids)
+        attn_transitions = self._markov_chain(centroid_bins)
+
+        # Legacy: also store mode sequence from old code if available
+        modes = [getattr(s, 'attention', s.shape).mode if hasattr(getattr(s, 'attention', s.shape), 'mode')
+                 else None for s in snapshots]
 
         raw_residual_mean = self._mean_raw_residual(snapshots)
 
@@ -177,7 +183,7 @@ class FibonacciConsolidator:
                 raw_residual_mean=raw_residual_mean,
             )
         else:
-            # Essence: PCA dominant direction + Markov chain of attention modes
+            # Essence: PCA dominant direction + Markov chain of spectral regions
             centered = projected_states - projected_states.mean(axis=0)
             if len(centered) > 1:
                 u, s, vt = np.linalg.svd(centered, full_matrices=False)
@@ -197,6 +203,28 @@ class FibonacciConsolidator:
                 compression_type="essence",
                 raw_residual_mean=raw_residual_mean,
             )
+
+    def _bin_centroids(self, centroids: List[float]) -> List[str]:
+        """Bin continuous spectral_centroid into 4 structural regions.
+
+        Low (0-0.25): energy concentrated in low-frequency modes of residual
+        Mid-low (0.25-0.5): mid-frequency structure
+        Mid-high (0.5-0.75): high-frequency structure
+        High (0.75-1.0): very high-frequency, rapid oscillation
+
+        Not human labels — these are bins on a measurable axis.
+        """
+        result = []
+        for c in centroids:
+            if c < 0.25:
+                result.append("low")
+            elif c < 0.5:
+                result.append("mid_low")
+            elif c < 0.75:
+                result.append("mid_high")
+            else:
+                result.append("high")
+        return result
 
     def _mean_raw_residual(self, snapshots) -> Optional[List[float]]:
         """Average of raw residual vectors in the trajectory.

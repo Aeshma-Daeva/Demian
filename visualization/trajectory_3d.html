@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Demian V9 Release Lab</title>
+    <link rel="stylesheet" href="trajectory_3d.css?v=5">
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="toolbar" aria-label="Trajectory controls">
+        <div class="file-control">
+          <label for="json-file">trajectory_3d.json</label>
+          <input id="json-file" type="file" accept="application/json,.json">
+        </div>
+        <fieldset>
+          <legend>Line</legend>
+          <label><input id="show-v9" type="checkbox" checked> v9 active experiment</label>
+          <label><input id="show-v8" type="checkbox" checked> v8 comparison</label>
+        </fieldset>
+        <fieldset>
+          <legend>Run</legend>
+          <label><input id="show-clean" type="checkbox" checked> clean</label>
+          <label><input id="show-perturbed" type="checkbox" checked> perturbed</label>
+        </fieldset>
+        <label class="select-control" for="color-mode">
+          Color
+          <select id="color-mode">
+            <option value="substrate">substrate</option>
+            <option value="perturb_scale">perturb scale</option>
+            <option value="residual_delta">residual delta</option>
+            <option value="residual_norm">residual norm</option>
+            <option value="fast_state_norm">fast norm</option>
+            <option value="slow_state_norm">slow norm</option>
+            <option value="message_state_norm">message norm</option>
+            <option value="carrier_residual_norm">carrier residual</option>
+            <option value="release_open_mean">release open</option>
+            <option value="release_strength_mean">release strength</option>
+            <option value="release_pressure_mean">release pressure</option>
+            <option value="release_drive_mean">release drive</option>
+            <option value="release_bias_norm">release bias</option>
+            <option value="path_curvature_mean">path curvature</option>
+            <option value="message_signature_tail">message signature</option>
+            <option value="carrier_signature_tail">carrier signature</option>
+            <option value="release_transfer">release transfer</option>
+            <option value="release_pre_accumulation">release pre-accum</option>
+            <option value="release_local_displacement">release displacement</option>
+            <option value="release_local_signature_push">release signature push</option>
+            <option value="release_local_causality">release causality</option>
+            <option value="release_timing_score">release timing</option>
+            <option value="release_eligible_fraction">eligible release</option>
+            <option value="release_early_fraction">early release</option>
+            <option value="internal_richness">internal richness</option>
+            <option value="geometric_coherence">geometric coherence</option>
+          </select>
+        </label>
+        <label class="select-control" for="seed-filter">
+          Seed
+          <select id="seed-filter">
+            <option value="all">all</option>
+          </select>
+        </label>
+        <label class="select-control" for="candidate-filter">
+          Candidate
+          <select id="candidate-filter">
+            <option value="all">all</option>
+          </select>
+        </label>
+        <label class="select-control" for="family-filter">
+          Motif
+          <select id="family-filter">
+            <option value="all">all</option>
+          </select>
+        </label>
+        <label class="select-control" for="scale-filter">
+          Scale
+          <select id="scale-filter">
+            <option value="all">all</option>
+          </select>
+        </label>
+        <label class="select-control" for="regime-filter">
+          Regime
+          <select id="regime-filter">
+            <option value="all">all</option>
+          </select>
+        </label>
+        <label class="range-control" for="step-limit">
+          Step <output id="step-output">128</output>
+          <input id="step-limit" type="range" min="1" max="128" value="128">
+        </label>
+        <label class="select-control" for="release-metric">
+          Release
+          <select id="release-metric">
+            <option value="release_strength_mean">strength</option>
+            <option value="release_open_mean">open</option>
+            <option value="release_pressure_mean">pressure</option>
+            <option value="release_transfer">transfer</option>
+          </select>
+        </label>
+        <label class="range-control" for="release-threshold">
+          Threshold <output id="release-threshold-output">0.005</output>
+          <input id="release-threshold" type="range" min="0" max="1" step="0.001" value="0.005">
+        </label>
+        <label class="range-control" for="release-window">
+          Window <output id="release-window-output">8</output>
+          <input id="release-window" type="range" min="0" max="32" step="1" value="8">
+        </label>
+        <fieldset>
+          <legend>View</legend>
+          <label><input id="event-align" type="checkbox"> align at perturb</label>
+          <label><input id="release-window-only" type="checkbox"> release window</label>
+          <label><input id="show-release-markers" type="checkbox" checked> release markers</label>
+          <label><input id="show-release-vectors" type="checkbox"> release vectors</label>
+          <label><input id="show-recovery-vectors" type="checkbox"> recovery vectors</label>
+          <label><input id="show-difference-vectors" type="checkbox"> v9-v8 vectors</label>
+        </fieldset>
+      </section>
+
+      <section class="stage" aria-label="3D trajectory view">
+        <canvas id="trajectory-canvas"></canvas>
+        <div id="empty-state" class="empty-state">
+          <strong>Load a trajectory export</strong>
+          <span>Select data/substrate_lab/&lt;run_name&gt;/trajectory_3d.json.</span>
+        </div>
+        <aside id="inspector" class="inspector" aria-live="polite">
+          <h1>Trajectory point</h1>
+          <dl id="inspector-fields"></dl>
+        </aside>
+        <aside class="analysis-panel" aria-label="Trajectory analysis">
+          <section>
+            <h2>Release Trace</h2>
+            <canvas id="release-chart" width="360" height="130"></canvas>
+          </section>
+          <section>
+            <h2>Path Distance</h2>
+            <canvas id="recovery-chart" width="360" height="130"></canvas>
+          </section>
+          <section>
+            <h2>Phase Portrait</h2>
+            <canvas id="phase-chart" width="360" height="130"></canvas>
+          </section>
+          <section>
+            <h2>PCA Axes</h2>
+            <div id="axis-loadings" class="axis-loadings"></div>
+          </section>
+        </aside>
+      </section>
+    </main>
+
+    <script type="module" src="trajectory_3d.js?v=5"></script>
+  </body>
+</html>

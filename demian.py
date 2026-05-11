@@ -14,6 +14,7 @@ from demian.nous import NousInjector
 from demian.loop import generate_with_proprioception
 from demian.rhythm import FibonacciConsolidator, InjectionScheduler
 from demian.dream import DreamSynthesizer
+from demian.continuity import ContinuityRunner
 
 log = logging.getLogger(__name__)
 
@@ -30,6 +31,31 @@ def main():
         "--target-dim", type=int, default=None,
         help="Random projection target dimensionality",
     )
+    parser.add_argument(
+        "--warmup", type=int, default=0,
+        help="Pre-generation proprioceptive steps before sampling",
+    )
+    parser.add_argument(
+        "--blend-mode", default="append", choices=["append", "additive"],
+        help="KV injection mode: append (new positions) or additive (perturb)",
+    )
+    parser.add_argument(
+        "--inject-mode", default="continuous", choices=["continuous", "one", "spaced"],
+        help="When to inject: continuous (every step), one (step 0 only), spaced (Fibonacci)",
+    )
+    parser.add_argument(
+        "--random-inject", action="store_true",
+        help="Inject random Gaussian vectors instead of residuals (control)",
+    )
+    parser.add_argument(
+        "--continuity", action="store_true",
+        help="Run continuity mode: repeated autos with persistent dream state",
+    )
+    parser.add_argument(
+        "--runs", type=int, default=1000,
+        help="Number of continuity runs (default: 1000)",
+    )
+    parser.add_argument("--prompt", default=None, help="Continuity prompt")
     args = parser.parse_args()
 
     logging.basicConfig(
@@ -38,11 +64,11 @@ def main():
     )
 
     cfg = yaml.safe_load(Path("config.yaml").read_text())
-    model_id = args.model or cfg.get("proprioceptor_model_id", "Qwen/Qwen2.5-7B-Instruct-GPTQ-Int4")
+    model_id = args.model or cfg.get("proprioceptor_model_id", "Qwen/Qwen2.5-3B-Instruct")
     temperature = args.temp if args.temp is not None else cfg.get("temperature", 0.7)
     max_new_tokens = cfg.get("max_new_tokens", 256)
     target_dim = args.target_dim or cfg.get("target_dim", 128)
-    injection_scale = cfg.get("injection_scale", 0.1)
+    injection_scale = cfg.get("injection_scale", 0.01)
 
     log.info("Loading model: %s", model_id)
     tokenizer = AutoTokenizer.from_pretrained(model_id, trust_remote_code=True)
@@ -53,6 +79,7 @@ def main():
         device_map="auto",
         torch_dtype=torch.float16,
         trust_remote_code=True,
+        attn_implementation="eager",
     )
     model.eval()
 
@@ -67,7 +94,8 @@ def main():
         model=model,
         tracker=tracker,
         max_memory_length=cfg.get("max_memory_length", 16),
-        injection_scale=cfg.get("injection_scale", 0.1),
+        injection_scale=cfg.get("injection_scale", 0.01),
+        blend_mode=cfg.get("blend_mode", "append"),
     )
 
     scheduler = InjectionScheduler(
@@ -117,6 +145,47 @@ def main():
     print("=" * 60)
     print()
 
+    # Continuity mode
+    if args.continuity:
+        prompt = args.prompt or cfg.get("continuity_prompt", "Tell me about yourself")
+
+        runner = ContinuityRunner(
+            model=model,
+            tokenizer=tokenizer,
+            tracker=tracker,
+            injector=injector,
+            device=str(model.device),
+        )
+
+        def _generate(prompt, n_tokens, temperature):
+            return generate_with_proprioception(
+                model=model,
+                tokenizer=tokenizer,
+                tracker=tracker,
+                injector=injector,
+                prompt=prompt,
+                max_new_tokens=n_tokens,
+                temperature=temperature,
+                proprio_inject=True,
+                device=str(model.device),
+                damping=cfg.get("injection_damping", 0.7),
+                inject_mode=cfg.get("inject_mode", "one"),
+                random_inject=args.random_inject,
+                stream=False,
+            )
+
+        runner.run(
+            generate_fn=_generate,
+            prompt=prompt,
+            initial_tokens=cfg.get("max_new_tokens", 256),
+            temperature=args.temp if args.temp is not None else cfg.get("temperature", 0.7),
+            n_runs=args.runs,
+            dream_weight=cfg.get("dream_weight", 0.003),
+            damping=cfg.get("injection_damping", 0.7),
+            inject_mode=cfg.get("inject_mode", "one"),
+        )
+        return
+
     try:
         turn_count = 0
         while True:
@@ -137,6 +206,8 @@ def main():
                 device=str(model.device),
                 scheduler=scheduler,
                 damping=damping,
+                inject_mode=cfg.get("inject_mode", "continuous"),
+                random_inject=args.random_inject,
             )
 
             print()

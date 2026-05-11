@@ -1,0 +1,140 @@
+{
+  "schema_version": 1,
+  "updated": "2026-05-11",
+  "policy": {
+    "raw_data": "Keep raw run directories in place until manifest references and doc links are stable.",
+    "status_values": ["active_evidence", "historical", "superseded", "baseline"],
+    "promotion_rule": "Promoted claims must point to indexed artifacts or explicitly cite code/test evidence."
+  },
+  "runs": [
+    {
+      "id": "v10_0_frozen_evolution_20260510",
+      "program": "demian-v1",
+      "date": "2026-05-10",
+      "family": "v9_five_channel_evolution",
+      "status": "active_evidence",
+      "primary_summary": "data/evolution/v10_0_frozen_evolution_4island_20260510_summary.json",
+      "artifacts": [
+        "data/evolution/v10_0_frozen_evolution_4island_20260510_summary.json",
+        "data/evolution/v10_0_frozen_evolution_island_1_20260510/diagnostics.json",
+        "data/evolution/v10_0_frozen_evolution_island_2_20260510/diagnostics.json",
+        "data/evolution/v10_0_frozen_evolution_island_3_20260510/diagnostics.json",
+        "data/evolution/v10_0_frozen_evolution_island_4_20260510/diagnostics.json"
+      ],
+      "claim_ids": ["C18"],
+      "supersedes": ["v9_3_cap_calibrated_20260510"],
+      "interpretation": "Predecessor evidence for Demian v1. Frozen four-island selection run selected sparse-to-borderline release with stronger event/phase behavior under eval seed 94."
+    },
+    {
+      "id": "v9_3_cap_calibrated_20260510",
+      "date": "2026-05-10",
+      "family": "v9_five_channel_evolution",
+      "status": "superseded",
+      "primary_summary": "data/evolution/v9_3_cap_calibrated_4island_20260510_summary.json",
+      "artifacts": [
+        "data/evolution/v9_3_cap_calibrated_4island_20260510_summary.json"
+      ],
+      "claim_ids": [],
+      "interpretation": "Cap-calibrated run exposed sparse/high-phase phenotype used as v10 comparison target."
+    },
+    {
+      "id": "v9_2_sparse_pressure_20260510",
+      "date": "2026-05-10",
+      "family": "v9_five_channel_evolution",
+      "status": "superseded",
+      "primary_summary": "data/evolution/v9_2_sparse_pressure_4island_20260510_summary.json",
+      "artifacts": [
+        "data/evolution/v9_2_sparse_pressure_4island_20260510_summary.json"
+      ],
+      "claim_ids": [],
+      "interpretation": "Sparse-pressure run helped identify flood penalty/cap calibration issues before v10."
+    },
+    {
+      "id": "v9_1_meaningful_4island_20260510",
+      "date": "2026-05-10",
+      "family": "v9_five_channel_evolution",
+      "status": "historical",
+      "primary_summary": "data/evolution/v9_1_4island_meaningful_20260510_summary.json",
+      "artifacts": [
+        "data/evolution/v9_1_4island_meaningful_20260510_summary.json"
+      ],
+      "claim_ids": [],
+      "interpretation": "Earlier four-island run before later sparse/flood calibration."
+    },
+    {
+      "id": "v9_5ch_release_full_20260509",
+      "date": "2026-05-09",
+      "family": "v9_five_channel_evolution",
+      "status": "active_evidence",
+      "primary_summary": "data/evolution/v9_5ch_release_20260509_full/archive.json",
+      "artifacts": [
+        "data/evolution/v9_5ch_release_20260509_full/archive.json",
+        "data/substrate_lab/v9_5ch_evo_trajectory_3d_20260509_full/trajectory_3d.json",
+        "data/substrate_lab/v9_5ch_evo_trajectory_3d_20260509_full/blender_expression/expression.blend",
+        "data/substrate_lab/v9_5ch_evo_trajectory_3d_20260509_full/blender_expression/expression_metadata.json"
+      ],
+      "claim_ids": ["C16", "C17"],
+      "interpretation": "Full v9 five-channel archive preserved multiple bounded regimes and showed release becoming rarer while causal effect remained weak."
+    },
+    {
+      "id": "v9_v8_compare_20260508",
+      "date": "2026-05-08",
+      "family": "native_substrate_comparison",
+      "status": "baseline",
+      "primary_summary": "data/substrate_lab/v9_v8_compare_20260508/summary.json",
+      "artifacts": [
+        "data/substrate_lab/v9_v8_compare_20260508/summary.json"
+      ],
+      "claim_ids": ["C15"],
+      "interpretation": "Saved comparison did not support behavioral superiority of canonical v9 over v8."
+    },
+    {
+      "id": "v8_multi_ablation_20260507",
+      "date": "2026-05-07",
+      "family": "native_substrate_comparison",
+      "status": "baseline",
+      "primary_summary": "data/substrate_lab/v8_multi_ablation_20260507/summary.json",
+      "artifacts": [
+        "data/substrate_lab/v8_multi_ablation_20260507/summary.json"
+      ],
+      "claim_ids": [],
+      "interpretation": "Current v8 ablation baseline for v9 comparison context."
+    },
+    {
+      "id": "v8_v74_coupling_stress_20260506",
+      "date": "2026-05-06",
+      "family": "native_substrate_comparison",
+      "status": "baseline",
+      "primary_summary": "data/substrate_lab/v8_v74_coupling_stress_20260506/summary.json",
+      "artifacts": [
+        "data/substrate_lab/v8_v74_coupling_stress_20260506/summary.json"
+      ],
+      "claim_ids": [],
+      "interpretation": "Coupling-stress comparison between v8 and promoted v7.4 baseline."
+    },
+    {
+      "id": "transformer_reservoir_batch",
+      "date": "unknown",
+      "family": "baseline_self_reference",
+      "status": "baseline",
+      "primary_summary": "data/reservoir_batch/batch_summary.json",
+      "artifacts": [
+        "data/reservoir_batch/batch_summary.json"
+      ],
+      "claim_ids": ["C1"],
+      "interpretation": "Transformer self-reference baseline showing deterministic period-2 behavior."
+    },
+    {
+      "id": "mamba_batch",
+      "date": "unknown",
+      "family": "baseline_self_reference",
+      "status": "baseline",
+      "primary_summary": "data/mamba_batch/mamba_batch_summary.json",
+      "artifacts": [
+        "data/mamba_batch/mamba_batch_summary.json"
+      ],
+      "claim_ids": ["C2"],
+      "interpretation": "Mamba self-reference baseline showing fixed-point basin rather than transformer-like 2-cycle."
+    }
+  ]
+}

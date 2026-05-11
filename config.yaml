@@ -1,13 +1,17 @@
 # Demian -- single-model proprioception
 proprioceptor_model_id: "Qwen/Qwen2.5-3B-Instruct"
+mamba_model_id: "state-spaces/mamba-2.8b-hf"
 temperature: 0.7
 max_new_tokens: 256
 
 # Proprioception
 target_dim: 128
-injection_scale: 0.02
+injection_scale: 0.01
 max_memory_length: 16
-injection_damping: 0.3
+injection_damping: 0.7
+blend_mode: "append"  # "append" or "additive"
+warmup_steps: 0
+inject_mode: "one"  # "continuous", "one", or "spaced"
 
 # Fibonacci consolidation
 consolidation_intervals: [1, 2, 3, 5, 8, 13, 21, 34, 55, 89]

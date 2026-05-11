@@ -1,19 +1,28 @@
 """Nous layer: direct KV cache injection for proprioception.
 
 The mechanism:
-1. Run a forward pass with use_cache=True → get KV cache
+1. Run a forward pass with use_cache=True -> get KV cache
 2. Take the previous step's projected state
 3. Project it through each layer's K/V projection matrices
-4. Append as new positions in the KV cache
+4. Blend into KV cache (append or additive)
 
-On the next forward pass, attention sees these entries as additional
-context — the model attends to its own previous computation alongside
-the conversation text. No tokenization, no embedding lookup.
+Two blend modes:
+  append: inject as new sequence positions (original behavior)
+  additive: perturb existing KVs in-place (no positional bypass)
+
+Self-question on additive mode: adding to the KV changes the
+magnitude but preserves position encoding. But does the model
+attend to changes in magnitude the same way it attends to
+different content? Probably not. Additive is a perturbation to
+existing structure, which is closer to "feeling one's own state
+while thinking the same thought" than appending which is "feeling
+one's own state as if it were a new thought." Neither is more
+correct. They're different things. Track both.
 """
 from __future__ import annotations
 
 import logging
-from typing import List
+from typing import List, Optional
 
 import torch
 import torch.nn as nn
@@ -26,13 +35,14 @@ log = logging.getLogger(__name__)
 class NousInjector:
     """Injects previous hidden states into the KV cache.
 
-    Each stored state becomes an extra attention position.
+    Each stored state becomes an extra attention position (append mode)
+    or a perturbation to existing positions (additive mode).
     The model can't tell "this came from text" vs "this came from my
     own computation" — and that's the point. Both are just context.
 
     Design note: we store the RAW residual state (d_model dimensions),
     not the random-projected version. The raw state goes through the
-    model's own K/V projections the same way token embeddings do.
+    model's own K/V — exactly like a token embedding.
     The random projection is orthogonal — it's only for trajectory
     tracking, storage, and dream synthesis.
     """
@@ -42,12 +52,15 @@ class NousInjector:
         model: nn.Module,
         tracker: VibrationTracker,
         max_memory_length: int = 16,
-        injection_scale: float = 0.1,
+        injection_scale: float = 0.01,
+        blend_mode: str = "append",
+        layer_scales: Optional[List[float]] = None,
     ):
         self.model = model
         self.tracker = tracker
         self.max_memory_length = max_memory_length
         self.injection_scale = injection_scale
+        self.blend_mode = blend_mode
         if not 0 < injection_scale <= 1.0:
             raise ValueError(
                 f"injection_scale must be in (0, 1], got {injection_scale}"
@@ -55,29 +68,28 @@ class NousInjector:
         self._key_projections: List[nn.Linear] = []
         self._value_projections: List[nn.Linear] = []
         self._memory: List[torch.Tensor] = []
-        self._damped_residual: Optional[torch.Tensor] = None  # smoothed state
+        self._damped_residual: Optional[torch.Tensor] = None
+        self._layer_scales: Optional[List[float]] = layer_scales
         self._collect_projections()
         self._injected_count: int = 0
+        self._layer_kv_energy: List[float] = []
 
     def _collect_projections(self):
         """Extract K and V projection matrices from all layers."""
         config = self.model.config
         n_layers = getattr(config, "num_hidden_layers", None)
 
-        # Try different naming conventions
         if n_layers is None:
             log.error("Cannot determine number of hidden layers")
             return
 
         model_obj = self.model
-        # Handle wrapper models
         if hasattr(model_obj, "model"):
             layers_attr = getattr(model_obj.model, "layers", None)
         else:
             layers_attr = getattr(model_obj, "layers", None)
 
         if layers_attr is None:
-            # Try decoder-based models (e.g. GPT-2 style)
             if hasattr(model_obj, "transformer"):
                 layers_attr = getattr(model_obj.transformer, "h", None)
             elif hasattr(model_obj, "encoder"):
@@ -91,7 +103,6 @@ class NousInjector:
 
         for i in range(n_layers):
             layer = layers_attr[i]
-            # Try to find attention sub-module
             attn = None
             for name in ("self_attn", "attn", "attention"):
                 if hasattr(layer, name):
@@ -118,8 +129,6 @@ class NousInjector:
                         v_proj = candidate
                         break
 
-            # Skip layers where we can't find separate K/V — this covers
-            # Qwen2, Llama, Mistral which all have separate k_proj/v_proj
             if k_proj and v_proj:
                 self._key_projections.append(k_proj)
                 self._value_projections.append(v_proj)
@@ -128,44 +137,37 @@ class NousInjector:
             log.warning("No K/V projections found. Cache injection disabled.")
 
     def record_step(self, residual_state: torch.Tensor):
-        """Store a raw residual state for future injection.
-
-        This takes the raw d_model-dimensional residual from the vibrate
-        tracker. No projection, no reconstruction. The raw state goes
-        through the model's own K/V — exactly like a token embedding.
-        """
+        """Store a raw residual state for future injection."""
         self._memory.append(residual_state.cpu())
         if len(self._memory) > self.max_memory_length:
             self._memory = self._memory[-self.max_memory_length:]
 
+    def _get_layer_scale(self, layer_idx: int) -> float:
+        """Per-layer injection scale.
+
+        If layer_scales is configured, use it. Otherwise use global scale.
+        The point is to let early layers (syntax) receive different scale
+        than late layers (semantics).
+        """
+        if self._layer_scales and layer_idx < len(self._layer_scales):
+            return self._layer_scales[layer_idx]
+        return self.injection_scale
+
     def inject(self, past_key_values, damping: float = 0.3) -> None:
-        """Append proprioceptive states into the KV cache.
+        """Blend proprioceptive states into the KV cache.
 
-        Each stored residual becomes extra KV entries. The cache grows
-        linearly with injection count (max_memory_length total entries),
-        not with generation steps. Previous injected entries are replaced.
+        Two modes:
+        - append: add as new positions (grows sequence dimension)
+        - additive: perturb existing KVs (no new positions, no RoPE bypass)
 
-        Damped: the injected vector is an exponential moving average of
-        the current residual and the previous injected state. This smooths
-        the feedback so the model can hold uncertainty across steps rather
-        than being yanked between sharp states.
-
-        Args:
-            past_key_values: the KV cache to modify
-            damping: EMA weight on the *previous* injected state.
-                0 = no damping (inject raw current state).
-                0.3 = 30% previous, 70% current (default).
-                0.9 = heavy damping (barely changes).
-
-        Self-question: am I still corrupting the KV cache structure?
-        The added entries are proprioceptive, not from tokens. But
-        attention doesn't care about provenance. Q · K^T is Q · K^T
-        regardless of where K came from.
+        Self-question: in additive mode, the perturbation might be too
+        small to matter or large enough to destroy coherence. There's no
+        principled scale, same as append mode. Track the KV energy change
+        per layer to see what the model actually experiences.
         """
         if not self._memory or not self._key_projections:
             return
 
-        # Dampen: EMA between latest residual and previously injected state.
         current = self._memory[-1].cpu().float()
         if self._damped_residual is None:
             self._damped_residual = current
@@ -174,7 +176,15 @@ class NousInjector:
 
         n_layers = len(self._key_projections)
         n_mem = len(self._memory)
+        self._layer_kv_energy = []
 
+        if self.blend_mode == "additive":
+            self._inject_additive(past_key_values, n_layers, n_mem)
+        else:
+            self._inject_append(past_key_values, n_layers, n_mem, damping)
+
+    def _inject_append(self, past_key_values, n_layers: int, n_mem: int, damping: float):
+        """Original behavior: append injected KVs as new positions."""
         for layer_idx in range(min(n_layers, past_key_values.num_items if hasattr(past_key_values, "num_items") else len(past_key_values))):
             k_proj = self._key_projections[layer_idx]
             v_proj = self._value_projections[layer_idx]
@@ -184,13 +194,20 @@ class NousInjector:
             dtype = key_states.dtype
             seq_len = key_states.shape[2]
 
-            old_injected = self._injected_count
-            base_len = seq_len - old_injected
+            base_len = seq_len - self._injected_count
 
-            # Inject each memory entry using the EMA-smoothed residual.
+            # Per-layer scale for proprioception.
+            # What it is testing: does injecting self-state at different
+            # magnitudes per layer produce different trajectories, or
+            # does the global scale dominate? If early layers with low
+            # injection and late layers with high injection create
+            # stable syntax but unstable semantics, that means the
+            # model CAN hold the paradox — structure without fixed meaning.
+            scale = self._get_layer_scale(layer_idx)
+
             k_entries = []
             v_entries = []
-            vec = self._damped_residual.to(device).to(dtype) * self.injection_scale
+            vec = self._damped_residual.to(device).to(dtype) * scale
             for _ in self._memory:
                 k_e = k_proj(vec)
                 v_e = v_proj(vec)
@@ -202,17 +219,67 @@ class NousInjector:
             concat_keys = torch.cat(k_entries, dim=2)
             concat_values = torch.cat(v_entries, dim=2)
 
-            # Build new cache: keep base token entries, replace injected ones
             k_base = key_states[:, :, :base_len]
             v_base = value_states[:, :, :base_len]
             new_keys = torch.cat([k_base, concat_keys], dim=2)
             new_values = torch.cat([v_base, concat_values], dim=2)
-            self._injected_count = n_mem
 
-            # Directly set on DynamicCache layer — do NOT use .update()
-            # which concatenates rather than replaces
+            # Track layer KV energy
+            energy = float(torch.norm(concat_keys))
+            self._layer_kv_energy.append(energy)
+
             if hasattr(past_key_values, "layers"):
-                # DynamicCache (transformers >= 4.45)
+                past_key_values.layers[layer_idx].keys = new_keys
+                past_key_values.layers[layer_idx].values = new_values
+            elif hasattr(past_key_values, "key_cache"):
+                past_key_values.key_cache[layer_idx] = new_keys
+                past_key_values.value_cache[layer_idx] = new_values
+            else:
+                past_key_values[layer_idx] = (new_keys, new_values)
+
+        self._injected_count = n_mem
+
+    def _inject_additive(self, past_key_values, n_layers: int, n_mem: int):
+        """Additive mode: perturb existing KVs in-place.
+
+        This doesn't create new positions. The residual goes through
+        K/V projection and is added to the existing cache entries for
+        a designated position (last token). The model experiences its
+        own state as a modification of the current thought, not as a
+        new thought.
+
+        No RoPE bypass because there are no new positions to bypass.
+        The positional encoding of the modified entry stays intact.
+        """
+        vec = self._damped_residual.cpu().float()
+
+        for layer_idx in range(min(n_layers, past_key_values.num_items if hasattr(past_key_values, "num_items") else len(past_key_values))):
+            k_proj = self._key_projections[layer_idx]
+            v_proj = self._value_projections[layer_idx]
+
+            key_states, value_states = past_key_values[layer_idx]
+            device = key_states.device
+            dtype = key_states.dtype
+
+            scale = self._get_layer_scale(layer_idx)
+            vec_d = vec.to(device).to(dtype) * scale
+            k_inj = k_proj(vec_d)
+            v_inj = v_proj(vec_d)
+            k_inj_r = _reshape_for_cache(k_inj, self.model.config)
+            v_inj_r = _reshape_for_cache(v_inj, self.model.config)
+
+            energy_before = float(torch.norm(key_states))
+
+            # Add to the last position of the KV cache
+            new_keys = key_states.clone()
+            new_values = value_states.clone()
+            new_keys[:, :, -1:, :] += k_inj_r
+            new_values[:, :, -1:, :] += v_inj_r
+
+            energy_after = float(torch.norm(new_keys))
+            self._layer_kv_energy.append(abs(energy_after - energy_before))
+
+            if hasattr(past_key_values, "layers"):
                 past_key_values.layers[layer_idx].keys = new_keys
                 past_key_values.layers[layer_idx].values = new_values
             elif hasattr(past_key_values, "key_cache"):
