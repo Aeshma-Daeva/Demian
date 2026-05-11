@@ -36,6 +36,7 @@ DOCS_TO_VALIDATE = [
     REPO_ROOT / "docs" / "CURRENT_STATE_AND_ROUTING.md",
     REPO_ROOT / "docs" / "SUBSTRATE_ANATOMY.md",
     REPO_ROOT / "docs" / "EXPERIMENT_NAMING.md",
+    REPO_ROOT / "docs" / "CAPSULE_CONTINUITY.md",
     REPO_ROOT / "docs" / "LABBOOK.md",
     REPO_ROOT / "docs" / "RESEARCH_MAP.md",
     REPO_ROOT / "docs" / "CLAIMS.md",

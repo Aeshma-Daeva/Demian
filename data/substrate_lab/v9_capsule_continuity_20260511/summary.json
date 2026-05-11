@@ -1,0 +1,212 @@
+{
+  "experiment": "v9-capsule-continuity",
+  "description": "Capsule resume probe on canonical v9 and v9 five-channel; full state resume is compared with surface-only and component-only resumes.",
+  "runs": [
+    {
+      "label": "demian_native_v9",
+      "config": {
+        "hidden_size": 16,
+        "seed": 94,
+        "pause_steps": 24,
+        "resume_steps": 24,
+        "device": "cpu",
+        "component_names": [
+          "fast",
+          "slow",
+          "control"
+        ]
+      },
+      "pause": {
+        "surface_norm": 0.7267894148826599,
+        "last_route_metrics": {
+          "fast_update_mean": 0.510944664478302,
+          "slow_write_mean": 0.551762044429779,
+          "control_write_mean": 0.7109743356704712,
+          "fast_to_slow_bias_norm": 0.11663687974214554,
+          "fast_slow_bias_norm": 1.5840383768081665,
+          "control_bias_norm": 0.32600316405296326
+        }
+      },
+      "arms": {
+        "full_capsule": {
+          "final_cosine_vs_uninterrupted": 0.9999999403953552,
+          "final_l2_gap_vs_uninterrupted": 0.0,
+          "mean_step_gap_vs_uninterrupted": 0.0
+        },
+        "state_only": {
+          "final_cosine_vs_uninterrupted": -0.10986296087503433,
+          "final_l2_gap_vs_uninterrupted": 1.241044521331787,
+          "mean_step_gap_vs_uninterrupted": 0.2934050752470891
+        },
+        "body_only": {
+          "final_cosine_vs_uninterrupted": 0.9654525518417358,
+          "final_l2_gap_vs_uninterrupted": 0.21332131326198578,
+          "mean_step_gap_vs_uninterrupted": 0.13121654031177363
+        },
+        "surface_only": {
+          "final_cosine_vs_uninterrupted": 0.09100709855556488,
+          "final_l2_gap_vs_uninterrupted": 0.9976807236671448,
+          "mean_step_gap_vs_uninterrupted": 0.25749408826231956
+        },
+        "body_surface": {
+          "final_cosine_vs_uninterrupted": 0.9609851241111755,
+          "final_l2_gap_vs_uninterrupted": 0.2264004796743393,
+          "mean_step_gap_vs_uninterrupted": 0.10775165787587564
+        },
+        "fast_only": {
+          "final_cosine_vs_uninterrupted": 0.9609851241111755,
+          "final_l2_gap_vs_uninterrupted": 0.2264004796743393,
+          "mean_step_gap_vs_uninterrupted": 0.10775165787587564
+        },
+        "slow_only": {
+          "final_cosine_vs_uninterrupted": 0.9997331500053406,
+          "final_l2_gap_vs_uninterrupted": 0.019020551815629005,
+          "mean_step_gap_vs_uninterrupted": 0.05160666936232398
+        },
+        "control_only": {
+          "final_cosine_vs_uninterrupted": 0.9606242775917053,
+          "final_l2_gap_vs_uninterrupted": 0.22710731625556946,
+          "mean_step_gap_vs_uninterrupted": 0.11977891468753417
+        }
+      },
+      "continuity_advantage": {
+        "surface_gap_minus_capsule_gap": 0.25749408826231956,
+        "surface_gap_ratio": null
+      },
+      "uninterrupted_tail_metrics": {
+        "fast_update_mean": 0.5113117694854736,
+        "slow_write_mean": 0.39903563261032104,
+        "control_write_mean": 0.612602710723877,
+        "fast_to_slow_bias_norm": 0.14123810827732086,
+        "fast_slow_bias_norm": 1.0099846124649048,
+        "control_bias_norm": 0.3020363748073578
+      }
+    },
+    {
+      "label": "v9_five_channel",
+      "config": {
+        "hidden_size": 16,
+        "seed": 94,
+        "pause_steps": 24,
+        "resume_steps": 24,
+        "device": "cpu",
+        "component_names": [
+          "fast",
+          "slow",
+          "control",
+          "message",
+          "carrier"
+        ]
+      },
+      "pause": {
+        "surface_norm": 1.1446336507797241,
+        "last_route_metrics": {
+          "fast_update_mean": 0.5140431523323059,
+          "slow_write_mean": 0.48369860649108887,
+          "control_write_mean": 0.7430251240730286,
+          "message_write_mean": 0.44434797763824463,
+          "carrier_write_mean": 0.6045746803283691,
+          "fast_to_slow_bias_norm": 0.13008683919906616,
+          "fast_slow_bias_norm": 1.435165524482727,
+          "control_bias_norm": 0.3321459889411926,
+          "fast_to_message_norm": 0.12123873084783554,
+          "fast_to_carrier_norm": 0.0,
+          "message_to_carrier_norm": 0.9594142436981201,
+          "carrier_to_slow_norm": 0.9070262908935547,
+          "message_to_fast_norm": 0.34539246559143066,
+          "carrier_to_fast_norm": 0.27727824449539185,
+          "release_open": 0.0,
+          "release_open_mean": 0.0,
+          "release_strength_mean": 0.0,
+          "release_pressure_mean": 7.933919906616211,
+          "release_drive_mean": 0.0,
+          "release_bias_norm": 0.0,
+          "endogenous_release_norm": 0.0,
+          "carrier_residual_norm": 19.328269958496094,
+          "binding_active": 1.0
+        }
+      },
+      "arms": {
+        "full_capsule": {
+          "final_cosine_vs_uninterrupted": 1.0,
+          "final_l2_gap_vs_uninterrupted": 0.0,
+          "mean_step_gap_vs_uninterrupted": 0.0
+        },
+        "state_only": {
+          "final_cosine_vs_uninterrupted": 0.12432384490966797,
+          "final_l2_gap_vs_uninterrupted": 1.3620096445083618,
+          "mean_step_gap_vs_uninterrupted": 0.3535039673248927
+        },
+        "body_only": {
+          "final_cosine_vs_uninterrupted": 0.7796170115470886,
+          "final_l2_gap_vs_uninterrupted": 0.6958091259002686,
+          "mean_step_gap_vs_uninterrupted": 0.2682533444215854
+        },
+        "surface_only": {
+          "final_cosine_vs_uninterrupted": -0.030075743794441223,
+          "final_l2_gap_vs_uninterrupted": 1.239902377128601,
+          "mean_step_gap_vs_uninterrupted": 0.30981059310336906
+        },
+        "body_surface": {
+          "final_cosine_vs_uninterrupted": 0.7556430101394653,
+          "final_l2_gap_vs_uninterrupted": 0.7155263423919678,
+          "mean_step_gap_vs_uninterrupted": 0.24032077503701052
+        },
+        "fast_only": {
+          "final_cosine_vs_uninterrupted": 0.7709242105484009,
+          "final_l2_gap_vs_uninterrupted": 0.7018306851387024,
+          "mean_step_gap_vs_uninterrupted": 0.24205329703787962
+        },
+        "slow_only": {
+          "final_cosine_vs_uninterrupted": 0.8130869269371033,
+          "final_l2_gap_vs_uninterrupted": 0.6959846019744873,
+          "mean_step_gap_vs_uninterrupted": 0.23207020511229834
+        },
+        "control_only": {
+          "final_cosine_vs_uninterrupted": 0.7787908315658569,
+          "final_l2_gap_vs_uninterrupted": 0.7002516984939575,
+          "mean_step_gap_vs_uninterrupted": 0.2597705020258824
+        },
+        "message_only": {
+          "final_cosine_vs_uninterrupted": 0.8206230998039246,
+          "final_l2_gap_vs_uninterrupted": 0.6563900709152222,
+          "mean_step_gap_vs_uninterrupted": 0.2043808133651813
+        },
+        "carrier_only": {
+          "final_cosine_vs_uninterrupted": 0.7347927093505859,
+          "final_l2_gap_vs_uninterrupted": 0.7291808128356934,
+          "mean_step_gap_vs_uninterrupted": 0.17608232672015825
+        }
+      },
+      "continuity_advantage": {
+        "surface_gap_minus_capsule_gap": 0.30981059310336906,
+        "surface_gap_ratio": null
+      },
+      "uninterrupted_tail_metrics": {
+        "fast_update_mean": 0.5215076804161072,
+        "slow_write_mean": 0.3779902458190918,
+        "control_write_mean": 0.44716790318489075,
+        "message_write_mean": 0.4147969186306,
+        "carrier_write_mean": 0.6703485250473022,
+        "fast_to_slow_bias_norm": 0.1433342844247818,
+        "fast_slow_bias_norm": 1.5283915996551514,
+        "control_bias_norm": 0.3938203752040863,
+        "fast_to_message_norm": 0.11659056693315506,
+        "fast_to_carrier_norm": 0.0,
+        "message_to_carrier_norm": 1.120794653892517,
+        "carrier_to_slow_norm": 0.9560837149620056,
+        "message_to_fast_norm": 0.3686947524547577,
+        "carrier_to_fast_norm": 0.3137512803077698,
+        "release_open": 0.0,
+        "release_open_mean": 0.0,
+        "release_strength_mean": 0.0,
+        "release_pressure_mean": 13.664607048034668,
+        "release_drive_mean": 0.0,
+        "release_bias_norm": 0.0,
+        "endogenous_release_norm": 0.0,
+        "carrier_residual_norm": 39.14201736450195,
+        "binding_active": 1.0
+      }
+    }
+  ]
+}

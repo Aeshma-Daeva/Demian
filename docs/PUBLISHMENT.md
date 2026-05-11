@@ -34,6 +34,7 @@ Strong current claims:
 - the v9 five-channel scaffold preserves multiple bounded regimes, including `surface_fixed_accumulating`, `bounded_strange`, `edge_of_chaos`, and small limit-cycle pockets
 - rare release gates are possible, but current release-local causal effect is still weak
 - the v10.0 predecessor run selected sparse-to-borderline release under eval seed 94, but this still needs held-out seed validation
+- capsule-continuity is worth a focused follow-up: v9 and v9 five-channel resume from full internal state while surface-only replay fails under the current deterministic probe
 - 3D/Blender rendering can serve as a non-textual inspection layer for trajectory geometry
 
 Do not publish v9 as a finished superior architecture yet. The evidence supports that v9-5ch is interesting and worth continuing, not that it dominates v8 or other baselines. Do not publish Demian v1 as complete; publish it as the next research program.
@@ -97,6 +98,7 @@ The repo should expose two or three golden paths:
 
 - reproduce a compact v9 five-channel run
 - run the small canonical v9-v8 comparison smoke check in `README.md`
+- run the capsule-continuity probe in `README.md`
 - export a trajectory
 - open or render the Blender expression artifact
 - compare canonical v9 against v8 as a baseline/falsification check

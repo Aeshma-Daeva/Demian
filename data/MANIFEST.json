@@ -89,6 +89,18 @@
       "interpretation": "Saved comparison did not support behavioral superiority of canonical v9 over v8."
     },
     {
+      "id": "v9_capsule_continuity_20260511",
+      "date": "2026-05-11",
+      "family": "capsule_continuity",
+      "status": "active_evidence",
+      "primary_summary": "data/substrate_lab/v9_capsule_continuity_20260511/summary.json",
+      "artifacts": [
+        "data/substrate_lab/v9_capsule_continuity_20260511/summary.json"
+      ],
+      "claim_ids": ["C19"],
+      "interpretation": "Canonical v9 and v9 five-channel resume from full internal-state capsules while surface-only replay fails under the deterministic probe."
+    },
+    {
       "id": "v8_multi_ablation_20260507",
       "date": "2026-05-07",
       "family": "native_substrate_comparison",

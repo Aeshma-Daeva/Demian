@@ -264,6 +264,21 @@ Promotion rule:
 - What would falsify this:
   - held-out eval seeds showing the final sparse event/phase lineages lose their rank advantage, or reruns showing high-duty flood genotypes dominate under the same frozen scoring
 
+### C19. v9 and v9 five-channel resume from internal-state capsules while surface-only replay fails
+
+- Type: `observation`
+- Evidence:
+  - [development/probe_v9_capsule_continuity.py](/home/xenith/demian/development/probe_v9_capsule_continuity.py)
+  - [tests/test_v9_capsule_continuity.py](/home/xenith/demian/tests/test_v9_capsule_continuity.py)
+  - [data/substrate_lab/v9_capsule_continuity_20260511/summary.json](/home/xenith/demian/data/substrate_lab/v9_capsule_continuity_20260511/summary.json)
+- Notes:
+  - canonical v9 full capsule cosine: `0.99999994`; surface-only cosine: `0.09100710`
+  - v9 five-channel full capsule cosine: `1.0`; surface-only cosine: `-0.03007574`
+  - the current full capsule restores the full internal tensor state; this is not yet a compression claim
+  - component-only arms suggest canonical v9 continuity is strongly concentrated in `slow`, while v9 five-channel continuity is distributed across `carrier`, `message`, and `slow`
+- What would falsify this:
+  - matched reruns where surface-only replay resumes as well as internal-state capsules, or compressed-capsule tests showing the apparent continuity advantage was only full-state copying
+
 ## Open Speculations
 
 ### S1. A more predictive observer could separate coherent induction from liminal cheating better than the current reactive observer

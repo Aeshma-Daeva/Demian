@@ -117,6 +117,19 @@ Use with:
   - compares bound/no-release, manual release, and learned release variants for the v9 message/carrier scaffold
   - useful for inspecting release traces before or apart from evolutionary archive runs
 
+### v9 capsule-continuity probe
+
+- Code:
+  - [../development/probe_v9_capsule_continuity.py](/home/xenith/demian/development/probe_v9_capsule_continuity.py)
+- Test surface:
+  - [../tests/test_v9_capsule_continuity.py](/home/xenith/demian/tests/test_v9_capsule_continuity.py)
+- Main artifact:
+  - [substrate_lab/v9_capsule_continuity_20260511/summary.json](/home/xenith/demian/data/substrate_lab/v9_capsule_continuity_20260511/summary.json)
+- Current read:
+  - canonical v9 and v9 five-channel both resume exactly from full internal-state capsule under the deterministic probe
+  - surface-only replay fails to reproduce continuation in both cases
+  - this is evidence for internal-state continuity, not yet evidence for compressed capsule continuity
+
 ### Canonical v9 three-channel baseline
 
 - Code:

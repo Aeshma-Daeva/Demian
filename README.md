@@ -15,6 +15,7 @@ Current focus:
 
 - v9 five-channel experiments (`fast`, `slow`, `control`, `message`, `carrier`) as the active scaffold and evidence line
 - `Demian v1` as the next named custom-substrate program distilled from v9 five-channel evidence
+- capsule-continuity as a focused side thread: internal-state resume versus surface-only replay
 - canonical `demian_native_v9` as the minimal 3-channel baseline for that direction
 - `demian_native_v8` as the immediate 7-channel comparison line
 - `demian_native_v7.4` as the promoted organ-heavy historical baseline
@@ -38,6 +39,7 @@ Older transformer experiments remain in the repo because they established an imp
 - [docs/WORKING_STATE.md](docs/WORKING_STATE.md): one-page active truth, restart file, and current priorities
 - [docs/SUBSTRATE_ANATOMY.md](docs/SUBSTRATE_ANATOMY.md): stable channel/routing anatomy for v9 five-channel and Demian v1 work
 - [docs/EXPERIMENT_NAMING.md](docs/EXPERIMENT_NAMING.md): separates scaffold names, artifact names, and next custom-substrate program names
+- [docs/CAPSULE_CONTINUITY.md](docs/CAPSULE_CONTINUITY.md): focused capsule-resume thread for v9 and v9 five-channel
 - [docs/LABBOOK.md](docs/LABBOOK.md): append-only experiment chronology for fast-moving run details
 - [docs/RESEARCH_MAP.md](docs/RESEARCH_MAP.md): project spine, empirical findings, and working loop
 - [docs/CLAIMS.md](docs/CLAIMS.md): active claims with evidence level and falsification lines
@@ -62,6 +64,9 @@ Older transformer experiments remain in the repo because they established an imp
 
 - `development/probe_v9_message_carrier_strange.py`
   Current v9 five-channel probe surface: message/carrier accumulation and manual, pressure, or learned release gates.
+
+- `development/probe_v9_capsule_continuity.py`
+  Focused capsule-continuity probe: full internal-state resume versus surface-only replay for canonical v9 and v9 five-channel.
 
 - `development/evolve_v9_5ch_release.py`
   Compatibility CLI for v9 five-channel release evolution. The old `v10.0-frozen-evolution` run is predecessor evidence for Demian v1.
@@ -95,16 +100,17 @@ Start from the architecture-dissection path, not the old transformer-only path:
 2. `docs/CURRENT_STATE_AND_ROUTING.md`
 3. `docs/SUBSTRATE_ANATOMY.md`
 4. `docs/EXPERIMENT_NAMING.md`
-5. `docs/LABBOOK.md`
-6. `docs/CLAIMS.md`
-7. `development/substrates/current.py`
-8. `development/evolution/`
-9. `development/evolve_v9_5ch_release.py`
-10. `docs/REPO_INVENTORY.md`
-11. `docs/DEVELOPMENT_SCRIPT_MAP.md`
-12. `docs/SUBSTRATE_LAB_DEPENDENCIES.md`
-13. `data/INDEX.md` and `data/MANIFEST.json`
-14. `development/substrate_lab.py`, but only targeted ranges around `DemianNativeV9Substrate` and `compare_native_v9_vs_v8` unless broader ancestry is needed
+5. `docs/CAPSULE_CONTINUITY.md`
+6. `docs/LABBOOK.md`
+7. `docs/CLAIMS.md`
+8. `development/substrates/current.py`
+9. `development/evolution/`
+10. `development/evolve_v9_5ch_release.py`
+11. `docs/REPO_INVENTORY.md`
+12. `docs/DEVELOPMENT_SCRIPT_MAP.md`
+13. `docs/SUBSTRATE_LAB_DEPENDENCIES.md`
+14. `data/INDEX.md` and `data/MANIFEST.json`
+15. `development/substrate_lab.py`, but only targeted ranges around `DemianNativeV9Substrate` and `compare_native_v9_vs_v8` unless broader ancestry is needed
 
 Use the transformer and Mamba code as fingerprint baselines, not as the design destination.
 
@@ -116,6 +122,7 @@ Important result directories:
 - `data/evolution/v9_5ch_release_20260509_full/`: prior full v9 five-channel evolutionary archive
 - `data/substrate_lab/v9_5ch_evo_trajectory_3d_20260509_full/`: prior evolved v9 five-channel 3D export and Blender expression artifact
 - `data/substrate_lab/v9_release_gate_trajectory_3d_20260509/`: v9 message/carrier release-gate trajectory export
+- `data/substrate_lab/v9_capsule_continuity_20260511/summary.json`: capsule-continuity probe for canonical v9 and v9 five-channel
 - `data/substrate_lab/v9_v8_compare_20260508/`: current compact v9-v8 diagnostic comparison
 - `data/reservoir_batch/`: transformer period-2 baseline
 - `data/mamba_batch/`: Mamba fixed-point baseline
@@ -157,6 +164,13 @@ For the current v9 five-channel / Demian v1 evidence path:
 
 ```bash
 ./venv/bin/python -m pytest tests/test_current_substrates.py tests/test_v9_5ch_summary.py -q
+```
+
+For the capsule-continuity side thread:
+
+```bash
+./venv/bin/python development/probe_v9_capsule_continuity.py --hidden-size 16 --pause-steps 24 --resume-steps 24
+./venv/bin/python -m pytest tests/test_v9_capsule_continuity.py -q
 ```
 
 ## Environment
