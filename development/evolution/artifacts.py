@@ -58,3 +58,43 @@ def v10_summary_digest(summary: dict[str, Any]) -> dict[str, Any]:
         "final_best_phase": float(metrics["phase_transition_score"]),
         "final_best_regimes": dict(metrics.get("regimes", {})),
     }
+
+
+def validate_track_b_discovery_summary(summary: dict[str, Any]) -> list[str]:
+    """Validate the common Track B discovery summary contract."""
+    errors: list[str] = []
+    required = {"experiment_label", "output_id", "native_objective", "causal_mode", "generation_count"}
+    missing = sorted(required - set(summary))
+    if missing:
+        errors.append(f"missing keys: {', '.join(missing)}")
+    for key in ("experiment_label", "output_id", "native_objective"):
+        if key in summary and not str(summary.get(key, "")).strip():
+            errors.append(f"{key} must be non-empty")
+    if "output_ids" in summary:
+        output_ids = [str(item) for item in summary.get("output_ids", [])]
+        duplicates = sorted({item for item in output_ids if output_ids.count(item) > 1})
+        if duplicates:
+            errors.append(f"reused output_ids: {', '.join(duplicates)}")
+    return errors
+
+
+def validate_track_b_characterization_summary(summary: dict[str, Any]) -> list[str]:
+    """Validate held-out characterization fields required for mechanism labels."""
+    errors: list[str] = []
+    required = {
+        "held_out_seeds",
+        "perturb_steps",
+        "channel_necessity_order",
+        "gain_zero_cleanliness",
+        "capsule_result_flags",
+    }
+    missing = sorted(required - set(summary))
+    if missing:
+        errors.append(f"missing keys: {', '.join(missing)}")
+    if "held_out_seeds" in summary and not summary["held_out_seeds"]:
+        errors.append("held_out_seeds must be non-empty")
+    if "perturb_steps" in summary and not summary["perturb_steps"]:
+        errors.append("perturb_steps must be non-empty")
+    if "capsule_result_flags" in summary and not isinstance(summary["capsule_result_flags"], dict):
+        errors.append("capsule_result_flags must be a dict")
+    return errors

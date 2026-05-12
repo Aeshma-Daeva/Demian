@@ -29,9 +29,16 @@ Read order:
 1. [docs/WORKING_STATE.md](/home/xenith/demian/docs/WORKING_STATE.md)
 2. [docs/RESEARCH_MAP.md](/home/xenith/demian/docs/RESEARCH_MAP.md)
 3. [docs/CLAIMS.md](/home/xenith/demian/docs/CLAIMS.md)
-4. [docs/EXPERIMENT_RULES.md](/home/xenith/demian/docs/EXPERIMENT_RULES.md)
-5. [data/INDEX.md](/home/xenith/demian/data/INDEX.md)
-6. [development/substrate_lab.py](/home/xenith/demian/development/substrate_lab.py)
+4. [docs/RESEARCH_LINEAGE.md](/home/xenith/demian/docs/RESEARCH_LINEAGE.md)
+5. [docs/EXPERIMENT_RULES.md](/home/xenith/demian/docs/EXPERIMENT_RULES.md)
+6. [data/INDEX.md](/home/xenith/demian/data/INDEX.md)
+7. [development/substrate_lab.py](/home/xenith/demian/development/substrate_lab.py)
+
+Use [docs/RESEARCH_LINEAGE.md](/home/xenith/demian/docs/RESEARCH_LINEAGE.md)
+when you need the chronological trail from KV-cache transformer probes, Mamba,
+competition, and GRU ancestry through native substrates and Demian v1. This
+research map is the current conceptual orientation; the lineage document is the
+legacy-mode path.
 
 Archive note:
 

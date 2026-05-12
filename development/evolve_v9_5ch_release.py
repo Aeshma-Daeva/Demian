@@ -51,7 +51,19 @@ from development.evolution.lineage import (
     population_entry,
 )
 from development.evolution.scoring import (
+    CAUSAL_MODE_COMBINED,
+    CAUSAL_MODE_GATE_STATE,
+    CAUSAL_MODE_ROUTE_RELEASE,
+    CAUSAL_MODES,
+    DEFAULT_CAUSAL_MODE,
+    DEFAULT_NATIVE_OBJECTIVE,
+    DYNAMIC_SELECTION_PROBE_RANK_MODE,
+    ENGINEERED_TARGET_RANK_MODE,
+    NATIVE_EMERGENCE_RANK_MODE,
+    NATIVE_OBJECTIVES,
+    NATIVE_OBJECTIVE_GATE_STATE,
     archive_bins,
+    causal_divergence_components,
     pareto_front,
     rank_components,
     rare_release_score,
@@ -86,7 +98,7 @@ SCALAR_GENES: dict[str, GeneSpec] = {
     "carrier_to_fast_scale": GeneSpec(0.00, 0.36, 0.16, 0.040),
     "message_readout_scale": GeneSpec(0.00, 0.26, 0.14, 0.025),
     "carrier_readout_scale": GeneSpec(0.00, 0.34, 0.22, 0.030),
-    "release_threshold": GeneSpec(-0.40, 0.55, 0.12, 0.070),
+    "release_threshold": GeneSpec(-0.40, 0.85, 0.12, 0.070),
     "release_temperature": GeneSpec(0.35, 1.80, 0.85, 0.110),
     "release_gain": GeneSpec(0.04, 0.46, 0.24, 0.045),
     "release_to_fast_scale": GeneSpec(0.00, 1.00, 1.00, 0.080),
@@ -99,6 +111,19 @@ SCALAR_GENES: dict[str, GeneSpec] = {
     "plastic_clip": GeneSpec(0.02, 0.32, 0.12, 0.025),
     "matrix_delta_scale": GeneSpec(0.00, 0.18, 0.045, 0.018),
 }
+
+REPRODUCTION_WEIGHTS: tuple[tuple[str, float], ...] = (
+    ("mutation", 0.50),
+    ("causal_release_template_mutation", 0.28),
+    ("delayed_eligibility_template_mutation", 0.15),
+    ("release_phase_mutation", 0.04),
+    ("crossover", 0.03),
+)
+NATIVE_REPRODUCTION_WEIGHTS: tuple[tuple[str, float], ...] = (
+    ("mutation", 0.70),
+    ("crossover", 0.30),
+)
+RANDOM_INJECTION_RATE = 0.08
 
 
 def clamp(value: float, spec: GeneSpec) -> float:
@@ -248,6 +273,188 @@ def mutate_release_phase_genome(
     return repair_genome(child, hidden_size, rank)
 
 
+CAUSAL_RELEASE_ROUTE_TEMPLATES: tuple[dict[str, Any], ...] = (
+    {
+        "name": "distributed_inband_release",
+        "threshold": 0.24,
+        "temperature": 0.58,
+        "gain": 0.34,
+        "routes": (0.16, 0.24, 0.18, 0.22, 0.20),
+        "obs": {
+            "message_norm": 0.020,
+            "carrier_norm": 0.020,
+            "message_carrier_gap": -0.012,
+            "release_pressure": 0.080,
+            "surface_delta": 0.060,
+        },
+    },
+    {
+        "name": "message_carrier_release",
+        "threshold": 0.30,
+        "temperature": 0.52,
+        "gain": 0.38,
+        "routes": (0.08, 0.16, 0.14, 0.32, 0.30),
+        "obs": {
+            "message_norm": 0.030,
+            "carrier_norm": 0.030,
+            "message_carrier_gap": -0.018,
+            "release_pressure": 0.090,
+            "surface_delta": 0.050,
+        },
+    },
+    {
+        "name": "control_slow_release",
+        "threshold": 0.18,
+        "temperature": 0.68,
+        "gain": 0.30,
+        "routes": (0.10, 0.34, 0.24, 0.16, 0.16),
+        "obs": {
+            "slow_norm": 0.018,
+            "control_norm": 0.018,
+            "release_pressure": 0.070,
+            "surface_delta": 0.075,
+        },
+    },
+)
+
+DELAYED_ELIGIBILITY_TEMPLATES: tuple[dict[str, Any], ...] = (
+    {
+        "name": "slow_carrier_delayed_gate",
+        "threshold": 0.68,
+        "temperature": 0.82,
+        "message_decay": 0.91,
+        "carrier_decay": 0.992,
+        "obs": {
+            "time_since_perturbation": 0.090,
+            "perturbation_magnitude": 0.060,
+            "surface_delta": 0.050,
+            "release_pressure": 0.060,
+        },
+    },
+    {
+        "name": "high_threshold_delayed_pressure",
+        "threshold": 0.76,
+        "temperature": 0.74,
+        "message_decay": 0.88,
+        "carrier_decay": 0.996,
+        "obs": {
+            "time_since_perturbation": 0.110,
+            "perturbation_magnitude": 0.050,
+            "surface_delta": 0.040,
+            "release_pressure": 0.075,
+        },
+    },
+    {
+        "name": "moderate_delayed_surface_gate",
+        "threshold": 0.62,
+        "temperature": 0.96,
+        "message_decay": 0.93,
+        "carrier_decay": 0.988,
+        "obs": {
+            "time_since_perturbation": 0.080,
+            "perturbation_magnitude": 0.070,
+            "surface_delta": 0.065,
+            "release_pressure": 0.045,
+        },
+    },
+)
+
+
+def mutate_causal_release_template_genome(
+    parent: dict[str, Any],
+    rng: random.Random,
+    hidden_size: int,
+    rank: int,
+    sigma: float,
+) -> dict[str, Any]:
+    """Jointly mutate the causal release gate and routing bundle."""
+    child = mutate_genome(parent, rng, hidden_size, rank, sigma)
+    scalars = child["scalars"]
+    template = rng.choice(CAUSAL_RELEASE_ROUTE_TEMPLATES)
+    blend = rng.uniform(0.45, 0.80)
+    scalar_targets = {
+        "release_threshold": template["threshold"],
+        "release_temperature": template["temperature"],
+        "release_gain": template["gain"],
+    }
+    for name, target in scalar_targets.items():
+        spec = SCALAR_GENES[name]
+        jitter = rng.gauss(0.0, spec.step * 0.35 * sigma)
+        scalars[name] = clamp((1.0 - blend) * scalars[name] + blend * float(target) + jitter, spec)
+
+    route_values = []
+    for channel, target in zip(CHANNELS, template["routes"]):
+        name = f"release_to_{channel}_scale"
+        spec = SCALAR_GENES[name]
+        jitter = rng.gauss(0.0, spec.step * 0.25 * sigma)
+        value = clamp((1.0 - blend) * scalars[name] + blend * float(target) + jitter, spec)
+        route_values.append(max(0.0, value))
+    route_total = sum(route_values)
+    if route_total <= 1e-8:
+        route_values[0] = 1.0
+        route_total = 1.0
+    for channel, value in zip(CHANNELS, route_values):
+        scalars[f"release_to_{channel}_scale"] = clamp(
+            value / route_total,
+            SCALAR_GENES[f"release_to_{channel}_scale"],
+        )
+
+    release_obs = child["matrices"]["release_gate"]["obs"]
+    for row in release_obs:
+        for observable, target in template["obs"].items():
+            idx = OBSERVABLE_KEYS.index(observable)
+            row[idx] += rng.gauss(float(target) * sigma, abs(float(target)) * 0.25 * sigma)
+        pressure_idx = OBSERVABLE_KEYS.index("release_pressure")
+        surface_delta_idx = OBSERVABLE_KEYS.index("surface_delta")
+        row[pressure_idx] = max(row[pressure_idx], 0.035 * sigma)
+        row[surface_delta_idx] = max(row[surface_delta_idx], 0.030 * sigma)
+    return repair_genome(child, hidden_size, rank)
+
+
+def mutate_delayed_eligibility_template_genome(
+    parent: dict[str, Any],
+    rng: random.Random,
+    hidden_size: int,
+    rank: int,
+    sigma: float,
+) -> dict[str, Any]:
+    """Bias release timing toward post-perturbation delayed eligibility."""
+    child = mutate_genome(parent, rng, hidden_size, rank, sigma)
+    scalars = child["scalars"]
+    template = rng.choice(DELAYED_ELIGIBILITY_TEMPLATES)
+    blend = rng.uniform(0.50, 0.82)
+    scalar_template_keys = {
+        "release_threshold": "threshold",
+        "release_temperature": "temperature",
+        "message_decay": "message_decay",
+        "carrier_decay": "carrier_decay",
+    }
+    for name, template_key in scalar_template_keys.items():
+        spec = SCALAR_GENES[name]
+        jitter = rng.gauss(0.0, spec.step * 0.30 * sigma)
+        scalars[name] = clamp((1.0 - blend) * scalars[name] + blend * float(template[template_key]) + jitter, spec)
+
+    release_obs = child["matrices"]["release_gate"]["obs"]
+    floor_targets = {
+        "time_since_perturbation": 0.045,
+        "perturbation_magnitude": 0.035,
+        "surface_delta": 0.030,
+        "release_pressure": 0.035,
+    }
+    for row in release_obs:
+        for observable, target in template["obs"].items():
+            idx = OBSERVABLE_KEYS.index(observable)
+            row[idx] += rng.gauss(float(target) * sigma, abs(float(target)) * 0.25 * sigma)
+        for observable, floor in floor_targets.items():
+            idx = OBSERVABLE_KEYS.index(observable)
+            row[idx] = max(row[idx], floor * sigma)
+
+    route_total = sum(max(0.0, scalars[name]) for name in RELEASE_TARGET_SCALARS)
+    if route_total <= 1e-8:
+        scalars["release_to_fast_scale"] = 1.0
+    return repair_genome(child, hidden_size, rank)
+
+
 def crossover(
     left: dict[str, Any],
     right: dict[str, Any],
@@ -274,7 +481,14 @@ def crossover(
 class AdaptiveV9FiveChannel(ExperimentalV9MessageCarrier):
     """v9-5ch with bounded low-rank runtime deltas on selected gates/routes."""
 
-    def __init__(self, hidden_size: int, genome: dict[str, Any], rank: int = 2):
+    def __init__(
+        self,
+        hidden_size: int,
+        genome: dict[str, Any],
+        rank: int = 2,
+        *,
+        release_routes_disabled: bool = False,
+    ):
         scalars = dict(genome["scalars"])
         super().__init__(
             hidden_size,
@@ -293,15 +507,19 @@ class AdaptiveV9FiveChannel(ExperimentalV9MessageCarrier):
         self.plastic_update_scale = scalars["plastic_update_scale"]
         self.plastic_clip = scalars["plastic_clip"]
         self.matrix_delta_scale = scalars["matrix_delta_scale"]
-        raw_release_targets = torch.tensor(
-            [scalars[name] for name in RELEASE_TARGET_SCALARS],
-            dtype=torch.float32,
-        )
-        total_release_target = float(raw_release_targets.sum().item())
-        if total_release_target <= 1e-8:
-            raw_release_targets[0] = 1.0
-            total_release_target = 1.0
-        self.release_target_mix = raw_release_targets / total_release_target
+        self.release_routes_disabled = bool(release_routes_disabled)
+        if self.release_routes_disabled:
+            self.release_target_mix = torch.zeros(len(RELEASE_TARGET_SCALARS), dtype=torch.float32)
+        else:
+            raw_release_targets = torch.tensor(
+                [scalars[name] for name in RELEASE_TARGET_SCALARS],
+                dtype=torch.float32,
+            )
+            total_release_target = float(raw_release_targets.sum().item())
+            if total_release_target <= 1e-8:
+                raw_release_targets[0] = 1.0
+                total_release_target = 1.0
+            self.release_target_mix = raw_release_targets / total_release_target
         self.low_rank = {}
         for name, gene in genome["matrices"].items():
             self.low_rank[name] = {
@@ -322,11 +540,17 @@ class AdaptiveV9FiveChannel(ExperimentalV9MessageCarrier):
         self.release_target_mix = self.release_target_mix.to(device=device, dtype=dtype)
         return module
 
+    def record_perturbation(self, step: int, magnitude: float) -> None:
+        self._perturb_step = int(step)
+        self._perturb_magnitude = float(abs(magnitude))
+
     def initial_state(self, batch_size: int, device: torch.device):
         self.plastic_state = {
             name: torch.zeros(self.rank, device=device) for name in LOW_RANK_TARGETS
         }
         self._prev_surface = None
+        self._perturb_step: int | None = None
+        self._perturb_magnitude = 0.0
         return super().initial_state(batch_size, device)
 
     def _observe(self, fast, slow, control, message, carrier) -> torch.Tensor:
@@ -339,6 +563,21 @@ class AdaptiveV9FiveChannel(ExperimentalV9MessageCarrier):
         else:
             surface_delta = torch.norm(surface - self._prev_surface) / math.sqrt(max(self.hidden_size, 1))
         self._prev_surface = surface.clone()
+        if self._perturb_step is None or self._step_index <= self._perturb_step:
+            time_since_perturbation = torch.zeros((), device=fast.device, dtype=fast.dtype)
+            perturbation_magnitude = torch.zeros((), device=fast.device, dtype=fast.dtype)
+        else:
+            elapsed = float(self._step_index - self._perturb_step)
+            time_since_perturbation = torch.tensor(
+                min(1.0, elapsed / 32.0),
+                device=fast.device,
+                dtype=fast.dtype,
+            )
+            perturbation_magnitude = torch.tensor(
+                self._perturb_magnitude * math.exp(-elapsed / 32.0),
+                device=fast.device,
+                dtype=fast.dtype,
+            )
         values = [
             torch.norm(fast) / math.sqrt(max(fast.numel(), 1)),
             torch.norm(slow) / math.sqrt(max(slow.numel(), 1)),
@@ -348,6 +587,8 @@ class AdaptiveV9FiveChannel(ExperimentalV9MessageCarrier):
             torch.abs(torch.norm(message) - torch.norm(carrier)) / math.sqrt(max(message.numel(), 1)),
             pressure,
             surface_delta,
+            time_since_perturbation,
+            perturbation_magnitude,
         ]
         return torch.stack([value.to(device=fast.device, dtype=fast.dtype) for value in values])
 
@@ -426,11 +667,18 @@ class AdaptiveV9FiveChannel(ExperimentalV9MessageCarrier):
         release_vector = release_strength * torch.tanh(
             self.message_to_fast(new_message) + self.carrier_to_fast(new_carrier)
         )
-        release_bias = self.release_target_mix[0] * self._fit_release_to(release_vector, fast)
-        slow_release_bias = self.release_target_mix[1] * self._fit_release_to(release_vector, new_slow)
-        control_release_bias = self.release_target_mix[2] * self._fit_release_to(release_vector, new_control)
-        message_release_bias = self.release_target_mix[3] * self._fit_release_to(release_vector, new_message)
-        carrier_release_bias = self.release_target_mix[4] * self._fit_release_to(release_vector, new_carrier)
+        if self.release_routes_disabled:
+            release_bias = torch.zeros_like(fast)
+            slow_release_bias = torch.zeros_like(new_slow)
+            control_release_bias = torch.zeros_like(new_control)
+            message_release_bias = torch.zeros_like(new_message)
+            carrier_release_bias = torch.zeros_like(new_carrier)
+        else:
+            release_bias = self.release_target_mix[0] * self._fit_release_to(release_vector, fast)
+            slow_release_bias = self.release_target_mix[1] * self._fit_release_to(release_vector, new_slow)
+            control_release_bias = self.release_target_mix[2] * self._fit_release_to(release_vector, new_control)
+            message_release_bias = self.release_target_mix[3] * self._fit_release_to(release_vector, new_message)
+            carrier_release_bias = self.release_target_mix[4] * self._fit_release_to(release_vector, new_carrier)
         new_slow = new_slow + slow_release_bias
         new_control = new_control + control_release_bias
         new_message = new_message + message_release_bias
@@ -459,6 +707,7 @@ class AdaptiveV9FiveChannel(ExperimentalV9MessageCarrier):
             "release_pressure_mean": float(release_pressure.mean().item()),
             "release_drive_mean": float(release_drive.mean().item()),
             "release_bias_norm": float(torch.norm(release_vector).item()),
+            "release_routes_disabled": float(self.release_routes_disabled),
             "release_to_fast_norm": float(torch.norm(release_bias).item()),
             "release_to_slow_norm": float(torch.norm(slow_release_bias).item()),
             "release_to_control_norm": float(torch.norm(control_release_bias).item()),
@@ -618,10 +867,17 @@ def run_with_motif(
     device: str,
     perturb_channel: str = "fast",
     perturb_mode: str = "external",
+    release_routes_disabled: bool = False,
+    capture_channel_states: bool = False,
 ) -> dict[str, Any]:
     torch.manual_seed(seed)
     np.random.seed(seed)
-    model = AdaptiveV9FiveChannel(hidden_size, genome, rank=rank).to(device=device)
+    model = AdaptiveV9FiveChannel(
+        hidden_size,
+        genome,
+        rank=rank,
+        release_routes_disabled=release_routes_disabled,
+    ).to(device=device)
     state = model.initial_state(1, torch.device(device))
     signature = motif["vector"]
     trajectory = []
@@ -642,6 +898,7 @@ def run_with_motif(
                     channel=perturb_channel,
                     mode=perturb_mode,
                 )
+                model.record_perturbation(step, perturb_scale)
             state = model.step(state)
             surface = model.state_vector(state).view(-1).detach().float().cpu()
             components = {
@@ -688,6 +945,10 @@ def run_with_motif(
                 "fast_signature_cosine": cosine_to_signature(fast, signature),
                 "route_metrics": dict(aux),
             }
+            if capture_channel_states:
+                row["_channel_states"] = {
+                    name: tensor.clone() for name, tensor in components.items()
+                }
             if prev_components is not None:
                 row["fast_state_delta"] = component_delta(fast, prev_components.get("fast"))
                 row["slow_state_delta"] = component_delta(slow, prev_components.get("slow"))
@@ -743,6 +1004,158 @@ def run_with_motif(
         "metrics": metrics,
         "trajectory": trajectory,
     }
+
+
+def strip_runtime_channel_states(run: dict[str, Any]) -> dict[str, Any]:
+    """Remove in-memory tensors used only for paired causal measurement."""
+    for row in run.get("trajectory", []):
+        row.pop("_channel_states", None)
+    return run
+
+
+def release_anchor_steps(run: dict[str, Any]) -> list[int]:
+    return [
+        int(row["step"])
+        for row in run.get("trajectory", [])
+        if float(row.get("route_metrics", {}).get("release_strength_mean", 0.0)) > 0.0
+    ]
+
+
+def gain_zero_diagnostics(run: dict[str, Any], *, tolerance: float = 1e-8) -> dict[str, Any]:
+    """Check that the gain-zero intervention actually removes release output."""
+    max_strength = 0.0
+    max_route_norm = 0.0
+    max_endogenous_norm = 0.0
+    route_keys = [f"release_to_{channel}_norm" for channel in CHANNELS]
+    for row in run.get("trajectory", []):
+        route_metrics = row.get("route_metrics", {})
+        max_strength = max(max_strength, abs(float(route_metrics.get("release_strength_mean", 0.0))))
+        max_endogenous_norm = max(
+            max_endogenous_norm,
+            abs(float(route_metrics.get("endogenous_release_norm", 0.0))),
+        )
+        for key in route_keys:
+            max_route_norm = max(max_route_norm, abs(float(route_metrics.get(key, 0.0))))
+    own_anchor_count = len(release_anchor_steps(run))
+    clean = (
+        max_strength <= tolerance
+        and max_route_norm <= tolerance
+        and max_endogenous_norm <= tolerance
+        and own_anchor_count == 0
+    )
+    return {
+        "gain_zero_clean": clean,
+        "gain_zero_max_release_strength": max_strength,
+        "gain_zero_max_route_norm": max_route_norm,
+        "gain_zero_max_endogenous_release_norm": max_endogenous_norm,
+        "gain_zero_own_release_anchor_count": own_anchor_count,
+        "gain_zero_tolerance": tolerance,
+    }
+
+
+def causal_release_metrics(
+    original: dict[str, Any],
+    ablated: dict[str, Any],
+    *,
+    anchor_offset: int = 4,
+) -> dict[str, float]:
+    """Measure route-causal channel divergence at original release anchors."""
+    original_rows = {
+        int(row["step"]): row
+        for row in original.get("trajectory", [])
+        if "_channel_states" in row
+    }
+    ablated_rows = {
+        int(row["step"]): row
+        for row in ablated.get("trajectory", [])
+        if "_channel_states" in row
+    }
+    values_by_channel: dict[str, list[float]] = {channel: [] for channel in CHANNELS}
+    for step in release_anchor_steps(original):
+        target_step = step + anchor_offset
+        left = original_rows.get(target_step)
+        right = ablated_rows.get(target_step)
+        if left is None or right is None:
+            continue
+        for channel in CHANNELS:
+            left_tensor = left["_channel_states"].get(channel)
+            right_tensor = right["_channel_states"].get(channel)
+            if left_tensor is None or right_tensor is None:
+                continue
+            delta = torch.norm(left_tensor - right_tensor) / math.sqrt(max(left_tensor.numel(), 1))
+            left_scale = torch.norm(left_tensor) / math.sqrt(max(left_tensor.numel(), 1))
+            right_scale = torch.norm(right_tensor) / math.sqrt(max(right_tensor.numel(), 1))
+            scale = 0.5 * (left_scale + right_scale) + 1e-8
+            values_by_channel[channel].append(float(delta / scale))
+    channel_means = {
+        f"release_causal_divergence_{channel}": mean_or_zero(values)
+        for channel, values in values_by_channel.items()
+    }
+    return {
+        "release_causal_divergence": mean_or_zero(channel_means.values()),
+        "release_causal_anchor_count": float(max((len(values) for values in values_by_channel.values()), default=0)),
+        **channel_means,
+    }
+
+
+def release_gain_zero_genome(genome: dict[str, Any]) -> dict[str, Any]:
+    clone = json.loads(json.dumps(genome))
+    clone.setdefault("scalars", {})["release_gain"] = 0.0
+    return clone
+
+
+def paired_causal_run(
+    genome: dict[str, Any],
+    *,
+    hidden_size: int,
+    steps: int,
+    seed: int,
+    perturb_step: int,
+    perturb_scale: float,
+    motif: dict[str, Any],
+    rank: int,
+    device: str,
+    perturb_channel: str = "fast",
+    perturb_mode: str = "external",
+) -> dict[str, Any]:
+    """Run original, route-disabled, and gain-zero variants under one condition."""
+    common = {
+        "hidden_size": hidden_size,
+        "steps": steps,
+        "seed": seed,
+        "perturb_step": perturb_step,
+        "perturb_scale": perturb_scale,
+        "motif": motif,
+        "rank": rank,
+        "device": device,
+        "perturb_channel": perturb_channel,
+        "perturb_mode": perturb_mode,
+        "capture_channel_states": True,
+    }
+    original = run_with_motif(genome, **common)
+    routes_disabled = run_with_motif(genome, release_routes_disabled=True, **common)
+    gain_zero = run_with_motif(release_gain_zero_genome(genome), **common)
+
+    routes_metrics = causal_release_metrics(original, routes_disabled, anchor_offset=4)
+    gain_zero_metrics = causal_release_metrics(original, gain_zero, anchor_offset=4)
+    gain_zero_checks = gain_zero_diagnostics(gain_zero)
+    original["metrics"].update(routes_metrics)
+    original["metrics"].update(
+        {
+            f"release_gain_zero_{key}": value
+            for key, value in gain_zero_metrics.items()
+            if key.startswith("release_causal")
+        }
+    )
+    original["metrics"].update(gain_zero_checks)
+    for ablation, run in (
+        ("original", original),
+        ("release_routes_disabled", routes_disabled),
+        ("release_gain_zero", gain_zero),
+    ):
+        run["ablation"] = ablation
+        strip_runtime_channel_states(run)
+    return {"runs": [original, routes_disabled, gain_zero]}
 
 
 def component_delta(current: torch.Tensor, previous: torch.Tensor | None) -> float:
@@ -834,7 +1247,7 @@ def release_timing_metrics(
     perturb_step: int,
 ) -> dict[str, float]:
     steps = [int(row["step"]) for row in release_rows]
-    eligible_start = perturb_step + 1
+    eligible_start = perturb_step + 8
     eligible_end = min(max(row["step"] for row in trajectory), perturb_step + 32)
     pre_rows = [row for row in trajectory if row["step"] < eligible_start]
     eligible_rows = [row for row in release_rows if eligible_start <= row["step"] <= eligible_end]
@@ -862,15 +1275,21 @@ def release_timing_metrics(
     eligible_fraction = len(eligible_rows) / max(release_count, 1)
     early_fraction = len(early_rows) / max(release_count, 1)
     late_fraction = len(late_rows) / max(release_count, 1)
+    delayed_window_steps = max(0, eligible_end - eligible_start + 1)
+    delayed_window_fraction = delayed_window_steps / max(len(trajectory), 1)
+    concentration_lift = max(0.0, eligible_fraction - delayed_window_fraction) / max(
+        1.0 - delayed_window_fraction,
+        1e-8,
+    )
     pressure_lift = max(0.0, pressure_at_release - pressure_pre_release)
     duty = release_count / max(len(trajectory), 1)
     after_accumulation = pre_tail_accumulation * eligible_fraction * (1.0 - early_fraction)
-    timing_score = (
-        after_accumulation
+    timing_score = min(1.0, (
+        concentration_lift
         * (1.0 + pressure_lift)
         * (1.0 - 0.5 * late_fraction)
         * rare_release_score(duty)
-    )
+    ))
     delayed_release_pressure = (
         pre_tail_accumulation
         * eligible_fraction
@@ -1143,6 +1562,11 @@ def aggregate_runs(runs: list[dict[str, Any]]) -> dict[str, Any]:
     memory_specificity = mean(max(m["message_signature_tail"], m["carrier_signature_tail"]) for m in metrics) + motif_spread
     channel_sep = mean(m["channel_separation"] for m in metrics)
     release_geometric_event = mean(m["release_geometric_event"] for m in metrics)
+    release_causal_divergence = mean(m.get("release_causal_divergence", 0.0) for m in metrics)
+    release_gain_zero_causal_divergence = mean(
+        m.get("release_gain_zero_release_causal_divergence", 0.0) for m in metrics
+    )
+    gain_zero_clean_fraction = mean(1.0 if m.get("gain_zero_clean", False) else 0.0 for m in metrics)
     phase_transition_score = mean(m["phase_transition_score"] for m in metrics)
     boundedness = mean(m["boundedness"] for m in metrics)
     geometric_coherence = mean(m["geometric_coherence"] for m in metrics)
@@ -1156,6 +1580,13 @@ def aggregate_runs(runs: list[dict[str, Any]]) -> dict[str, Any]:
         + 0.15 * geometric_coherence
         + 0.10 * regime_bonus
     )
+    causal_components = causal_divergence_components(
+        {
+            "release_causal_divergence": release_causal_divergence,
+            "release_gain_zero_release_causal_divergence": release_gain_zero_causal_divergence,
+            "gain_zero_clean_fraction": gain_zero_clean_fraction,
+        }
+    )
     return {
         "internal_richness": internal_richness,
         "memory_specificity": memory_specificity,
@@ -1163,6 +1594,37 @@ def aggregate_runs(runs: list[dict[str, Any]]) -> dict[str, Any]:
         "release_effectiveness": release_effect,
         "release_local_causality": mean(m["release_local_causality"] for m in metrics),
         "release_geometric_event": release_geometric_event,
+        "release_causal_divergence": release_causal_divergence,
+        "release_gain_zero_release_causal_divergence": release_gain_zero_causal_divergence,
+        "release_route_specific_causal_divergence": causal_components["route_release_causal_divergence"],
+        "gate_state_causal_divergence": causal_components["gate_state_causal_divergence"],
+        "gain_zero_clean_fraction": gain_zero_clean_fraction,
+        "gain_zero_max_release_strength": max(m.get("gain_zero_max_release_strength", 0.0) for m in metrics),
+        "gain_zero_max_route_norm": max(m.get("gain_zero_max_route_norm", 0.0) for m in metrics),
+        "gain_zero_max_endogenous_release_norm": max(
+            m.get("gain_zero_max_endogenous_release_norm", 0.0) for m in metrics
+        ),
+        "gain_zero_own_release_anchor_count": mean(
+            m.get("gain_zero_own_release_anchor_count", 0.0) for m in metrics
+        ),
+        **{
+            f"release_causal_divergence_{channel}": mean(
+                m.get(f"release_causal_divergence_{channel}", 0.0)
+                for m in metrics
+            )
+            for channel in CHANNELS
+        },
+        **{
+            f"release_gain_zero_release_causal_divergence_{channel}": mean(
+                m.get(f"release_gain_zero_release_causal_divergence_{channel}", 0.0)
+                for m in metrics
+            )
+            for channel in CHANNELS
+        },
+        "release_causal_anchor_count": mean(m.get("release_causal_anchor_count", 0.0) for m in metrics),
+        "release_gain_zero_release_causal_anchor_count": mean(
+            m.get("release_gain_zero_release_causal_anchor_count", 0.0) for m in metrics
+        ),
         "phase_transition_score": phase_transition_score,
         "release_pre_accumulation": mean(m["release_pre_accumulation"] for m in metrics),
         "release_pre_event_pressure": mean(m["release_pre_event_pressure"] for m in metrics),
@@ -1207,8 +1669,10 @@ def evaluate_genome(
     perturb_channels: list[str] | None = None,
     perturb_modes: list[str] | None = None,
     keep_trajectories: bool = False,
+    paired_causal: bool = False,
 ) -> dict[str, Any]:
     runs = []
+    paired_runs = []
     channels = perturb_channels or ["fast"]
     modes = perturb_modes or ["external"]
     for seed in seeds:
@@ -1217,24 +1681,47 @@ def evaluate_genome(
             for motif in motifs:
                 for channel in channels:
                     for mode in modes:
-                        run = run_with_motif(
-                            genome,
-                            hidden_size=hidden_size,
-                            steps=steps,
-                            seed=seed,
-                            perturb_step=perturb_step,
-                            perturb_scale=scale,
-                            motif=motif,
-                            rank=rank,
-                            device=device,
-                            perturb_channel=channel,
-                            perturb_mode=mode,
-                        )
+                        if paired_causal:
+                            paired = paired_causal_run(
+                                genome,
+                                hidden_size=hidden_size,
+                                steps=steps,
+                                seed=seed,
+                                perturb_step=perturb_step,
+                                perturb_scale=scale,
+                                motif=motif,
+                                rank=rank,
+                                device=device,
+                                perturb_channel=channel,
+                                perturb_mode=mode,
+                            )
+                            run = next(item for item in paired["runs"] if item["ablation"] == "original")
+                            paired_runs.extend(paired["runs"])
+                        else:
+                            run = run_with_motif(
+                                genome,
+                                hidden_size=hidden_size,
+                                steps=steps,
+                                seed=seed,
+                                perturb_step=perturb_step,
+                                perturb_scale=scale,
+                                motif=motif,
+                                rank=rank,
+                                device=device,
+                                perturb_channel=channel,
+                                perturb_mode=mode,
+                            )
                         if not keep_trajectories:
                             run.pop("trajectory", None)
                         runs.append(run)
     aggregate = aggregate_runs(runs)
-    return {"aggregate": aggregate, "runs": runs}
+    result = {"aggregate": aggregate, "runs": runs}
+    if paired_causal:
+        if not keep_trajectories:
+            for run in paired_runs:
+                run.pop("trajectory", None)
+        result["paired_runs"] = paired_runs
+    return result
 
 
 def resolve_device(device: str) -> str:
@@ -1256,6 +1743,8 @@ def parse_worker_devices(text: str, fallback: str, workers: int = 1) -> list[str
 def normalize_workers_for_devices(workers: int, worker_devices: list[str]) -> int:
     """Avoid spawning duplicate CUDA evaluators for the same physical device."""
     requested = max(1, int(workers))
+    if os.environ.get("DEMIAN_ALLOW_DUPLICATE_CUDA_WORKERS", "0").lower() in {"1", "true", "yes", "on"}:
+        return requested
     cuda_devices = [device for device in worker_devices if str(device).startswith("cuda")]
     if not cuda_devices:
         return requested
@@ -1305,6 +1794,7 @@ def evaluate_candidate_job(job: dict[str, Any]) -> dict[str, Any]:
             perturb_channels=list(job.get("perturb_channels", ["fast"])),
             perturb_modes=list(job.get("perturb_modes", ["external"])),
             keep_trajectories=False,
+            paired_causal=bool(job.get("paired_causal", False)),
         )
     return {
         "id": job["candidate_id"],
@@ -1317,9 +1807,26 @@ def evaluate_candidate_job(job: dict[str, Any]) -> dict[str, Any]:
         "generation_of_origin": int(job["generation_of_origin"]),
         "mutation_count": int(job["mutation_count"]),
         "worker_device": device,
+        "rank_mode": str(job.get("rank_mode", ENGINEERED_TARGET_RANK_MODE)),
+        "causal_mode": str(job.get("causal_mode", DEFAULT_CAUSAL_MODE)),
+        "native_objective": str(job.get("native_objective", DEFAULT_NATIVE_OBJECTIVE)),
         "metrics": result["aggregate"],
         "runs": result["runs"],
+        "paired_runs": result.get("paired_runs", []),
     }
+
+
+def choose_reproduction_kind(
+    rng: random.Random,
+    weights: tuple[tuple[str, float], ...] = REPRODUCTION_WEIGHTS,
+) -> str:
+    roll = rng.random()
+    cumulative = 0.0
+    for kind, weight in weights:
+        cumulative += float(weight)
+        if roll < cumulative:
+            return kind
+    return weights[-1][0]
 
 
 def reproduce(
@@ -1332,24 +1839,37 @@ def reproduce(
     hidden_size: int,
     rank: int,
     mutation_sigma: float,
+    reproduction_weights: tuple[tuple[str, float], ...] = REPRODUCTION_WEIGHTS,
+    random_injection_rate: float = RANDOM_INJECTION_RATE,
+    include_default_seed: bool = True,
+    elitism: bool = True,
+    allow_structured_operators: bool = True,
+    use_archive_bins_for_parents: bool = True,
 ) -> list[dict[str, Any]]:
-    parents = archive_bins(global_archive)[: max(2, population_size // 2)]
+    if use_archive_bins_for_parents:
+        parents = archive_bins(global_archive)[: max(2, population_size // 2)]
+    else:
+        parents = sorted(global_archive, key=scalar_rank, reverse=True)[: max(2, population_size // 2)]
     if len(parents) < 2:
         parents = sorted(evaluated, key=scalar_rank, reverse=True)[:2]
-    population = [population_entry(default_genome(hidden_size, rank), "default_seed", [])]
-    for parent in parents[: max(1, population_size // 5)]:
-        population.append(
-            population_entry(
-                parent["genome"],
-                "elite_copy",
-                [parent["id"]],
-                ancestor_ids=parent.get("ancestor_ids", [parent["id"]]),
-                generation_of_origin=int(parent.get("generation_of_origin", parent["generation"])),
-                mutation_count=int(parent.get("mutation_count", 0)),
+    population = []
+    if include_default_seed:
+        population.append(population_entry(default_genome(hidden_size, rank), "default_seed", []))
+    if elitism:
+        for parent in parents[: max(1, population_size // 5)]:
+            population.append(
+                population_entry(
+                    parent["genome"],
+                    "elite_copy",
+                    [parent["id"]],
+                    ancestor_ids=parent.get("ancestor_ids", [parent["id"]]),
+                    generation_of_origin=int(parent.get("generation_of_origin", parent["generation"])),
+                    mutation_count=int(parent.get("mutation_count", 0)),
+                )
             )
-        )
     while len(population) < population_size:
-        if rng.random() < 0.28 and len(parents) >= 2:
+        reproduction_kind = choose_reproduction_kind(rng, reproduction_weights)
+        if reproduction_kind == "crossover" and len(parents) >= 2:
             left, right = rng.sample(parents, 2)
             child = crossover(left["genome"], right["genome"], rng, hidden_size, rank)
             entry = population_entry(
@@ -1365,7 +1885,27 @@ def reproduce(
             )
         else:
             parent = rng.choice(parents)
-            if rng.random() < 0.35:
+            if allow_structured_operators and reproduction_kind == "causal_release_template_mutation":
+                child = mutate_causal_release_template_genome(
+                    parent["genome"], rng, hidden_size, rank, mutation_sigma
+                )
+                entry = lineage_child_entry(
+                    child,
+                    "causal_release_template_mutation",
+                    parent,
+                    generation_of_origin,
+                )
+            elif allow_structured_operators and reproduction_kind == "delayed_eligibility_template_mutation":
+                child = mutate_delayed_eligibility_template_genome(
+                    parent["genome"], rng, hidden_size, rank, mutation_sigma
+                )
+                entry = lineage_child_entry(
+                    child,
+                    "delayed_eligibility_template_mutation",
+                    parent,
+                    generation_of_origin,
+                )
+            elif allow_structured_operators and reproduction_kind == "release_phase_mutation":
                 child = mutate_release_phase_genome(
                     parent["genome"], rng, hidden_size, rank, mutation_sigma
                 )
@@ -1383,7 +1923,7 @@ def reproduce(
                     parent,
                     generation_of_origin,
                 )
-        if rng.random() < 0.08:
+        if random_injection_rate > 0.0 and rng.random() < random_injection_rate:
             child = random_genome(rng, hidden_size, rank)
             entry = population_entry(child, "random", [])
         population.append(entry)
@@ -1424,6 +1964,10 @@ def candidate_jobs(
                 "rank": args.rank,
                 "device": worker_devices[idx % len(worker_devices)],
                 "torch_threads": args.torch_threads,
+                "paired_causal": getattr(args, "paired_causal", False),
+                "rank_mode": getattr(args, "rank_mode", ENGINEERED_TARGET_RANK_MODE),
+                "causal_mode": getattr(args, "causal_mode", DEFAULT_CAUSAL_MODE),
+                "native_objective": getattr(args, "native_objective", DEFAULT_NATIVE_OBJECTIVE),
             }
         )
     return jobs
@@ -1444,6 +1988,56 @@ def evaluate_generation_jobs(
             rows.append(future.result())
     rows.sort(key=lambda row: int(row["index"]))
     return rows
+
+
+def top_ablation_report(
+    rows: list[dict[str, Any]],
+    *,
+    generation: int,
+    top_n: int = 3,
+) -> dict[str, Any]:
+    """Summarize paired ablations for the top ranked rows in a generation."""
+    reports = []
+    for row in sorted(rows, key=scalar_rank, reverse=True)[:top_n]:
+        rank_mode = str(row.get("rank_mode", ENGINEERED_TARGET_RANK_MODE))
+        causal_mode = str(row.get("causal_mode", DEFAULT_CAUSAL_MODE))
+        native_objective = str(row.get("native_objective", DEFAULT_NATIVE_OBJECTIVE))
+        ablation_runs: dict[str, list[dict[str, Any]]] = {}
+        for run in row.get("paired_runs", []):
+            ablation_runs.setdefault(str(run.get("ablation", "unknown")), []).append(run)
+        ablations = {}
+        for ablation, runs in ablation_runs.items():
+            aggregate = aggregate_runs(runs)
+            rank_row = {
+                "metrics": aggregate,
+                "rank_mode": rank_mode,
+                "causal_mode": causal_mode,
+                "native_objective": native_objective,
+            }
+            ablations[ablation] = {
+                "run_count": len(runs),
+                "rank_score": scalar_rank(rank_row),
+                "rank_components": rank_components(rank_row),
+                "metrics": aggregate,
+            }
+        reports.append(
+            {
+                "id": row["id"],
+                "rank_score": scalar_rank(row),
+                "rank_components": rank_components(row),
+                "rank_mode": rank_mode,
+                "causal_mode": causal_mode,
+                "native_objective": native_objective,
+                "metrics": row["metrics"],
+                "ablations": ablations,
+            }
+        )
+    return {
+        "generation": generation,
+        "top_n": top_n,
+        "report_kind": "paired_causal_top_ablation",
+        "candidates": reports,
+    }
 
 
 def save_json(value: Any, path: Path) -> None:
@@ -1486,8 +2080,129 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--workers", type=int, default=1)
     parser.add_argument("--worker-devices", default="")
     parser.add_argument("--torch-threads", type=int, default=0)
+    parser.add_argument("--paired-causal", action="store_true")
+    parser.add_argument(
+        "--rank-mode",
+        choices=(
+            ENGINEERED_TARGET_RANK_MODE,
+            NATIVE_EMERGENCE_RANK_MODE,
+            DYNAMIC_SELECTION_PROBE_RANK_MODE,
+        ),
+        default=ENGINEERED_TARGET_RANK_MODE,
+    )
+    parser.add_argument(
+        "--causal-mode",
+        choices=CAUSAL_MODES,
+        default=DEFAULT_CAUSAL_MODE,
+        help=(
+            "Select the causal signal used by ranking: route-specific release, "
+            "persistent gate-state propagation, or both as separated terms."
+        ),
+    )
+    parser.add_argument(
+        "--native-objective",
+        choices=NATIVE_OBJECTIVES,
+        default=DEFAULT_NATIVE_OBJECTIVE,
+        help="Track B native objective variant; independent from causal_mode.",
+    )
+    parser.add_argument(
+        "--reproduction-mode",
+        choices=("structured", "native"),
+        default="structured",
+    )
+    parser.add_argument("--no-default-seed", action="store_true")
+    parser.add_argument("--no-elitism", action="store_true")
+    parser.add_argument("--no-random-injection", action="store_true")
+    parser.add_argument("--demian-v1-minimal-causal", action="store_true")
+    parser.add_argument("--demian-v1-delayed-island", action="store_true")
+    parser.add_argument("--demian-v2-track-a-island", action="store_true")
+    parser.add_argument("--demian-v2-track-b-island", action="store_true")
+    parser.add_argument("--dynamic-selection-probe", action="store_true")
+    parser.add_argument("--island-index", type=int, default=1)
     parser.add_argument("--out-dir", default="data/evolution/v9_5ch_release_20260509")
-    return parser.parse_args()
+    args = parser.parse_args()
+    if args.demian_v1_minimal_causal:
+        args.population = 16
+        args.generations = 10
+        args.eval_seeds = "94,95"
+        args.paired_causal = True
+        args.experiment_version = "demian-v1-causal-minimal"
+        args.device = "cpu"
+        if args.out_dir == "data/evolution/v9_5ch_release_20260509":
+            args.out_dir = "data/evolution/demian_v1_causal_minimal_20260511"
+    if args.demian_v1_delayed_island:
+        island_index = max(1, int(args.island_index))
+        args.population = 8
+        args.generations = 20
+        args.eval_seeds = "94,95"
+        args.steps = 128
+        args.perturb_step = 64
+        args.perturb_scales = "0.35,0.7"
+        args.paired_causal = True
+        args.experiment_version = "demian-v1-delayed-eligibility"
+        args.seed = 2026051100 + island_index
+        if args.out_dir == "data/evolution/v9_5ch_release_20260509":
+            args.out_dir = f"data/evolution/demian_v1_delayed_island_{island_index}_20260511"
+    if args.demian_v2_track_a_island:
+        island_index = max(1, int(args.island_index))
+        args.population = 8
+        args.generations = 20
+        args.eval_seeds = "94,95"
+        args.steps = 128
+        args.perturb_step = 64
+        args.perturb_scales = "0.35,0.7"
+        args.paired_causal = True
+        args.experiment_version = "demian-v2-track-a-engineered-target"
+        args.rank_mode = ENGINEERED_TARGET_RANK_MODE
+        args.causal_mode = CAUSAL_MODE_ROUTE_RELEASE
+        args.reproduction_mode = "structured"
+        args.device = "cpu"
+        args.torch_threads = args.torch_threads or 1
+        args.seed = 2026051200 + island_index
+        if args.out_dir == "data/evolution/v9_5ch_release_20260509":
+            args.out_dir = f"data/evolution/demian_v2_track_a_island_{island_index}_20260511"
+    if args.demian_v2_track_b_island:
+        args.population = 8
+        args.generations = 20
+        args.eval_seeds = "94,95"
+        args.steps = 128
+        args.perturb_step = 64
+        args.perturb_scales = "0.35,0.7"
+        args.paired_causal = True
+        args.experiment_version = "demian-v2-track-b-native-emergence"
+        args.rank_mode = NATIVE_EMERGENCE_RANK_MODE
+        args.causal_mode = CAUSAL_MODE_GATE_STATE
+        args.native_objective = NATIVE_OBJECTIVE_GATE_STATE
+        args.reproduction_mode = "native"
+        args.no_default_seed = True
+        args.no_elitism = True
+        args.no_random_injection = True
+        args.device = "cpu"
+        args.torch_threads = args.torch_threads or 1
+        args.seed = 2026051291
+        if args.out_dir == "data/evolution/v9_5ch_release_20260509":
+            args.out_dir = "data/evolution/demian_v2_track_b_island_1_20260511"
+    if args.dynamic_selection_probe:
+        args.population = 16
+        args.generations = 60
+        args.eval_seeds = "94,95"
+        args.steps = 128
+        args.perturb_step = 64
+        args.perturb_scales = "0.35,0.7"
+        args.paired_causal = True
+        args.experiment_version = "dynamic-selection-probe"
+        args.rank_mode = DYNAMIC_SELECTION_PROBE_RANK_MODE
+        args.causal_mode = CAUSAL_MODE_ROUTE_RELEASE
+        args.reproduction_mode = "native"
+        args.no_default_seed = True
+        args.no_elitism = True
+        args.no_random_injection = True
+        args.device = "cpu"
+        args.torch_threads = args.torch_threads or 1
+        args.seed = 2026051301
+        if args.out_dir == "data/evolution/v9_5ch_release_20260509":
+            args.out_dir = "data/evolution/dynamic_selection_probe_20260513"
+    return args
 
 
 def main() -> None:
@@ -1514,6 +2229,15 @@ def main() -> None:
     )
     worker_devices = parse_worker_devices(args.worker_devices, args.device, workers=args.workers)
     resolved_main_device = resolve_device(args.device)
+    reproduction_weights = (
+        NATIVE_REPRODUCTION_WEIGHTS
+        if args.reproduction_mode == "native"
+        else REPRODUCTION_WEIGHTS
+    )
+    random_injection_rate = 0.0 if args.no_random_injection else RANDOM_INJECTION_RATE
+    include_default_seed = not args.no_default_seed
+    elitism = not args.no_elitism
+    allow_structured_operators = args.reproduction_mode == "structured"
     requested_workers = args.workers
     args.workers = normalize_workers_for_devices(args.workers, worker_devices)
     if args.workers != requested_workers:
@@ -1527,8 +2251,9 @@ def main() -> None:
         "seed": args.seed,
         "eval_seeds": seeds,
         "cross_validation_note": (
-            "Frozen run uses the configured eval seeds only; rerun best lineages "
-            "across additional seeds before treating them as stable findings."
+            "CPU paired-causal reproduction is the reference for Demian v1 causal "
+            "release checks. CUDA comparisons are diagnostic only and are not "
+            "assumed equivalent."
         ),
         "hidden_size": args.hidden_size,
         "steps": args.steps,
@@ -1547,28 +2272,132 @@ def main() -> None:
         "cuda_lock_dir": str(CUDA_LOCK_DIR),
         "cuda_lock_enabled": cuda_lock_enabled(),
         "torch_threads": args.torch_threads,
+        "paired_causal": args.paired_causal,
+        "rank_mode": args.rank_mode,
+        "causal_mode": args.causal_mode,
+        "native_objective": args.native_objective,
+        "reproduction_mode": args.reproduction_mode,
+        "include_default_seed": include_default_seed,
+        "elitism": elitism,
+        "allow_structured_operators": allow_structured_operators,
+        "use_archive_bins_for_parent_selection": args.reproduction_mode != "native",
         "scalar_genes": {name: asdict(spec) for name, spec in SCALAR_GENES.items()},
         "low_rank_targets": list(LOW_RANK_TARGETS),
         "release_target_scalars": list(RELEASE_TARGET_SCALARS),
         "pareto_objectives": list(PARETO_OBJECTIVES),
         "rank_pressure": {
-            "internal_richness": "1.0 * aggregate internal channel differentiation",
-            "channel_separation": "1.2 * aggregate norm-space differentiation across fast/slow/message/carrier channels",
-            "release_geometric_event": f"1.6 * clipped release-local event normalized by {RELEASE_GEOMETRIC_RANK_CAP}",
-            "phase_transition": f"1.2 * clipped phase transition normalized by {PHASE_TRANSITION_RANK_CAP}",
-            "mathematical_curiosity": "0.7 * bounded non-output structural curiosity over richness, channel separation, curvature, event intensity, coherence, and regime diversity",
-            "geometric_coherence": "1.0 * bounded channel-separated path coherence",
-            "regime_bonus": "0.45 * archive regime diversity",
-            "flood_penalty": "-1.4 * release duty flood pressure above the sparse gate threshold",
+            "engineered_target": {
+                "causal_mode": args.causal_mode,
+                "score_a": "internal_richness + 1.2*channel_separation + 0.7*mathematical_curiosity + geometric_coherence",
+                "score_b": (
+                    "1.6*causal_multiplier*min(1, selected_causal_divergence/0.25) "
+                    "+ 1.6*causal_multiplier*duty_band_multiplier*release_timing_score "
+                    "+ 1.2*causal_multiplier*min(1, phase_transition_score/1.0) "
+                    "+ 0.45*regime_bonus - high-duty penalty"
+                ),
+                "causal_modes": {
+                    CAUSAL_MODE_ROUTE_RELEASE: (
+                        "release_causal_divergence > 0 and "
+                        "release_gain_zero_release_causal_divergence <= 1e-8"
+                    ),
+                    CAUSAL_MODE_GATE_STATE: (
+                        "gain_zero_clean_fraction == 1 and "
+                        "release_gain_zero_release_causal_divergence persists"
+                    ),
+                    CAUSAL_MODE_COMBINED: "route_release_causal_divergence + gate_state_causal_divergence",
+                },
+                "causal_multiplier": "clamp(selected_causal_divergence / 0.01, 0, 1)",
+                "duty_band_multiplier": "1.0 if 0.06 <= release_duty_cycle <= 0.18 else 0.0",
+                "rank": "sqrt(max(0, score_a) * max(0, score_b))",
+            },
+            "native_emergence": {
+                "causal_mode": args.causal_mode,
+                "native_objective": args.native_objective,
+                "objectives": list(NATIVE_OBJECTIVES),
+                "gate_state": (
+                    "morphology + selected_causal_divergence_raw + "
+                    "0.3*release_geometric_event + 0.3*phase_transition_score"
+                ),
+                "morphology_only": (
+                    "internal_richness + 1.2*channel_separation + "
+                    "0.7*mathematical_curiosity + geometric_coherence"
+                ),
+                "morphology_low_duty": "morphology_only + capped low_duty_preference <= 0.15",
+                "combined_discovery": (
+                    "morphology_only + 0.25*selected_causal_divergence_raw + "
+                    "0.15*release_geometric_event + 0.15*phase_transition_score"
+                ),
+                "excluded": "no causal gate, duty band, timing score, regime bonus, or structured operators",
+            },
+            "dynamic_selection_probe": {
+                "phase_1_generations": [0, 19],
+                "phase_1": (
+                    "morphology + 1.5*raw release_causal_divergence + "
+                    "0.3*release_geometric_event + 0.3*phase_transition_score"
+                ),
+                "phase_2_generations": [20, 39],
+                "phase_2": (
+                    "phase_1 terms with event/phase gated by clamp(raw causal / 0.01, 0, 1), "
+                    "plus high-duty penalty"
+                ),
+                "phase_3_generations": [40, 59],
+                "phase_3": (
+                    "phase_2 terms plus "
+                    "1.6*causal_multiplier*duty_band_multiplier*release_timing_score"
+                ),
+                "raw_causal_signal": "metrics.release_causal_divergence",
+                "target_duty_band": [0.06, 0.18],
+                "timing_window": [args.perturb_step + 8, min(args.steps, args.perturb_step + 32)],
+            },
+        },
+        "reproduction_weights": {
+            kind: weight for kind, weight in reproduction_weights
+        },
+        "random_injection_rate": random_injection_rate,
+        "effective_reproduction_rates_after_random_injection": {
+            kind: weight * (1.0 - random_injection_rate)
+            for kind, weight in reproduction_weights
+        } | {"random": random_injection_rate},
+        "structured_causal_release_template_operator": {
+            "reproduction_kind": "causal_release_template_mutation",
+            "selection_probability": 0.28,
+            "joint_scalar_targets": [
+                "release_threshold",
+                "release_temperature",
+                "release_gain",
+            ],
+            "joint_route_targets": list(RELEASE_TARGET_SCALARS),
+            "release_gate_observable_targets": list(OBSERVABLE_KEYS),
+            "templates": CAUSAL_RELEASE_ROUTE_TEMPLATES,
+        },
+        "structured_delayed_eligibility_template_operator": {
+            "reproduction_kind": "delayed_eligibility_template_mutation",
+            "selection_probability": 0.15,
+            "joint_scalar_targets": [
+                "release_threshold",
+                "release_temperature",
+                "message_decay",
+                "carrier_decay",
+            ],
+            "release_gate_observable_targets": [
+                "time_since_perturbation",
+                "perturbation_magnitude",
+                "surface_delta",
+                "release_pressure",
+            ],
+            "templates": DELAYED_ELIGIBILITY_TEMPLATES,
         },
         "phase_windows": {
             "accumulation": [1, args.perturb_step - 1],
             "perturb_step": args.perturb_step,
+            "delayed_eligibility": [args.perturb_step + 8, min(args.steps, args.perturb_step + 32)],
             "post_perturb_observation": [args.perturb_step + 1, args.steps],
         },
     }
     save_json(config, out_dir / "config.json")
-    population = [population_entry(default_genome(args.hidden_size, args.rank), "default_seed", [])]
+    population = []
+    if include_default_seed:
+        population.append(population_entry(default_genome(args.hidden_size, args.rank), "default_seed", []))
     while len(population) < args.population:
         population.append(population_entry(random_genome(rng, args.hidden_size, args.rank), "random", []))
     all_rows: list[dict[str, Any]] = []
@@ -1617,6 +2446,11 @@ def main() -> None:
         generation_diag = generation_diagnostics(evaluated, generation=generation)
         diagnostics.append(generation_diag)
         save_json(generation_diag, diagnostics_dir / f"generation_{generation:03d}.json")
+        if args.paired_causal and (generation + 1) in {5, 10, 15, 20}:
+            save_json(
+                top_ablation_report(evaluated, generation=generation + 1, top_n=3),
+                diagnostics_dir / f"generation_{generation + 1:03d}_top3_causal_ablation.json",
+            )
         save_json(diagnostics, out_dir / "diagnostics.json")
         front = pareto_front(evaluated)
         archive = archive_bins(all_rows)
@@ -1644,6 +2478,12 @@ def main() -> None:
                 hidden_size=args.hidden_size,
                 rank=args.rank,
                 mutation_sigma=args.mutation_sigma,
+                reproduction_weights=reproduction_weights,
+                random_injection_rate=random_injection_rate,
+                include_default_seed=include_default_seed,
+                elitism=elitism,
+                allow_structured_operators=allow_structured_operators,
+                use_archive_bins_for_parents=args.reproduction_mode != "native",
             )
     save_json({
         objective: max(all_rows, key=lambda row: float(row["metrics"][objective]))

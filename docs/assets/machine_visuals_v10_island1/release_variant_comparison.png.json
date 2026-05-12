@@ -1,0 +1,30 @@
+{
+  "csv": "docs/assets/machine_visuals_v10_island1/release_variant_comparison.csv",
+  "input": "data/substrate_lab/v10_0_frozen_evolution_island_1_trajectory_3d_20260511/trajectory_3d.json",
+  "metrics": [
+    "release_duty_fraction",
+    "release_strength_max",
+    "release_pressure_max",
+    "post_event_residual_delta_max",
+    "pressure_to_post_delta_ratio"
+  ],
+  "normalization": "row_scaled_mean_over_perturbed_runs",
+  "run_filter": "all",
+  "seed": "all",
+  "selected_run": [
+    "gen018_candidate003",
+    "gen018_candidate003",
+    94,
+    "perturbed",
+    0.35,
+    "basis",
+    3
+  ],
+  "status": "rendered",
+  "variants": [
+    "gen011_candidate005",
+    "gen013_candidate005",
+    "gen014_candidate006",
+    "gen018_candidate003"
+  ]
+}

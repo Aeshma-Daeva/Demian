@@ -5,6 +5,10 @@ The figures are SVG so GitHub can render them directly. Color intensity uses a
 quadratic mapping: normalized magnitude is squared before being mapped to fill
 color. This keeps low-amplitude background activity visually quiet and makes
 strong neuron/gate activations visible without inventing categorical labels.
+
+The script also emits Matplotlib PNG heatmaps using standard colormaps. Those
+are useful for publication/export contexts where a real colormap and colorbar
+are clearer than hand-authored SVG cells.
 """
 
 from __future__ import annotations
@@ -13,6 +17,7 @@ import argparse
 import math
 import os
 import sys
+import tempfile
 from pathlib import Path
 from typing import Any
 
@@ -120,6 +125,159 @@ def trace_v9_five_channel(
         "channels": channel_rows,
         "gates": gate_rows,
     }
+
+
+def neuron_heatmap_matrix(trace: dict[str, Any]) -> list[list[float]]:
+    """Return channel-stacked rows of signed neuron activation values."""
+    channels: dict[str, list[list[float]]] = trace["channels"]
+    rows: list[list[float]] = []
+    for name in CHANNELS:
+        channel_rows = channels[name]
+        channel_width = len(channel_rows[0]) if channel_rows else 0
+        for neuron_index in range(channel_width):
+            rows.append([float(step_values[neuron_index]) for step_values in channels[name]])
+    return rows
+
+
+def gate_heatmap_matrix(trace: dict[str, Any]) -> list[list[float]]:
+    """Return route/release gate metrics as rows over time."""
+    gates: dict[str, list[float]] = trace["gates"]
+    return [[float(value) for value in gates[name]] for name, _label in GATES]
+
+
+def row_normalized_matrix(matrix: list[list[float]]) -> list[list[float]]:
+    """Normalize each row independently to preserve within-metric structure."""
+    rows: list[list[float]] = []
+    for row in matrix:
+        max_value = max(row, default=0.0)
+        if max_value <= 1e-12:
+            rows.append([0.0 for _value in row])
+        else:
+            rows.append([float(value) / max_value for value in row])
+    return rows
+
+
+def _import_matplotlib() -> tuple[Any, Any, Any]:
+    try:
+        mpl_config_dir = Path(tempfile.gettempdir()) / "demian-matplotlib"
+        mpl_config_dir.mkdir(parents=True, exist_ok=True)
+        os.environ.setdefault("MPLCONFIGDIR", str(mpl_config_dir))
+
+        import matplotlib
+
+        matplotlib.use("Agg")
+        import matplotlib.pyplot as plt
+        from matplotlib.colors import PowerNorm, TwoSlopeNorm
+    except ModuleNotFoundError as exc:
+        raise SystemExit(
+            "Matplotlib is required for PNG heatmap rendering. "
+            "Install project requirements first: ./venv/bin/pip install -r requirements.txt"
+        ) from exc
+    return plt, PowerNorm, TwoSlopeNorm
+
+
+def render_neuron_heatmap_png(trace: dict[str, Any], path: Path, *, dpi: int = 200) -> None:
+    """Render signed neuron activations with a centered RdBu_r colormap."""
+    plt, _power_norm, two_slope_norm = _import_matplotlib()
+    matrix = neuron_heatmap_matrix(trace)
+    max_abs = max((abs(value) for row in matrix for value in row), default=0.0)
+    if max_abs <= 1e-12:
+        max_abs = 1.0
+    norm = two_slope_norm(vmin=-max_abs, vcenter=0.0, vmax=max_abs)
+    config = trace["config"]
+    steps = int(config["steps"])
+    channel_widths = [
+        len(trace["channels"][name][0]) if trace["channels"][name] else 0 for name in CHANNELS
+    ]
+
+    fig_height = max(4.8, len(matrix) * 0.075 + 1.9)
+    fig_width = max(8.0, steps * 0.08 + 2.4)
+    fig, ax = plt.subplots(figsize=(fig_width, fig_height), constrained_layout=True)
+    image = ax.imshow(matrix, aspect="auto", interpolation="nearest", cmap="RdBu_r", norm=norm)
+    centers: list[float] = []
+    row_offset = 0
+    for width in channel_widths:
+        centers.append(row_offset + (width - 1) / 2 if width else row_offset)
+        row_offset += width
+    ax.set_yticks(centers, CHANNELS)
+    ax.set_xlabel("step")
+    ax.set_ylabel("channel")
+    ax.set_title(
+        f"v9 five-channel neuron activations: seed={config['seed']}, hidden={config['hidden_size']}, steps={steps}"
+    )
+    ax.set_xticks([0, steps - 1], [1, steps])
+    boundary_row = 0
+    for width in channel_widths[:-1]:
+        boundary_row += width
+        ax.axhline(boundary_row - 0.5, color="black", linewidth=0.35, alpha=0.35)
+    colorbar = fig.colorbar(image, ax=ax, shrink=0.78)
+    colorbar.set_label("activation")
+    fig.savefig(path, dpi=dpi, bbox_inches="tight")
+    plt.close(fig)
+
+
+def render_gate_heatmap_png(trace: dict[str, Any], path: Path, *, dpi: int = 200) -> None:
+    """Render unsigned gate metrics with viridis and quadratic PowerNorm."""
+    plt, power_norm, _two_slope_norm = _import_matplotlib()
+    matrix = gate_heatmap_matrix(trace)
+    max_value = max((value for row in matrix for value in row), default=0.0)
+    if max_value <= 1e-12:
+        max_value = 1.0
+    config = trace["config"]
+    steps = int(config["steps"])
+
+    fig_width = max(8.0, steps * 0.08 + 2.8)
+    fig, ax = plt.subplots(figsize=(fig_width, 4.6), constrained_layout=True)
+    image = ax.imshow(
+        matrix,
+        aspect="auto",
+        interpolation="nearest",
+        cmap="viridis",
+        norm=power_norm(gamma=2.0, vmin=0.0, vmax=max_value),
+    )
+    ax.set_yticks(range(len(GATES)), [label for _name, label in GATES])
+    ax.set_xlabel("step")
+    ax.set_ylabel("metric")
+    ax.set_title(
+        f"v9 five-channel gating activations: seed={config['seed']}, hidden={config['hidden_size']}, steps={steps}"
+    )
+    ax.set_xticks([0, steps - 1], [1, steps])
+    colorbar = fig.colorbar(image, ax=ax, shrink=0.78)
+    colorbar.set_label("metric value, PowerNorm gamma=2.0")
+    fig.savefig(path, dpi=dpi, bbox_inches="tight")
+    plt.close(fig)
+
+
+def render_gate_row_normalized_heatmap_png(
+    trace: dict[str, Any], path: Path, *, dpi: int = 200
+) -> None:
+    """Render gate metrics with each row normalized to its own maximum."""
+    plt, power_norm, _two_slope_norm = _import_matplotlib()
+    matrix = row_normalized_matrix(gate_heatmap_matrix(trace))
+    config = trace["config"]
+    steps = int(config["steps"])
+
+    fig_width = max(8.0, steps * 0.08 + 2.8)
+    fig, ax = plt.subplots(figsize=(fig_width, 4.6), constrained_layout=True)
+    image = ax.imshow(
+        matrix,
+        aspect="auto",
+        interpolation="nearest",
+        cmap="viridis",
+        norm=power_norm(gamma=2.0, vmin=0.0, vmax=1.0),
+    )
+    ax.set_yticks(range(len(GATES)), [label for _name, label in GATES])
+    ax.set_xlabel("step")
+    ax.set_ylabel("metric")
+    ax.set_title(
+        "v9 five-channel gating activations, row-normalized: "
+        f"seed={config['seed']}, hidden={config['hidden_size']}, steps={steps}"
+    )
+    ax.set_xticks([0, steps - 1], [1, steps])
+    colorbar = fig.colorbar(image, ax=ax, shrink=0.78)
+    colorbar.set_label("within-row fraction of max, PowerNorm gamma=2.0")
+    fig.savefig(path, dpi=dpi, bbox_inches="tight")
+    plt.close(fig)
 
 
 def render_neuron_svg(trace: dict[str, Any]) -> str:
@@ -288,6 +446,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--seed", type=int, default=94)
     parser.add_argument("--steps", type=int, default=64)
     parser.add_argument("--out-dir", default="docs/assets")
+    parser.add_argument("--dpi", type=int, default=200)
+    parser.add_argument(
+        "--formats",
+        choices=("svg", "png", "all"),
+        default="all",
+        help="Which visual formats to render. Anatomy is SVG-only.",
+    )
     return parser.parse_args()
 
 
@@ -300,15 +465,27 @@ def main() -> None:
         seed=args.seed,
         steps=args.steps,
     )
-    files = {
-        "v9_5ch_neuron_activations.svg": render_neuron_svg(trace),
-        "v9_5ch_gating_activations.svg": render_gate_svg(trace),
-        "v9_5ch_anatomy.svg": render_anatomy_svg(),
-    }
-    for name, svg in files.items():
-        path = out_dir / name
-        path.write_text(svg, encoding="utf-8")
-        print(f"saved: {path}")
+    if args.formats in {"svg", "all"}:
+        files = {
+            "v9_5ch_neuron_activations.svg": render_neuron_svg(trace),
+            "v9_5ch_gating_activations.svg": render_gate_svg(trace),
+            "v9_5ch_anatomy.svg": render_anatomy_svg(),
+        }
+        for name, svg in files.items():
+            path = out_dir / name
+            path.write_text(svg, encoding="utf-8")
+            print(f"saved: {path}")
+
+    if args.formats in {"png", "all"}:
+        png_files = {
+            "v9_5ch_neuron_heatmap.png": render_neuron_heatmap_png,
+            "v9_5ch_gate_heatmap.png": render_gate_heatmap_png,
+            "v9_5ch_gate_heatmap_row_normalized.png": render_gate_row_normalized_heatmap_png,
+        }
+        for name, renderer in png_files.items():
+            path = out_dir / name
+            renderer(trace, path, dpi=args.dpi)
+            print(f"saved: {path}")
 
 
 if __name__ == "__main__":

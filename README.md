@@ -15,6 +15,24 @@ Current public center:
 - **Fresh side result:** capsule-continuity probes show that full internal-state resume preserves trajectory continuation while surface-only replay fails in canonical v9 and v9 five-channel.
 - **Main boundary:** v9 five-channel is interesting and worth continuing; it is not yet evidence of global superiority over v8 or other baselines.
 
+For the complete historical trail from KV-cache transformer probes and Mamba
+recurrence through native substrates, Track B discovery, and Demian v1
+synthesis, read [docs/RESEARCH_LINEAGE.md](docs/RESEARCH_LINEAGE.md). The
+front page is selective; the lineage doc preserves the full path of thought.
+
+## Publication Entry Points
+
+- [docs/TECHNICAL_REPORT.md](docs/TECHNICAL_REPORT.md): long-form GitHub report
+  for the methodology, main result, negative results, and Demian v1 synthesis.
+- [docs/ARXIV_OUTLINE.md](docs/ARXIV_OUTLINE.md): tighter paper structure for
+  the first methods-first arXiv submission.
+- [docs/GLOSSARY.md](docs/GLOSSARY.md): translation layer from Demian terms to
+  standard ML and dynamical-systems terminology.
+- [docs/REPRODUCIBILITY.md](docs/REPRODUCIBILITY.md): compact CPU commands and
+  expected result shapes.
+- [docs/RESEARCH_LINEAGE.md](docs/RESEARCH_LINEAGE.md): complete historical
+  trail and legacy-mode chronology.
+
 ![Capsule continuity sweep](docs/assets/capsule_continuity.svg)
 
 ## Visual Readouts
@@ -31,6 +49,45 @@ are meant as inspection surfaces, not decorative illustrations.
 The neuron and gate heatmaps use quadratic color: normalized magnitude is
 squared before it becomes color intensity. This keeps low-amplitude background
 activity visually quiet while strong activations and gates remain visible.
+Matplotlib PNG variants are also generated with standard colormaps for export:
+`RdBu_r` for signed neuron activations and `viridis` with `PowerNorm(gamma=2.0)`
+for unsigned gate metrics. The row-normalized gate variant is an inspection
+view: each metric row is scaled to its own maximum, so it should not be read as
+a cross-metric magnitude comparison.
+
+![v9 five-channel neuron heatmap](docs/assets/v9_5ch_neuron_heatmap.png)
+
+![v9 five-channel gate heatmap](docs/assets/v9_5ch_gate_heatmap.png)
+
+![v9 five-channel row-normalized gate heatmap](docs/assets/v9_5ch_gate_heatmap_row_normalized.png)
+
+Machine-native diagnostics are generated from `trajectory_3d.json` exports by
+`development/render_machine_visuals.py`. These prioritize event locality,
+state deltas, recurrence, channel separation, spectral structure, and candidate
+frontiers over visual polish.
+
+- [event-aligned release windows](docs/assets/machine_visuals/event_aligned_release_windows.png)
+- [release variant comparison](docs/assets/machine_visuals/release_variant_comparison.png)
+- [state delta heatmap](docs/assets/machine_visuals/state_delta_heatmap.png)
+- [recurrence distance](docs/assets/machine_visuals/recurrence_distance.png)
+- [channel separation covariance](docs/assets/machine_visuals/channel_separation_covariance.png)
+- [phase portraits](docs/assets/machine_visuals/phase_portraits.png)
+- [spectral channel power](docs/assets/machine_visuals/spectral_channel_power.png)
+- [evolution Pareto frontier](docs/assets/machine_visuals_evo/pareto_frontier.png)
+- [evolution release/geometry surface](docs/assets/machine_visuals_evo/sweep_surface_release_vs_geometry.png)
+- [16-seed release variant comparison](docs/assets/machine_visuals_seed_sweep/release_variant_comparison.png)
+- [v10 predecessor island-1 release comparison](docs/assets/machine_visuals_v10_island1/release_variant_comparison.png)
+- [v10 predecessor island-1 Pareto frontier](docs/assets/machine_visuals_v10_island1/pareto_frontier.png)
+
+The 2026-05-11 v10 continuation added held-out CPU checks for the top island
+candidates:
+[seed-94 reproduction sanity check](data/substrate_lab/v10_frozen_repro_seed94_20260511/summary.csv),
+[held-out release-gain ablation](data/substrate_lab/v10_frozen_cross_eval_20260511/summary.csv),
+and [held-out release-route ablation](data/substrate_lab/v10_frozen_cross_eval_routes_20260511/summary.csv).
+These are falsification artifacts. They currently argue that the archived v10
+predecessor result is not ready to publish as a stable finding: CPU reruns do
+not exactly reproduce the archived CUDA metrics, held-out release duty floods,
+and zeroing release routes barely changes the held-out behavior.
 
 Public status:
 
@@ -64,6 +121,10 @@ Older transformer experiments remain in the repo because they established an imp
 ## Orientation
 
 - [docs/CURRENT_STATE_AND_ROUTING.md](docs/CURRENT_STATE_AND_ROUTING.md): OpenClaude/NanoGPT restart map, latest substrate artifacts, and model routing presets
+- [docs/TECHNICAL_REPORT.md](docs/TECHNICAL_REPORT.md): GitHub long-form publication report
+- [docs/ARXIV_OUTLINE.md](docs/ARXIV_OUTLINE.md): first-paper outline and figure/table plan
+- [docs/GLOSSARY.md](docs/GLOSSARY.md): Demian-to-standard terminology map
+- [docs/REPRODUCIBILITY.md](docs/REPRODUCIBILITY.md): compact CPU checks and artifact inspection commands
 - [docs/WORKING_STATE.md](docs/WORKING_STATE.md): one-page active truth, restart file, and current priorities
 - [docs/SUBSTRATE_ANATOMY.md](docs/SUBSTRATE_ANATOMY.md): stable channel/routing anatomy for v9 five-channel and Demian v1 work
 - [docs/EXPERIMENT_NAMING.md](docs/EXPERIMENT_NAMING.md): separates scaffold names, artifact names, and next custom-substrate program names
@@ -101,6 +162,9 @@ Older transformer experiments remain in the repo because they established an imp
 
 - `development/summarize_v9_5ch_evolution.py`
   Rebuilds compact summaries from v9 five-channel and predecessor island candidate outputs. Use this instead of ad hoc aggregation snippets.
+
+- `development/cross_eval_v10_frozen.py`
+  Held-out CPU cross-evaluation and release ablation driver for archived v10.0 predecessor candidates.
 
 - `scripts/render_v9_expression_blender.py`
   Deterministic Blender expression renderer for trajectory artifacts. This is a visualization bridge, not symbolic art output.
@@ -208,6 +272,9 @@ The local `venv` has the research runtime more reliably than the system interpre
 Examples:
 
 ```bash
+./venv/bin/ruff check development tests
+./venv/bin/ruff format --check development/lab_schemas.py development/lab_tools.py development/validate_lab_artifact.py tests/test_lab_tooling.py
+./venv/bin/python development/validate_lab_artifact.py data/evolution/v10_0_frozen_evolution_4island_20260510_summary.json
 ./venv/bin/python development/update_docs.py
 ./venv/bin/python development/run_substrate_tests.py
 ./venv/bin/python -m pytest tests/test_current_substrates.py
@@ -241,7 +308,7 @@ See [docs/CURRENT_STATE_AND_ROUTING.md](docs/CURRENT_STATE_AND_ROUTING.md) for c
 
 - This repo is an active lab, not a stabilized package.
 - Some older tests and scripts still reflect pre-geometric `mode` terminology.
-- Full pytest on 2026-05-11 passes locally: `144 passed in 29.68s`.
+- Full pytest on 2026-05-11 passes locally: `161 passed in 31.46s`.
 - Do not dismiss `FIXED_POINT` regimes as boring by default. Current v9 five-channel evidence shows `surface_fixed_accumulating` can coexist with internal richness and other bounded regimes.
 - archived notes and plans are useful context, but they are not a substitute for checking raw artifacts.
 

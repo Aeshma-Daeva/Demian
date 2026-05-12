@@ -6,6 +6,7 @@ from __future__ import annotations
 import json
 import os
 import sys
+import argparse
 from dataclasses import asdict
 from pathlib import Path
 from typing import Any
@@ -84,12 +85,16 @@ def variant_kwargs() -> dict[str, dict[str, Any]]:
     }
 
 
-def collect_records() -> list[dict[str, Any]]:
+def collect_records(
+    *,
+    seeds: tuple[int, ...] = SEEDS,
+    perturb_scales: tuple[float, ...] = PERTURB_SCALES,
+) -> list[dict[str, Any]]:
     records: list[dict[str, Any]] = []
     for label, kwargs in variant_kwargs().items():
-        for seed in SEEDS:
+        for seed in seeds:
             records.extend(run_case(label, kwargs, seed, "clean", None))
-            for scale in PERTURB_SCALES:
+            for scale in perturb_scales:
                 records.extend(run_case(label, kwargs, seed, "perturbed", scale))
     return records
 
@@ -134,8 +139,30 @@ def run_case(
     return rows
 
 
+def parse_csv_ints(value: str) -> tuple[int, ...]:
+    return tuple(int(part.strip()) for part in value.split(",") if part.strip())
+
+
+def parse_csv_floats(value: str) -> tuple[float, ...]:
+    return tuple(float(part.strip()) for part in value.split(",") if part.strip())
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--out-dir", default=str(OUT_DIR))
+    parser.add_argument("--seeds", default=",".join(str(seed) for seed in SEEDS))
+    parser.add_argument(
+        "--perturb-scales",
+        default=",".join(str(scale) for scale in PERTURB_SCALES),
+    )
+    return parser.parse_args()
+
+
 def main() -> None:
-    records = collect_records()
+    args = parse_args()
+    seeds = parse_csv_ints(args.seeds)
+    perturb_scales = parse_csv_floats(args.perturb_scales)
+    records = collect_records(seeds=seeds, perturb_scales=perturb_scales)
     records.sort(key=record_sort_key)
     features = _projection_feature_names(ROUTE_METRICS)
     coords, projection = _project_records(records, features)
@@ -178,8 +205,9 @@ def main() -> None:
             },
         )
 
-    OUT_DIR.mkdir(parents=True, exist_ok=True)
-    out_path = OUT_DIR / "trajectory_3d.json"
+    out_dir = Path(args.out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    out_path = out_dir / "trajectory_3d.json"
     out_path.write_text(
         json.dumps(
             {
@@ -188,13 +216,13 @@ def main() -> None:
                     "substrate_labels": {
                         key: "v9 message/carrier release probe" for key in variant_kwargs()
                     },
-                    "seeds": list(SEEDS),
+                    "seeds": list(seeds),
                     "steps": STEPS,
                     "hidden_size": HIDDEN_SIZE,
                     "projection_method": "deterministic_pca_on_metric_vectors",
                     "projection_features": features,
                     "perturb_step": PERTURB_STEP,
-                    "perturb_scales": list(PERTURB_SCALES),
+                    "perturb_scales": list(perturb_scales),
                     "perturb_mode": "noise",
                     "schema_version": 1,
                     "viewer_note": "release openness and strength are internal gate traces",

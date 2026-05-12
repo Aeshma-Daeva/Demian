@@ -79,6 +79,7 @@ Current substrate findings:
 - v9 five-channel evolution exists at [development/evolve_v9_5ch_release.py](/home/xenith/demian/development/evolve_v9_5ch_release.py) and produced a full archive at [data/evolution/v9_5ch_release_20260509_full/archive.json](/home/xenith/demian/data/evolution/v9_5ch_release_20260509_full/archive.json)
 - the full v9 five-channel archive preserved multiple regimes, including `surface_fixed_accumulating`, `bounded_strange`, `edge_of_chaos`, and small limit-cycle pockets
 - release evolved toward rarer opening in the archive but release-local causal effect remains weak
+- Gate-State Causal Propagation is now replicated in the Track B native-emergence line: 3/3 replications showed clean gain-zero divergence, positive held-out route/gain-zero divergence, exact full internal-state resume, positive surface-only resume gap, and repeated message/carrier channel necessity
 - `v10.0-frozen-evolution` completed at [data/evolution/v10_0_frozen_evolution_4island_20260510_summary.json](/home/xenith/demian/data/evolution/v10_0_frozen_evolution_4island_20260510_summary.json)
 - in that predecessor run, mean duty drifted down while mean event and phase increased; the final winner was `duty=0.171875`, `release_geometric_event=0.7896`, `phase_transition_score=0.9371`, and mostly `bounded_strange`
 - the predecessor run shows heritable sparse-to-borderline release under eval seed 94, but this is not yet cross-validated across eval seeds
@@ -117,6 +118,8 @@ Read in this order:
 2. `docs/CURRENT_STATE_AND_ROUTING.md`
 3. `docs/SUBSTRATE_ANATOMY.md`
 4. `docs/EXPERIMENT_NAMING.md`
+5. `docs/RESEARCH_LINEAGE.md` when you need the full historical path from
+   KV-cache transformer probes and Mamba through Demian v1 synthesis
 5. `docs/LABBOOK.md`
 6. `docs/CLAIMS.md`
 7. `docs/EXPERIMENT_RULES.md`
@@ -163,10 +166,10 @@ Epistemic guardrails:
 ## Immediate Open Questions
 
 Priority 1:
-- run `demian-v1-cross-eval`: cross-validate the v10.0 predecessor winner and near-winners against held-out eval seeds before treating the selected genotype/rank ordering as stable
+- separate the replicated Gate-State Causal Propagation mechanism from sparse route-specific release in the next scoring design
 
 Priority 2:
-- run `demian-v1-release-causality`: inspect final and near-final lineages for the sparse event/phase hybrid mechanism
+- continue `demian-v1-cross-eval`: cross-validate sparse-release predecessor winners without conflating them with high-duty gate-state propagation
 
 Priority 3:
 - keep the canonical 3-channel v9 vs v8 artifact as baseline/falsification context

@@ -1,0 +1,23 @@
+{
+  "input": "data/substrate_lab/v9_5ch_evo_trajectory_3d_20260509_full/trajectory_3d.json",
+  "metrics": [
+    "route_metrics.release_pressure_mean",
+    "route_metrics.release_open_mean",
+    "route_metrics.release_strength_mean",
+    "residual_delta",
+    "route_metrics.carrier_residual_norm"
+  ],
+  "run_filter": "all",
+  "seed": "all",
+  "selected_run": [
+    "gen007_candidate019",
+    "gen007_candidate019",
+    94,
+    "perturbed",
+    0.35,
+    "basis",
+    3
+  ],
+  "status": "rendered",
+  "window": 12
+}

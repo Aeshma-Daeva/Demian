@@ -1,6 +1,37 @@
 # Publishment
 
-Last updated: 2026-05-11
+Last updated: 2026-05-12
+
+## Publication Split
+
+Demian should be published with a two-layer structure:
+
+- **GitHub:** the canonical living lab. It preserves the full trail from the
+  original native-substrate ambition through KV-cache/Mamba probes,
+  competition, the native substrate lineage, Track B discovery, and Demian v1
+  synthesis.
+- **arXiv:** the frozen citable scientific statement. The first paper should be
+  methods-first with one strong replicated finding: Gate-State Causal
+  Propagation.
+
+Core framing:
+
+> Demian began as an attempt to build a native substrate. The lab emerged
+> because building that substrate required a discipline for observing internal
+> dynamics, falsifying mechanisms, and preserving failed and successful design
+> paths.
+
+The first arXiv paper should not be a complete autobiography or a Demian v1
+success claim. It should present the methodology and the replicated gate-state
+finding, then frame Demian v1 as a design consequence.
+
+Publication entry points:
+
+- [TECHNICAL_REPORT.md](TECHNICAL_REPORT.md): broader GitHub technical report.
+- [ARXIV_OUTLINE.md](ARXIV_OUTLINE.md): paper-only structure.
+- [GLOSSARY.md](GLOSSARY.md): terminology translation.
+- [REPRODUCIBILITY.md](REPRODUCIBILITY.md): compact CPU checks.
+- [RESEARCH_LINEAGE.md](RESEARCH_LINEAGE.md): complete historical trail.
 
 ## Position
 
@@ -33,7 +64,7 @@ Strong current claims:
 - Mamba-style and custom recurrent systems can show rich microstructure under apparently stable attractor classes
 - the v9 five-channel scaffold preserves multiple bounded regimes, including `surface_fixed_accumulating`, `bounded_strange`, `edge_of_chaos`, and small limit-cycle pockets
 - rare release gates are possible, but current release-local causal effect is still weak
-- the v10.0 predecessor run selected sparse-to-borderline release under eval seed 94, but this still needs held-out seed validation
+- the v10.0 predecessor run selected sparse-to-borderline release under eval seed 94, but 2026-05-11 CPU reproduction and held-out checks make it a falsification target rather than a publishable stability claim
 - capsule-continuity is worth a focused follow-up: v9 and v9 five-channel resume from full internal state while surface-only replay fails under the current deterministic probe
 - 3D/Blender rendering can serve as a non-textual inspection layer for trajectory geometry
 
@@ -86,6 +117,14 @@ The public repo needs three layers.
 - include deterministic 2D anatomy, neuron-activation, and gate-activation SVGs
   from `development/render_publication_2d_visuals.py`; these should remain
   inspection surfaces with explicit source/config notes, not decorative art
+- include Matplotlib PNG heatmap variants from the same script when export or
+  publication workflows need standard colormaps and colorbars
+- keep the row-normalized gate heatmap labeled as an inspection view, because
+  it reveals within-metric structure but removes cross-metric magnitude
+  comparability
+- include machine-native diagnostic renders from `development/render_machine_visuals.py`
+  for event locality, recurrence, delta heatmaps, channel separation, spectral
+  power, and candidate frontier/surface inspection
 
 ### Evidence Ledger
 

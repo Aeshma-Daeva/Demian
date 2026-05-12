@@ -1,0 +1,29 @@
+{
+  "input": "data/substrate_lab/v10_0_frozen_evolution_island_1_trajectory_3d_20260511/trajectory_3d.json",
+  "pairs": [
+    [
+      "route_metrics.release_pressure_mean",
+      "route_metrics.carrier_residual_norm"
+    ],
+    [
+      "route_metrics.release_pressure_mean",
+      "residual_delta"
+    ],
+    [
+      "fast_state_norm",
+      "slow_state_norm"
+    ]
+  ],
+  "run_filter": "all",
+  "seed": "all",
+  "selected_run": [
+    "gen018_candidate003",
+    "gen018_candidate003",
+    94,
+    "perturbed",
+    0.35,
+    "basis",
+    3
+  ],
+  "status": "rendered"
+}

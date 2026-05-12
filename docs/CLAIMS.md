@@ -281,6 +281,24 @@ Promotion rule:
 - What would falsify this:
   - matched reruns where surface-only replay resumes as well as internal-state capsules, or compressed-capsule tests showing the apparent continuity advantage was only full-state copying
 
+### C20. Gate-State Causal Propagation replicates in Track B native-emergence runs
+
+- Type: `observation`
+- Evidence:
+  - [development/gate_state_propagation_characterization.py](/home/xenith/demian/development/gate_state_propagation_characterization.py)
+  - [tests/test_gate_state_propagation_characterization.py](/home/xenith/demian/tests/test_gate_state_propagation_characterization.py)
+  - [data/diagnostics/gate_state_propagation_characterization_20260511/summary.json](/home/xenith/demian/data/diagnostics/gate_state_propagation_characterization_20260511/summary.json)
+  - [data/diagnostics/gate_state_track_b_replication_summary_20260511/summary.json](/home/xenith/demian/data/diagnostics/gate_state_track_b_replication_summary_20260511/summary.json)
+- Notes:
+  - three Track B native-emergence replications passed the mechanism gate
+  - gain-zero diagnostics remained clean in 3/3 top-candidate held-out classifications
+  - held-out route-disabled and gain-zero divergence were both positive in 3/3; mean divergence was `0.2997`
+  - full internal-state resume was exact in 3/3 and surface-only resume had a positive gap in 3/3
+  - `message` and `carrier` were the top two necessary channels in 3/3; `slow` support was also high
+  - this is not a sparse-release claim: the replicated top candidates are high-duty native-emergence phenotypes
+- What would falsify this:
+  - rerunning the same Track B replication protocol without clean gain-zero divergence, or channel-disabled/capsule probes failing to reproduce message/carrier necessity
+
 ## Open Speculations
 
 ### S1. A more predictive observer could separate coherent induction from liminal cheating better than the current reactive observer

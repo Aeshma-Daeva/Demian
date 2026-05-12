@@ -1,0 +1,30 @@
+{
+  "csv": "docs/assets/machine_visuals_seed_sweep/release_variant_comparison.csv",
+  "input": "data/substrate_lab/v9_release_gate_trajectory_3d_seed_sweep_20260511/trajectory_3d.json",
+  "metrics": [
+    "release_duty_fraction",
+    "release_strength_max",
+    "release_pressure_max",
+    "post_event_residual_delta_max",
+    "pressure_to_post_delta_ratio"
+  ],
+  "normalization": "row_scaled_mean_over_perturbed_runs",
+  "run_filter": "all",
+  "seed": "all",
+  "selected_run": [
+    "manual_release_medium",
+    null,
+    94,
+    "perturbed",
+    1.0,
+    null,
+    null
+  ],
+  "status": "rendered",
+  "variants": [
+    "bound_no_release",
+    "learned_release_high_threshold",
+    "learned_release_neutral",
+    "manual_release_medium"
+  ]
+}

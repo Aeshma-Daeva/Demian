@@ -12,6 +12,8 @@ OBSERVABLE_KEYS = (
     "message_carrier_gap",
     "release_pressure",
     "surface_delta",
+    "time_since_perturbation",
+    "perturbation_magnitude",
 )
 LOW_RANK_TARGETS = (
     "message_gate",

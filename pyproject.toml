@@ -1,0 +1,22 @@
+[tool.ruff]
+target-version = "py312"
+line-length = 120
+extend-exclude = [
+    ".git",
+    ".pytest_cache",
+    "venv",
+    "data",
+    "docs/assets",
+]
+
+[tool.ruff.lint]
+select = ["E9", "F63", "F7", "F82"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = []
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+filterwarnings = [
+    "ignore::DeprecationWarning:mlflow.*",
+]

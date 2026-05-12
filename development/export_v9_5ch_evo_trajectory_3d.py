@@ -93,6 +93,7 @@ def collect_records(
     source_name: str,
     limit: int,
     motif_limit: int,
+    device_override: str | None = None,
 ) -> tuple[list[dict[str, Any]], dict[str, Any], list[dict[str, Any]]]:
     config = load_json(archive_dir / "config.json")
     candidates = selected_candidates(archive_dir, source_name, limit)
@@ -112,7 +113,7 @@ def collect_records(
                         perturb_scale=scale,
                         motif=motif,
                         rank=config["rank"],
-                        device=config.get("resolved_main_device", config["device"]),
+                        device=device_override or config.get("resolved_main_device", config["device"]),
                     )
                     records.extend(records_from_run(candidate, run, config))
     return records, config, candidates
@@ -259,6 +260,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--limit", type=int, default=8)
     parser.add_argument("--motif-limit", type=int, default=4)
     parser.add_argument("--out-dir", default="data/substrate_lab/v9_5ch_evo_trajectory_3d_20260509")
+    parser.add_argument("--device", default=None)
     return parser.parse_args()
 
 
@@ -270,6 +272,7 @@ def main() -> None:
         args.source,
         args.limit,
         args.motif_limit,
+        args.device,
     )
     payload = export_payload(records, config, candidates)
     out_dir = Path(args.out_dir)

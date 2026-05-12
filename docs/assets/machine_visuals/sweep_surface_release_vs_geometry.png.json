@@ -1,0 +1,16 @@
+{
+  "input": "data/substrate_lab/v9_release_gate_trajectory_3d_20260509/trajectory_3d.json",
+  "reason": "No candidate summary release/geometric metrics found.",
+  "run_filter": "all",
+  "seed": "all",
+  "selected_run": [
+    "manual_release_medium",
+    null,
+    94,
+    "perturbed",
+    1.0,
+    null,
+    null
+  ],
+  "status": "skipped"
+}

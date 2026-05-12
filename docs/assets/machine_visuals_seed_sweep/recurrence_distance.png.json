@@ -1,0 +1,28 @@
+{
+  "input": "data/substrate_lab/v9_release_gate_trajectory_3d_seed_sweep_20260511/trajectory_3d.json",
+  "metrics": [
+    "residual_delta",
+    "fast_state_delta",
+    "slow_state_delta",
+    "message_state_delta",
+    "route_metrics.release_pressure_mean",
+    "route_metrics.release_open_mean",
+    "route_metrics.release_strength_mean",
+    "route_metrics.carrier_residual_norm",
+    "fast_state_norm",
+    "slow_state_norm",
+    "message_state_norm"
+  ],
+  "run_filter": "all",
+  "seed": "all",
+  "selected_run": [
+    "manual_release_medium",
+    null,
+    94,
+    "perturbed",
+    1.0,
+    null,
+    null
+  ],
+  "status": "rendered"
+}

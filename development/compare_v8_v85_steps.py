@@ -139,11 +139,15 @@ def main():
     # Summary table
     print("\n\n=== COMPARISON ===")
     for label in all_results:
-        print(f"
-label}:")
+        print(f"\n{label}:")
         for steps in STEPS_LIST:
             a = all_results[label][str(steps)]
-            print(f"  steps={steps}: rec={a['perturb_rec_mean']:.4f} [{a['perturb_rec_min']:.4f}-a['perturb_rec_max']:.4f}] attr={a['attractors']} cov={a['cov_rank_mean']:.3f} comp={a['compression_mean']:.3f} coh={a['coherence_mean']:.4f}")
+            print(
+                f"  steps={steps}: rec={a['perturb_rec_mean']:.4f} "
+                f"[{a['perturb_rec_min']:.4f}-{a['perturb_rec_max']:.4f}] "
+                f"attr={a['attractors']} cov={a['cov_rank_mean']:.3f} "
+                f"comp={a['compression_mean']:.3f} coh={a['coherence_mean']:.4f}"
+            )
 
     print(f"\nDone: {OUT_DIR / 'summary.json'}")
 

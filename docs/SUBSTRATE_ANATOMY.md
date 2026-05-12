@@ -80,6 +80,62 @@ like another residual path and is not the target. The current selection target
 is instrumental sparsity: release opens rarely enough to avoid flood behavior
 and strongly enough to alter bounded path geometry.
 
+## Demian v1 Explicit Gate-State Prototype
+
+The first v1 synthesis prototype makes gate-state propagation an explicit
+sixth channel instead of treating it as an emergent side effect of release
+state. Its active state owners are:
+
+```text
+fast, slow, control, message, carrier, gate
+```
+
+The prototype route reading is:
+
+```text
+fast -> message -> carrier -> slow
+control/message/carrier/slow -> gate
+gate -> graded route modulation
+```
+
+The gate does not inject a release vector into the state. It modulates existing
+message-carrier, carrier-slow, and message/carrier-surface routes. Sparsity is
+therefore read as sparse gate-state change or pressure variation, not rare
+release-open events.
+
+Implementation surface:
+
+- [development/demian_v1_gate_state.py](/home/xenith/demian/development/demian_v1_gate_state.py)
+- [tests/test_demian_v1_gate_state.py](/home/xenith/demian/tests/test_demian_v1_gate_state.py)
+
+## Replicated Gate-State Propagation
+
+Track B native-emergence replications established a separate mechanism from
+sparse route-specific release. In `Gate-State Causal Propagation`, original
+trajectories diverge from gain-zero and route-disabled variants even when
+gain-zero diagnostics confirm zero release strength and zero release-route
+output.
+
+The replicated channel pattern is:
+
+```text
+message + carrier state -> gate-state propagation
+slow state -> supporting continuation memory
+surface-only resume -> insufficient continuation
+full internal-state resume -> exact continuation
+```
+
+Interpretation boundary:
+
+- This is a native internal-state mechanism, not proof that sparse delayed
+  release has been solved.
+- `message` and `carrier` are the repeated necessary channels in the Track B
+  replications.
+- `slow` carries supporting continuation state, but the replicated core is the
+  message/carrier propagation path.
+- Metrics should keep route-specific causal release separate from gain-zero
+  gate-state propagation.
+
 ## Metric Reading
 
 | Metric | What it reads | Use |

@@ -1,0 +1,16 @@
+{
+  "input": "data/substrate_lab/v10_0_frozen_evolution_island_1_trajectory_3d_20260511/trajectory_3d.json",
+  "rows": 4,
+  "run_filter": "all",
+  "seed": "all",
+  "selected_run": [
+    "gen018_candidate003",
+    "gen018_candidate003",
+    94,
+    "perturbed",
+    0.35,
+    "basis",
+    3
+  ],
+  "status": "rendered"
+}

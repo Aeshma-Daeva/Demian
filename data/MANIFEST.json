@@ -19,11 +19,61 @@
         "data/evolution/v10_0_frozen_evolution_island_1_20260510/diagnostics.json",
         "data/evolution/v10_0_frozen_evolution_island_2_20260510/diagnostics.json",
         "data/evolution/v10_0_frozen_evolution_island_3_20260510/diagnostics.json",
-        "data/evolution/v10_0_frozen_evolution_island_4_20260510/diagnostics.json"
+        "data/evolution/v10_0_frozen_evolution_island_4_20260510/diagnostics.json",
+        "data/substrate_lab/v10_frozen_repro_seed94_20260511/summary.csv",
+        "data/substrate_lab/v10_frozen_cross_eval_20260511/summary.csv",
+        "data/substrate_lab/v10_frozen_cross_eval_routes_20260511/summary.csv",
+        "data/substrate_lab/v10_0_frozen_evolution_island_1_trajectory_3d_20260511/trajectory_3d.json",
+        "docs/assets/machine_visuals_v10_island1/release_variant_comparison.png",
+        "docs/assets/machine_visuals_v10_island1/pareto_frontier.png"
       ],
       "claim_ids": ["C18"],
       "supersedes": ["v9_3_cap_calibrated_20260510"],
-      "interpretation": "Predecessor evidence for Demian v1. Frozen four-island selection run selected sparse-to-borderline release with stronger event/phase behavior under eval seed 94."
+      "interpretation": "Predecessor evidence for Demian v1. Frozen four-island selection run selected sparse-to-borderline release with stronger event/phase behavior under eval seed 94, but 2026-05-11 CPU reproduction and held-out ablations did not support treating it as backend-stable or cross-seed-stable."
+    },
+    {
+      "id": "gate_state_propagation_characterization_20260511",
+      "program": "demian-v2-track-b",
+      "date": "2026-05-11",
+      "family": "gate_state_propagation",
+      "status": "active_evidence",
+      "primary_summary": "data/diagnostics/gate_state_propagation_characterization_20260511/summary.json",
+      "artifacts": [
+        "data/diagnostics/gate_state_propagation_characterization_20260511/config.json",
+        "data/diagnostics/gate_state_propagation_characterization_20260511/summary.json",
+        "data/diagnostics/gate_state_propagation_characterization_20260511/ablation_rows.jsonl",
+        "data/diagnostics/gate_state_propagation_characterization_20260511/ablation_summary.csv",
+        "data/diagnostics/gate_state_propagation_characterization_20260511/ablation_results.parquet",
+        "data/diagnostics/gate_state_propagation_characterization_20260511/capsule_rows.jsonl",
+        "data/diagnostics/gate_state_propagation_characterization_20260511/capsule_summary.csv",
+        "data/diagnostics/gate_state_propagation_characterization_20260511/capsule_results.parquet",
+        "data/diagnostics/gate_state_propagation_characterization_20260511/README.md"
+      ],
+      "claim_ids": [],
+      "interpretation": "Candidate evidence for Gate-State Causal Propagation in the top Track B native-emergence genotype. Gain-zero diagnostics are clean, route/gain-zero divergence is positive, full internal-state resume is exact, and surface-only resume fails, but replication is required before promotion."
+    },
+    {
+      "id": "gate_state_track_b_replications_20260511",
+      "program": "demian-v2-track-b",
+      "date": "2026-05-11",
+      "family": "gate_state_propagation",
+      "status": "active_evidence",
+      "primary_summary": "data/diagnostics/gate_state_track_b_replication_summary_20260511/summary.json",
+      "artifacts": [
+        "data/evolution/demian_v2_track_b_replication_1_20260511/archive.json",
+        "data/evolution/demian_v2_track_b_replication_2_20260511/archive.json",
+        "data/evolution/demian_v2_track_b_replication_3_20260511/archive.json",
+        "data/diagnostics/gate_state_track_b_replication_1_heldout_20260511/summary.json",
+        "data/diagnostics/gate_state_track_b_replication_2_heldout_20260511/summary.json",
+        "data/diagnostics/gate_state_track_b_replication_3_heldout_20260511/summary.json",
+        "data/diagnostics/gate_state_track_b_replication_summary_20260511/summary.json",
+        "data/diagnostics/gate_state_track_b_replication_summary_20260511/replication_summary.csv",
+        "data/diagnostics/gate_state_parameter_signatures.csv",
+        "data/diagnostics/gate_state_parameter_signatures.parquet",
+        "data/diagnostics/gate_state_parameter_signatures_summary.json"
+      ],
+      "claim_ids": ["C20"],
+      "interpretation": "Replicated Gate-State Causal Propagation in 3/3 Track B native-emergence replications. Held-out classifications kept gain-zero clean, route/gain-zero divergence positive, full internal-state resume exact, surface-only resume gapped, and message/carrier as the repeated necessary-channel core."
     },
     {
       "id": "v9_3_cap_calibrated_20260510",
@@ -74,7 +124,13 @@
         "data/substrate_lab/v9_5ch_evo_trajectory_3d_20260509_full/blender_expression/expression_metadata.json",
         "docs/assets/v9_5ch_anatomy.svg",
         "docs/assets/v9_5ch_neuron_activations.svg",
-        "docs/assets/v9_5ch_gating_activations.svg"
+        "docs/assets/v9_5ch_gating_activations.svg",
+        "docs/assets/machine_visuals/recurrence_distance.png",
+        "docs/assets/machine_visuals/channel_separation_covariance.png",
+        "docs/assets/machine_visuals/release_variant_comparison.png",
+        "docs/assets/machine_visuals_seed_sweep/release_variant_comparison.png",
+        "docs/assets/machine_visuals_evo/pareto_frontier.png",
+        "docs/assets/machine_visuals_evo/sweep_surface_release_vs_geometry.png"
       ],
       "claim_ids": ["C16", "C17"],
       "interpretation": "Full v9 five-channel archive preserved multiple bounded regimes and showed release becoming rarer while causal effect remained weak; deterministic 2D SVGs expose anatomy, neuron activations, and route/gate activations with quadratic color intensity."

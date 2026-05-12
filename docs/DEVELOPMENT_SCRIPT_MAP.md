@@ -26,8 +26,9 @@ Classification values:
 | `development/probe_v9_message_carrier_strange.py` | `active` | yes | Message/carrier/release probe surface and experimental five-channel scaffold. |
 | `development/probe_v9_5ch_release_params.py` | `active` | targeted | Release scalar sensitivity for archived candidates. |
 | `development/export_v9_5ch_evo_trajectory_3d.py` | `active` | targeted | Exports evolved v9 five-channel candidates to 3D trajectory schema. |
-| `development/export_v9_release_gate_trajectory_3d.py` | `active` | targeted | Exports release-gate probe trajectories. |
+| `development/export_v9_release_gate_trajectory_3d.py` | `active` | targeted | Exports release-gate probe trajectories; supports custom seed and perturb-scale CSV arguments for broader comparison sweeps. |
 | `development/summarize_v9_5ch_evolution.py` | `active` | targeted | Rebuilds compact summaries from per-island v9 five-channel and predecessor evolution outputs. |
+| `development/cross_eval_v10_frozen.py` | `active` | targeted | Held-out CPU cross-evaluation and release ablation driver for archived v10.0 frozen predecessor candidates. |
 
 ## Workbench And Operations
 
@@ -35,6 +36,7 @@ Classification values:
 | --- | --- | --- | --- |
 | `development/update_docs.py` | `operational` | targeted | Generated status/link/manifest validator. |
 | `development/summarize_results.py` | `operational` | targeted | Local compact result summary utility. |
+| `development/render_machine_visuals.py` | `operational` | targeted | Renders machine-native diagnostic PNGs from `trajectory_3d.json` exports: event windows, deltas, recurrence, covariance, phase portraits, spectra, and candidate frontiers. |
 | `development/run_substrate_tests.py` | `operational` | targeted | Generic self-loop empirical battery runner. |
 | `development/run_substrate_stress_tests.py` | `operational` | targeted | Generic stress-test runner. |
 | `development/sweep_substrate_regimes.py` | `operational` | targeted | Generic substrate-regime sweep. |
@@ -108,6 +110,7 @@ guaranteed to exist locally.
 | `development/export_v9_5ch_evo_trajectory_3d.py` | `data/substrate_lab/v9_5ch_evo_trajectory_3d_20260509` |
 | `development/export_v9_release_gate_trajectory_3d.py` | `data/substrate_lab/v9_release_gate_trajectory_3d_20260509/trajectory_3d.json` |
 | `development/summarize_v9_5ch_evolution.py` | caller-provided summary JSON path |
+| `development/cross_eval_v10_frozen.py` | `data/substrate_lab/v10_frozen_cross_eval_20260511` |
 
 ### Baseline v8/v7.4/v7.2
 
@@ -154,6 +157,7 @@ guaranteed to exist locally.
 | --- | --- |
 | `development/update_docs.py` | `docs/AUTO_STATUS.md` and generated status blocks |
 | `development/summarize_results.py` | terminal summary only |
+| `development/render_machine_visuals.py` | `docs/assets/machine_visuals` |
 | `development/run_substrate_tests.py` | `data/substrate_lab` |
 | `development/run_substrate_stress_tests.py` | `data/substrate_stress` |
 | `development/sweep_substrate_regimes.py` | `data/substrate_sweeps` |

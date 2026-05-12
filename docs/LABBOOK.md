@@ -25,6 +25,130 @@ interpretation
 next check
 ```
 
+## 2026-05-11 - Gate-State Propagation Characterization
+
+Purpose:
+
+- Characterize the top native-emergence Track B genotype before costly
+  replications.
+- Test whether gate-state propagation is a real internal mechanism through
+  route/gain-zero diagnostics, channel-disabled continuation, capsule-style
+  resumes, and parameter-signature extraction.
+
+Config:
+
+```text
+candidate: data/evolution/demian_v2_track_b_island_1_20260511/candidates/gen012_candidate000.json
+seeds: 94-102
+perturb scales: 0.2, 0.35, 0.7
+motifs: basis:0, gaussian:0
+steps: 128
+perturb step: 64
+conditions: original, routes_disabled, gain_zero, message_disabled, carrier_disabled, control_disabled, slow_disabled
+device: cpu
+```
+
+Artifacts:
+
+- [data/diagnostics/gate_state_propagation_characterization_20260511/summary.json](/home/xenith/demian/data/diagnostics/gate_state_propagation_characterization_20260511/summary.json)
+- [data/diagnostics/gate_state_propagation_characterization_20260511/ablation_summary.csv](/home/xenith/demian/data/diagnostics/gate_state_propagation_characterization_20260511/ablation_summary.csv)
+- [data/diagnostics/gate_state_propagation_characterization_20260511/ablation_results.parquet](/home/xenith/demian/data/diagnostics/gate_state_propagation_characterization_20260511/ablation_results.parquet)
+- [data/diagnostics/gate_state_propagation_characterization_20260511/capsule_summary.csv](/home/xenith/demian/data/diagnostics/gate_state_propagation_characterization_20260511/capsule_summary.csv)
+- [data/diagnostics/gate_state_propagation_characterization_20260511/capsule_results.parquet](/home/xenith/demian/data/diagnostics/gate_state_propagation_characterization_20260511/capsule_results.parquet)
+- [data/diagnostics/gate_state_parameter_signatures_summary.json](/home/xenith/demian/data/diagnostics/gate_state_parameter_signatures_summary.json)
+
+Result:
+
+```text
+ablation runs: 378
+ablation rows: 48384
+capsule rows: 432
+gain_zero_clean: true
+routes_disabled_divergence_positive: true
+gain_zero_divergence_positive: true
+full_resume_exact: true
+surface_resume_gap_positive: true
+```
+
+Interpretation:
+
+- This is candidate evidence for gate-state propagation, not a promoted claim.
+- Gain-zero and route-disabled divergence are both positive while gain-zero
+  release strength/routes remain cleanly zero.
+- Channel-disabled probes show the largest causal divergence in the
+  `message_disabled` and `carrier_disabled` arms under this grid, with `slow`
+  also necessary.
+- Full internal-state resume is exact; surface-only and channel-only resumes
+  retain substantial final gaps.
+
+Next check:
+
+- Run three native-emergence Track B replications and promote only if the same
+  necessary-channel pattern appears in at least two runs with clean gain-zero
+  diagnostics and positive held-out divergence.
+
+## 2026-05-11 - Track B Gate-State Replications
+
+Purpose:
+
+- Run the three native-emergence Track B replications required before promoting
+  Gate-State Causal Propagation.
+- Classify each top candidate with the mechanism labels learned from the first
+  characterization pass.
+
+Config:
+
+```text
+replications: 3
+population: 16
+generations: 20
+rank mode: native_emergence
+initial population: random only
+operators: mutation + crossover
+paired causal evaluation: enabled
+eval seeds: 94, 95
+held-out classification seeds: 96, 97, 98
+held-out classification scales: 0.35, 0.7
+default seed: disabled
+elitism: disabled
+random injection overlay: disabled
+structured operators: disabled
+```
+
+Artifacts:
+
+- [data/evolution/demian_v2_track_b_replication_1_20260511/archive.json](/home/xenith/demian/data/evolution/demian_v2_track_b_replication_1_20260511/archive.json)
+- [data/evolution/demian_v2_track_b_replication_2_20260511/archive.json](/home/xenith/demian/data/evolution/demian_v2_track_b_replication_2_20260511/archive.json)
+- [data/evolution/demian_v2_track_b_replication_3_20260511/archive.json](/home/xenith/demian/data/evolution/demian_v2_track_b_replication_3_20260511/archive.json)
+- [data/diagnostics/gate_state_track_b_replication_summary_20260511/summary.json](/home/xenith/demian/data/diagnostics/gate_state_track_b_replication_summary_20260511/summary.json)
+- [data/diagnostics/gate_state_track_b_replication_summary_20260511/replication_summary.csv](/home/xenith/demian/data/diagnostics/gate_state_track_b_replication_summary_20260511/replication_summary.csv)
+
+Result:
+
+```text
+passed replications: 3/3
+mean held-out route divergence: 0.2997
+mean held-out gain-zero divergence: 0.2997
+gain-zero clean: 3/3
+full internal-state resume exact: 3/3
+surface-only resume gap positive: 3/3
+message/carrier top-two necessary channels: 3/3
+```
+
+Interpretation:
+
+- Gate-State Causal Propagation is replicated as a Track B native-emergence
+  mechanism.
+- The replicated path is message/carrier gate-state propagation with slow
+  continuation support.
+- The top replicated candidates are high-duty phenotypes, so this does not
+  solve the sparse delayed release target.
+
+Next check:
+
+- Split future metrics so route-specific causal release and gain-zero
+  gate-state propagation are scored separately.
+
 ## 2026-05-10 - v10.0 Frozen Evolution Predecessor Evidence
 
 Purpose:

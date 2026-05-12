@@ -24,12 +24,26 @@ Purpose:
 
 Use with:
 - [docs/CLAIMS.md](/home/xenith/demian/docs/CLAIMS.md)
+- [docs/RESEARCH_LINEAGE.md](/home/xenith/demian/docs/RESEARCH_LINEAGE.md)
 - [docs/EXPERIMENT_RULES.md](/home/xenith/demian/docs/EXPERIMENT_RULES.md)
 - [docs/EXPERIMENT_NAMING.md](/home/xenith/demian/docs/EXPERIMENT_NAMING.md)
 - [docs/LABBOOK.md](/home/xenith/demian/docs/LABBOOK.md)
 - [data/MANIFEST.json](/home/xenith/demian/data/MANIFEST.json)
 
 ## Core Baselines
+
+### KV-cache transformer loop ancestry
+
+- Main artifact:
+  - [trajectory_kv_comparison.json](/home/xenith/demian/data/trajectory_kv_comparison.json)
+- Context:
+  - [../docs/archive/notes/PROJECT_DEMIAN.md](/home/xenith/demian/docs/archive/notes/PROJECT_DEMIAN.md)
+  - [../docs/RESEARCH_LINEAGE.md](/home/xenith/demian/docs/RESEARCH_LINEAGE.md)
+- Supports:
+  - the original shift from text-quality evaluation to internal trajectory
+    measurement
+  - the historical finding that intervention mechanism mattered less than the
+    induced recurrent dynamics
 
 ### Transformer self-reference baseline
 
@@ -74,6 +88,7 @@ Use with:
   - [../development/evolve_v9_5ch_release.py](/home/xenith/demian/development/evolve_v9_5ch_release.py)
   - [../development/export_v9_5ch_evo_trajectory_3d.py](/home/xenith/demian/development/export_v9_5ch_evo_trajectory_3d.py)
   - [../development/render_publication_2d_visuals.py](/home/xenith/demian/development/render_publication_2d_visuals.py)
+  - [../development/render_machine_visuals.py](/home/xenith/demian/development/render_machine_visuals.py)
 - Test surface:
   - [../tests/test_v9_5ch_evolution.py](/home/xenith/demian/tests/test_v9_5ch_evolution.py)
   - [../tests/test_publication_2d_visuals.py](/home/xenith/demian/tests/test_publication_2d_visuals.py)
@@ -85,21 +100,41 @@ Use with:
   - [../docs/assets/v9_5ch_anatomy.svg](/home/xenith/demian/docs/assets/v9_5ch_anatomy.svg)
   - [../docs/assets/v9_5ch_neuron_activations.svg](/home/xenith/demian/docs/assets/v9_5ch_neuron_activations.svg)
   - [../docs/assets/v9_5ch_gating_activations.svg](/home/xenith/demian/docs/assets/v9_5ch_gating_activations.svg)
+  - [../docs/assets/machine_visuals/recurrence_distance.png](/home/xenith/demian/docs/assets/machine_visuals/recurrence_distance.png)
+  - [../docs/assets/machine_visuals/channel_separation_covariance.png](/home/xenith/demian/docs/assets/machine_visuals/channel_separation_covariance.png)
+  - [../docs/assets/machine_visuals/release_variant_comparison.png](/home/xenith/demian/docs/assets/machine_visuals/release_variant_comparison.png)
+  - [../docs/assets/machine_visuals_seed_sweep/release_variant_comparison.png](/home/xenith/demian/docs/assets/machine_visuals_seed_sweep/release_variant_comparison.png)
+  - [../docs/assets/machine_visuals_evo/pareto_frontier.png](/home/xenith/demian/docs/assets/machine_visuals_evo/pareto_frontier.png)
+  - [../docs/assets/machine_visuals_evo/sweep_surface_release_vs_geometry.png](/home/xenith/demian/docs/assets/machine_visuals_evo/sweep_surface_release_vs_geometry.png)
 - Current read:
   - full archive ran for 8 generations, 24 population, 192 candidates
   - final archive preserved `surface_fixed_accumulating`, `bounded_strange`, `edge_of_chaos`, and small limit-cycle pockets
   - release duty became rarer in archived candidates, but release effectiveness remains weak
   - deterministic 2D SVGs expose anatomy, neuron activations, and route/gate activations with quadratic color intensity for GitHub readers
+  - machine-native diagnostic renders expose recurrence, channel separation, event locality, spectral power, and candidate frontier structure from trajectory exports
+  - the 16-seed release-gate sweep covers seeds 94-109, perturb scales 0.25/0.5/1.0, and compares no-release, manual-release, and learned-release variants
   - use this as the active v9 path-geometry and release-gate artifact, not as proof of global v9 superiority
 
 ### v10.0 frozen four-island evolution predecessor
 
 - Code:
   - [../development/evolve_v9_5ch_release.py](/home/xenith/demian/development/evolve_v9_5ch_release.py)
+  - [../development/cross_eval_v10_frozen.py](/home/xenith/demian/development/cross_eval_v10_frozen.py)
+  - [../development/export_v9_5ch_evo_trajectory_3d.py](/home/xenith/demian/development/export_v9_5ch_evo_trajectory_3d.py)
+  - [../development/render_machine_visuals.py](/home/xenith/demian/development/render_machine_visuals.py)
 - Test surface:
   - [../tests/test_v9_5ch_evolution.py](/home/xenith/demian/tests/test_v9_5ch_evolution.py)
+  - [../tests/test_cross_eval_v10_frozen.py](/home/xenith/demian/tests/test_cross_eval_v10_frozen.py)
 - Main artifact:
   - [evolution/v10_0_frozen_evolution_4island_20260510_summary.json](/home/xenith/demian/data/evolution/v10_0_frozen_evolution_4island_20260510_summary.json)
+- Continuation artifacts:
+  - [substrate_lab/v10_frozen_repro_seed94_20260511/summary.csv](/home/xenith/demian/data/substrate_lab/v10_frozen_repro_seed94_20260511/summary.csv)
+  - [substrate_lab/v10_frozen_cross_eval_20260511/summary.csv](/home/xenith/demian/data/substrate_lab/v10_frozen_cross_eval_20260511/summary.csv)
+  - [substrate_lab/v10_frozen_cross_eval_20260511/runs.csv](/home/xenith/demian/data/substrate_lab/v10_frozen_cross_eval_20260511/runs.csv)
+  - [substrate_lab/v10_frozen_cross_eval_routes_20260511/summary.csv](/home/xenith/demian/data/substrate_lab/v10_frozen_cross_eval_routes_20260511/summary.csv)
+  - [substrate_lab/v10_0_frozen_evolution_island_1_trajectory_3d_20260511/trajectory_3d.json](/home/xenith/demian/data/substrate_lab/v10_0_frozen_evolution_island_1_trajectory_3d_20260511/trajectory_3d.json)
+  - [../docs/assets/machine_visuals_v10_island1/release_variant_comparison.png](/home/xenith/demian/docs/assets/machine_visuals_v10_island1/release_variant_comparison.png)
+  - [../docs/assets/machine_visuals_v10_island1/pareto_frontier.png](/home/xenith/demian/docs/assets/machine_visuals_v10_island1/pareto_frontier.png)
 - Per-island diagnostics:
   - [evolution/v10_0_frozen_evolution_island_1_20260510/diagnostics.json](/home/xenith/demian/data/evolution/v10_0_frozen_evolution_island_1_20260510/diagnostics.json)
   - [evolution/v10_0_frozen_evolution_island_2_20260510/diagnostics.json](/home/xenith/demian/data/evolution/v10_0_frozen_evolution_island_2_20260510/diagnostics.json)
@@ -111,7 +146,61 @@ Use with:
   - the frozen run replaced iterative scoring tweaks with selection pressure over time
   - mean duty fell while mean event and phase rose; the final winner was `duty=0.171875`, `release_geometric_event=0.7896`, `phase_transition_score=0.9371`
   - lineage diagnostics show late winners descended from earlier lineages rather than arising only as fresh random mutations
-  - treat as strong evidence that the current score selects sparse-to-borderline release under seed 94, not as cross-seed proof
+  - CPU reruns on 2026-05-11 did not exactly reproduce the archived CUDA metrics; treat backend/code reproducibility as unresolved
+  - held-out CPU cross-eval over seeds 95-102, scales 0.25/0.35/0.50, channels fast/carrier/message, and two motifs showed high release duty and weak event carryover
+  - release-route-zero ablation was nearly identical to original in held-out CPU runs, which argues against transfer-causal release under that grid
+  - treat as strong evidence that the archived score selected sparse-to-borderline release under seed 94, not as cross-seed or backend-stable proof
+
+### Gate-state propagation characterization
+
+- Code:
+  - [../development/gate_state_propagation_characterization.py](/home/xenith/demian/development/gate_state_propagation_characterization.py)
+- Test surface:
+  - [../tests/test_gate_state_propagation_characterization.py](/home/xenith/demian/tests/test_gate_state_propagation_characterization.py)
+- Main artifact:
+  - [diagnostics/gate_state_propagation_characterization_20260511/summary.json](/home/xenith/demian/data/diagnostics/gate_state_propagation_characterization_20260511/summary.json)
+- Searchable artifacts:
+  - [diagnostics/gate_state_propagation_characterization_20260511/ablation_results.parquet](/home/xenith/demian/data/diagnostics/gate_state_propagation_characterization_20260511/ablation_results.parquet)
+  - [diagnostics/gate_state_propagation_characterization_20260511/capsule_results.parquet](/home/xenith/demian/data/diagnostics/gate_state_propagation_characterization_20260511/capsule_results.parquet)
+- Quick-inspection artifacts:
+  - [diagnostics/gate_state_propagation_characterization_20260511/ablation_summary.csv](/home/xenith/demian/data/diagnostics/gate_state_propagation_characterization_20260511/ablation_summary.csv)
+  - [diagnostics/gate_state_propagation_characterization_20260511/capsule_summary.csv](/home/xenith/demian/data/diagnostics/gate_state_propagation_characterization_20260511/capsule_summary.csv)
+- Current read:
+  - characterizes `data/evolution/demian_v2_track_b_island_1_20260511/candidates/gen012_candidate000.json`
+  - full sweep covers seeds 94-102, scales 0.2/0.35/0.7, motifs `basis:0` and `gaussian:0`, 128 steps, perturb step 64, and seven original/intervention conditions
+  - per-step channel-disabled semantics are step, clamp requested channel to zero, record, and feed the clamped state into the next step
+  - evidence gate is candidate-only: gain-zero is clean, route/gain-zero divergence are positive, full internal-state resume is exact, and surface-only resume has a positive gap
+  - superseded as candidate-only evidence by the Track B replication summary below
+
+### Gate-state Track B replications
+
+- Code:
+  - [../development/evolve_v9_5ch_release.py](/home/xenith/demian/development/evolve_v9_5ch_release.py)
+  - [../development/gate_state_propagation_characterization.py](/home/xenith/demian/development/gate_state_propagation_characterization.py)
+- Test surface:
+  - [../tests/test_v9_5ch_evolution.py](/home/xenith/demian/tests/test_v9_5ch_evolution.py)
+  - [../tests/test_gate_state_propagation_characterization.py](/home/xenith/demian/tests/test_gate_state_propagation_characterization.py)
+- Main artifact:
+  - [diagnostics/gate_state_track_b_replication_summary_20260511/summary.json](/home/xenith/demian/data/diagnostics/gate_state_track_b_replication_summary_20260511/summary.json)
+- Replication archives:
+  - [evolution/demian_v2_track_b_replication_1_20260511/archive.json](/home/xenith/demian/data/evolution/demian_v2_track_b_replication_1_20260511/archive.json)
+  - [evolution/demian_v2_track_b_replication_2_20260511/archive.json](/home/xenith/demian/data/evolution/demian_v2_track_b_replication_2_20260511/archive.json)
+  - [evolution/demian_v2_track_b_replication_3_20260511/archive.json](/home/xenith/demian/data/evolution/demian_v2_track_b_replication_3_20260511/archive.json)
+- Held-out classification artifacts:
+  - [diagnostics/gate_state_track_b_replication_1_heldout_20260511/summary.json](/home/xenith/demian/data/diagnostics/gate_state_track_b_replication_1_heldout_20260511/summary.json)
+  - [diagnostics/gate_state_track_b_replication_2_heldout_20260511/summary.json](/home/xenith/demian/data/diagnostics/gate_state_track_b_replication_2_heldout_20260511/summary.json)
+  - [diagnostics/gate_state_track_b_replication_3_heldout_20260511/summary.json](/home/xenith/demian/data/diagnostics/gate_state_track_b_replication_3_heldout_20260511/summary.json)
+- Replicated top-candidate parameter signatures:
+  - [diagnostics/gate_state_parameter_signatures_summary.json](/home/xenith/demian/data/diagnostics/gate_state_parameter_signatures_summary.json)
+  - [diagnostics/gate_state_parameter_signatures.parquet](/home/xenith/demian/data/diagnostics/gate_state_parameter_signatures.parquet)
+  - [diagnostics/gate_state_parameter_signatures.csv](/home/xenith/demian/data/diagnostics/gate_state_parameter_signatures.csv)
+- Current read:
+  - Gate-State Causal Propagation replicated in 3/3 Track B native-emergence replications
+  - held-out seeds 96, 97, and 98 preserved clean gain-zero divergence and positive route/gain-zero divergence
+  - `message` and `carrier` were the top two necessary channels in 3/3 held-out classifications
+  - full internal-state resume was exact and surface-only resume failed in all three
+  - parameter signatures now cover the three replicated top candidates: `gen016_candidate012`, `gen019_candidate008`, and `gen017_candidate000`
+  - this is a high-duty native-emergence mechanism, not a sparse delayed-release solution
 
 ### Current v9 release-gate trajectory export
 
