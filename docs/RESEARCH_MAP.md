@@ -85,17 +85,17 @@ Primary files:
 - [development/export_v9_5ch_evo_trajectory_3d.py](/home/xenith/demian/development/export_v9_5ch_evo_trajectory_3d.py)
 - [development/substrate_lab.py](/home/xenith/demian/development/substrate_lab.py)
 - [tests/test_substrate_lab.py](/home/xenith/demian/tests/test_substrate_lab.py)
-- [run_competition.py](/home/xenith/demian/run_competition.py)
-- [demian/competition.py](/home/xenith/demian/demian/competition.py)
-- [demian/machine_observables.py](/home/xenith/demian/demian/machine_observables.py)
-- [demian/hebbian.py](/home/xenith/demian/demian/hebbian.py)
-- [run_mamba_batch.py](/home/xenith/demian/run_mamba_batch.py)
-- [demian/mamba_reservoir.py](/home/xenith/demian/demian/mamba_reservoir.py)
+- [legacy/root_cli/run_competition.py](/home/xenith/demian/legacy/root_cli/run_competition.py)
+- [legacy/demian_runtime/competition.py](/home/xenith/demian/legacy/demian_runtime/competition.py)
+- [legacy/demian_runtime/machine_observables.py](/home/xenith/demian/legacy/demian_runtime/machine_observables.py)
+- [legacy/demian_runtime/hebbian.py](/home/xenith/demian/legacy/demian_runtime/hebbian.py)
+- [legacy/root_cli/run_mamba_batch.py](/home/xenith/demian/legacy/root_cli/run_mamba_batch.py)
+- [legacy/demian_runtime/mamba_reservoir.py](/home/xenith/demian/legacy/demian_runtime/mamba_reservoir.py)
 
 Secondary baseline files:
 
-- [run_reservoir_batch.py](/home/xenith/demian/run_reservoir_batch.py)
-- [demian/reservoir.py](/home/xenith/demian/demian/reservoir.py)
+- [legacy/root_cli/run_reservoir_batch.py](/home/xenith/demian/legacy/root_cli/run_reservoir_batch.py)
+- [legacy/demian_runtime/reservoir.py](/home/xenith/demian/legacy/demian_runtime/reservoir.py)
 
 ## Empirical Spine
 

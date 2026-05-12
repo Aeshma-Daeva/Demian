@@ -19,7 +19,7 @@ import torch
 import yaml
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-from demian.mamba_reservoir import run_mamba_reservoir
+from legacy.demian_runtime.mamba_reservoir import run_mamba_reservoir
 
 log = logging.getLogger(__name__)
 
@@ -94,7 +94,7 @@ def main():
         format="%(asctime)s [%(name)s] %(levelname)s: %(message)s",
     )
 
-    cfg = yaml.safe_load(Path("config.yaml").read_text())
+    cfg = yaml.safe_load(Path(__file__).with_name("config.yaml").read_text())
     model_id = args.model or cfg.get("mamba_model_id", "state-spaces/mamba-2.8b-hf")
 
     log.info("Loading: %s", model_id)

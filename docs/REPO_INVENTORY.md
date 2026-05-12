@@ -26,7 +26,8 @@ Read these first:
 
 | Bucket | Current role | Cleanup direction |
 | --- | --- | --- |
-| `demian/` | Importable package code and baseline mechanisms | Keep package-only; avoid adding one-off research scripts here. |
+| `legacy/demian_runtime/` | Old importable runtime package and baseline mechanisms | Keep for ancestry and baseline reproduction; active code should not grow here. |
+| `legacy/root_cli/` | Old root-level CLIs and config | Keep runnable for historical baselines; do not put new front-page commands here. |
 | `development/substrates/` | Compact active substrate workbench, runtime helpers, and focused import surfaces | Expand as the lightweight substrate lab facade. |
 | `development/evolution/` | v9 five-channel and Demian v1 helpers for metadata, artifact validation, scoring, lineage, and diagnostics | Keep as the active evolution package. |
 | `development/substrate_lab.py` | Legacy full substrate lineage and compatibility API | Keep stable until focused workbench coverage is complete. |

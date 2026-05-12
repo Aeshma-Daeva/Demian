@@ -28,7 +28,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
-from demian.mamba_reservoir import (
+from legacy.demian_runtime.mamba_reservoir import (
     _get_layer0,
     _get_all_layers,
     _prepare_injection,
@@ -38,8 +38,8 @@ from demian.mamba_reservoir import (
     _build_step_metrics,
     _cache_to_device,
 )
-from demian.machine_observables import MachineDriver
-from demian.hebbian import (
+from legacy.demian_runtime.machine_observables import MachineDriver
+from legacy.demian_runtime.hebbian import (
     HebbianAdapter,
     AgentLoRAState,
     apply_hebbian_adapters,

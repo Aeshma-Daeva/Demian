@@ -37,7 +37,7 @@ Promotion rule:
 - Type: `observation`
 - Evidence:
   - [data/reservoir_batch/batch_summary.json](/home/xenith/demian/data/reservoir_batch/batch_summary.json)
-  - [run_reservoir_batch.py](/home/xenith/demian/run_reservoir_batch.py)
+  - [legacy/root_cli/run_reservoir_batch.py](/home/xenith/demian/legacy/root_cli/run_reservoir_batch.py)
 - Notes:
   - `autocorr_lag2` and switch statistics are the main support
 - What would falsify this:
@@ -48,7 +48,7 @@ Promotion rule:
 - Type: `observation`
 - Evidence:
   - [data/mamba_batch/mamba_batch_summary.json](/home/xenith/demian/data/mamba_batch/mamba_batch_summary.json)
-  - [run_mamba_batch.py](/home/xenith/demian/run_mamba_batch.py)
+  - [legacy/root_cli/run_mamba_batch.py](/home/xenith/demian/legacy/root_cli/run_mamba_batch.py)
 - What would falsify this:
   - repeated matched runs showing persistent transformer-like period-2 dominance
 

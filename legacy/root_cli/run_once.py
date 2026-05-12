@@ -6,14 +6,14 @@ import torch
 import yaml
 from pathlib import Path
 from transformers import AutoModelForCausalLM, AutoTokenizer
-from demian.vibration import VibrationTracker
-from demian.nous import NousInjector
-from demian.loop import generate_with_proprioception
+from legacy.demian_runtime.vibration import VibrationTracker
+from legacy.demian_runtime.nous import NousInjector
+from legacy.demian_runtime.loop import generate_with_proprioception
 
 logging.basicConfig(level=logging.INFO,
     format="%(asctime)s [%(name)s] %(levelname)s: %(message)s")
 
-cfg = yaml.safe_load(Path("config.yaml").read_text())
+cfg = yaml.safe_load(Path(__file__).with_name("config.yaml").read_text())
 model_id = cfg.get("proprioceptor_model_id", "Qwen/Qwen2.5-3B-Instruct")
 
 print("Loading " + model_id + "...")

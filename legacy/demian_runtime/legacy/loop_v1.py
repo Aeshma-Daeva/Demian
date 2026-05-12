@@ -1,3 +1,10 @@
+# ARCHIVED 2026-04-07. See v2 at ../loop.py
+# Why: _translate() used snap.attention.mode (focused/distributed/diffuse) with
+# human-readable color codes and descriptions ("locked-on", "flowing", etc).
+# _trajectory_beats() tracked mode-flip transitions. Both replaced with structural
+# descriptors: spectral_centroid, spectral_concentration, layer_work_ratio,
+# layer_agreement, velocity_align, attention_dim. No human labels.
+
 """Generation loop — closing the proprioceptive cycle.
 
 The cycle:
@@ -17,11 +24,11 @@ from typing import Callable, Optional
 
 import torch
 
-from demian.nous import NousInjector
-from demian.rhythm import InjectionScheduler
-from demian.vibration import VibrationTracker, AttentionShape
-from demian.probe import probe_step, compute_layer_metrics, compute_kv_directionality
-from demian.introspect import InjectionController
+from legacy.demian_runtime.nous import NousInjector
+from legacy.demian_runtime.rhythm import InjectionScheduler
+from legacy.demian_runtime.vibration import VibrationTracker, AttentionShape
+from legacy.demian_runtime.probe import probe_step, compute_layer_metrics, compute_kv_directionality
+from legacy.demian_runtime.introspect import InjectionController
 
 log = logging.getLogger(__name__)
 
@@ -35,41 +42,63 @@ _YELLOW = "\033[33m"
 _RED = "\033[31m"
 _MAGENTA = "\033[35m"
 
-def _translate(snap):
-    """Raw state → structural display. No categories, no human labels."""
-    s = snap.shape
+_MODE_COLORS = {
+    "focused": _CYAN,
+    "distributed": _GREEN,
+    "diffuse": _YELLOW,
+}
 
-    # Color by spectral centroid (high freq = warm, low freq = cool)
-    if s.spectral_centroid > 0.5:
-        color = _RED
-    elif s.spectral_centroid > 0.3:
-        color = _YELLOW
-    else:
-        color = _CYAN
+
+def _translate(snap):
+    """Human translator: raw state → what it means."""
+    mode = snap.attention.mode
+    color = _MODE_COLORS.get(mode, _RESET)
 
     coh = snap.temporal_coherence
-    rn = snap.residual_norm
-    delta = snap.residual_delta
-    vel = s.velocity_align
+    if coh > 0.9:
+        coh_desc = "locked-on"
+    elif coh > 0.7:
+        coh_desc = "flowing"
+    elif coh > 0.4:
+        coh_desc = "shifting"
+    else:
+        coh_desc = "drifting"
 
-    bar_len = int(min(s.dominance_ratio * 2, 18))
-    bar = f"{color}{'\u2588' * bar_len}{'\u2591' * (18 - bar_len)}{_RESET}"
+    rn = snap.residual_norm
+    if rn > 5:
+        rn_desc = "high energy"
+    elif rn > 3:
+        rn_desc = "active"
+    elif rn > 1:
+        rn_desc = "steady"
+    else:
+        rn_desc = "quiet"
+
+    delta = snap.residual_delta
+    if delta > 3:
+        delta_desc = "big jump"
+    elif delta > 1:
+        delta_desc = "moving"
+    else:
+        delta_desc = "settled"
+
+    bar_len = int(min(snap.attention.dominance_ratio * 2, 18))
+    bar = f"{color}{'█' * bar_len}{'░' * (18 - bar_len)}{_RESET}"
+
+    ent = snap.attention.entropy
+    ent_str = f"{ent:.2f}" if ent == ent else "—"  # nan check
 
     return (
-        f" {color}cent={s.spectral_centroid:.3f}{_RESET}  "
-        f"conc={s.spectral_concentration:.3f}  "
-        f"Lwr={s.layer_work_ratio:.3f}  "
-        f"Lag={s.layer_agreement:+.2f}  "
-        f"vel={vel:+.2f}  "
-        f"E={rn:.2f}  "
-        f"\u0394={delta:.2f}  "
-        f"part={s.attention_dim:.0f}  "
-        f"{bar}"
+        f" {color}{mode.upper():>12}{_RESET}  "
+        f"{coh_desc:>9}  {rn_desc:>11}  {delta_desc:>9}  "
+        f"{snap.attention.n_peaks:2d} peaks  {bar}  "
+        f"entropy={ent_str}  "
+        f"kurtosis={snap.attention.kurtosis:+.1f}"
     )
 
 
 def _trajectory_beats(snapshots):
-    """Summarize the full trajectory as structural transitions."""
+    """Summarize the full trajectory into human-readable beats."""
     if not snapshots:
         return []
     beats = []
@@ -78,38 +107,21 @@ def _trajectory_beats(snapshots):
     last = snapshots[-1]
 
     beats.append(
-        f"  started cent={first.shape.spectral_centroid:.3f} "
-        f"conc={first.shape.spectral_concentration:.3f} "
-        f"E={first.shape.energy:.1f} "
-        f"part={first.shape.attention_dim:.0f}"
+        f"  started {first.attention.mode} "
+        f"(energy={first.residual_norm:.1f}, coherence={first.temporal_coherence:.2f})"
     )
 
-    # Detect significant transitions: spectral_centroid shift or velocity sign flip
     for i in range(1, n):
-        s_prev = snapshots[i - 1].shape
-        s_curr = snapshots[i].shape
-        d_cent = abs(s_curr.spectral_centroid - s_prev.spectral_centroid)
-        if d_cent > 0.25:
-            direction = "\u2191" if s_curr.spectral_centroid > s_prev.spectral_centroid else "\u2192"
+        if snapshots[i].attention.mode != snapshots[i - 1].attention.mode:
             beats.append(
-                f"  {direction} cent shift at step {i + 1}: "
-                f"{s_prev.spectral_centroid:.3f} \u2192 {s_curr.spectral_centroid:.3f}"
-            )
-            continue  # one beat per transition
-
-        vel_prev = s_prev.velocity_align
-        vel_curr = s_curr.velocity_align
-        if vel_prev * vel_curr < 0:
-            beats.append(
-                f"  \u00B0 velocity flip at step {i + 1}: "
-                f"{vel_prev:+.2f} \u2192 {vel_curr:+.2f}"
+                f"  \u2192 shifted {snapshots[i-1].attention.mode} "
+                f"to {snapshots[i].attention.mode} "
+                f"at step {i + 1}"
             )
 
     beats.append(
-        f"  ended cent={last.shape.spectral_centroid:.3f} "
-        f"conc={last.shape.spectral_concentration:.3f} "
-        f"E={last.shape.energy:.1f} "
-        f"part={last.shape.attention_dim:.0f}"
+        f"  ended {last.attention.mode} "
+        f"(energy={last.residual_norm:.1f}, coherence={last.temporal_coherence:.2f})"
     )
     return beats
 
@@ -367,16 +379,11 @@ def generate_with_proprioception(
     for s in all_snapshots:
         entry = {
             "step": s.step,
-            "spectral_centroid": s.shape.spectral_centroid,
-            "spectral_concentration": s.shape.spectral_concentration,
-            "layer_work_ratio": s.shape.layer_work_ratio,
-            "layer_agreement": s.shape.layer_agreement,
-            "velocity_align": s.shape.velocity_align,
-            "attention_dim": s.shape.attention_dim,
-            "kurtosis": s.shape.kurtosis,
-            "n_peaks": s.shape.n_peaks,
-            "dominance_ratio": s.shape.dominance_ratio,
-            "entropy": s.shape.entropy,
+            "mode": s.attention.mode,
+            "kurtosis": s.attention.kurtosis,
+            "n_peaks": s.attention.n_peaks,
+            "dominance_ratio": s.attention.dominance_ratio,
+            "entropy": s.attention.entropy,
             "residual_norm": s.residual_norm,
             "residual_delta": s.residual_delta,
             "temporal_coherence": s.temporal_coherence,

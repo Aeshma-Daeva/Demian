@@ -39,7 +39,7 @@ from pathlib import Path
 import torch
 import yaml
 
-from demian.competition import Competition
+from legacy.demian_runtime.competition import Competition
 
 
 def parse_args():
@@ -120,7 +120,7 @@ def main():
         format="%(asctime)s [%(name)s] %(levelname)s: %(message)s",
     )
 
-    cfg = yaml.safe_load(Path("config.yaml").read_text())
+    cfg = yaml.safe_load(Path(__file__).with_name("config.yaml").read_text())
     model_id = args.model or cfg.get("mamba_model_id", "state-spaces/mamba-2.8b-hf")
 
     print(f"\n  Loading: {model_id}")

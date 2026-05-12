@@ -385,7 +385,7 @@ def main():
         format="%(asctime)s [%(name)s] %(levelname)s: %(message)s",
     )
 
-    cfg = yaml.safe_load(Path("config.yaml").read_text())
+    cfg = yaml.safe_load(Path(__file__).resolve().parents[1] / "root_cli" / "config.yaml".read_text())
     model_id = cfg.get("proprioceptor_model_id", "Qwen/Qwen2.5-3B-Instruct")
 
     log.info("Loading model: %s", model_id)

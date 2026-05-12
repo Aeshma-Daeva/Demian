@@ -93,8 +93,8 @@ What mattered:
 
 Artifacts:
 
-- [run_reservoir_batch.py](/home/xenith/demian/run_reservoir_batch.py)
-- [demian/reservoir.py](/home/xenith/demian/demian/reservoir.py)
+- [legacy/root_cli/run_reservoir_batch.py](/home/xenith/demian/legacy/root_cli/run_reservoir_batch.py)
+- [legacy/demian_runtime/reservoir.py](/home/xenith/demian/legacy/demian_runtime/reservoir.py)
 - [data/reservoir_batch/batch_summary.json](/home/xenith/demian/data/reservoir_batch/batch_summary.json)
 - [data/reservoir/](/home/xenith/demian/data/reservoir)
 
@@ -127,8 +127,8 @@ What mattered:
 
 Artifacts:
 
-- [run_mamba_batch.py](/home/xenith/demian/run_mamba_batch.py)
-- [demian/mamba_reservoir.py](/home/xenith/demian/demian/mamba_reservoir.py)
+- [legacy/root_cli/run_mamba_batch.py](/home/xenith/demian/legacy/root_cli/run_mamba_batch.py)
+- [legacy/demian_runtime/mamba_reservoir.py](/home/xenith/demian/legacy/demian_runtime/mamba_reservoir.py)
 - [data/mamba_batch/mamba_batch_summary.json](/home/xenith/demian/data/mamba_batch/mamba_batch_summary.json)
 - [data/mamba_reservoir/](/home/xenith/demian/data/mamba_reservoir)
 
@@ -160,8 +160,8 @@ What mattered:
 
 Artifacts:
 
-- [run_competition.py](/home/xenith/demian/run_competition.py)
-- [demian/competition.py](/home/xenith/demian/demian/competition.py)
+- [legacy/root_cli/run_competition.py](/home/xenith/demian/legacy/root_cli/run_competition.py)
+- [legacy/demian_runtime/competition.py](/home/xenith/demian/legacy/demian_runtime/competition.py)
 - [data/competition50/](/home/xenith/demian/data/competition50)
 - [data/competition50_run2/](/home/xenith/demian/data/competition50_run2)
 - [data/competition_v3/](/home/xenith/demian/data/competition_v3)

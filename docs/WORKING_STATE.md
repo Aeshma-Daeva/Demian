@@ -133,7 +133,7 @@ Read in this order:
 15. `docs/SUBSTRATE_LAB_DEPENDENCIES.md`
 16. targeted ranges in `development/substrate_lab.py` around `DemianNativeV9Substrate` and `compare_native_v9_vs_v8`
 17. v9 tests in `tests/test_substrate_lab.py`
-18. `demian/machine_observables.py` only when measurement behavior is the task
+18. `legacy/demian_runtime/machine_observables.py` only when measurement behavior is the task
 
 Archive:
 - older notebooks and plans live under `docs/archive/`

@@ -142,6 +142,17 @@ Older transformer experiments remain in the repo because they established an imp
 
 ## Main Tracks
 
+Top-level layout is intentionally small:
+
+- `development/`: active substrate, evolution, diagnostics, and current
+  research code.
+- `docs/`: publication, claims, reproducibility, lineage, and restart surfaces.
+- `data/`: indexed artifacts and summaries.
+- `legacy/`: older runtime package and root-era CLIs kept for ancestry and
+  baseline reproduction.
+- `scripts/` and `visualization/`: operational renderers and viewers.
+- `tests/`: active verification surface.
+
 - `development/substrate_lab.py`
   Historical architecture lab. It still contains the full substrate lineage and compatibility API, but do not use it as the first read surface.
 
@@ -169,19 +180,19 @@ Older transformer experiments remain in the repo because they established an imp
 - `scripts/render_v9_expression_blender.py`
   Deterministic Blender expression renderer for trajectory artifacts. This is a visualization bridge, not symbolic art output.
 
-- `run_competition.py` / `demian/competition.py`
-  Multi-agent Mamba dynamics with continuity pressure, inheritance, communication field, and optional Hebbian fast weights.
+- `legacy/root_cli/run_competition.py` / `legacy/demian_runtime/competition.py`
+  Legacy multi-agent Mamba dynamics with continuity pressure, inheritance, communication field, and optional Hebbian fast weights.
 
-- `run_mamba_batch.py` / `demian/mamba_reservoir.py`
-  Single-agent Mamba self-reference baseline. Useful for understanding fixed-point topology before adding population dynamics.
+- `legacy/root_cli/run_mamba_batch.py` / `legacy/demian_runtime/mamba_reservoir.py`
+  Legacy single-agent Mamba self-reference baseline. Useful for understanding fixed-point topology before adding population dynamics.
 
-- `run_reservoir_batch.py` / `demian/reservoir.py`
-  Transformer reservoir baseline. Important because it established the strong period-2 attractor.
+- `legacy/root_cli/run_reservoir_batch.py` / `legacy/demian_runtime/reservoir.py`
+  Legacy transformer reservoir baseline. Important because it established the strong period-2 attractor.
 
-- `demian/machine_observables.py`
+- `legacy/demian_runtime/machine_observables.py`
   The non-anthropocentric measurement layer. Structural observables, attractor classification, compact notation.
 
-- `demian/hebbian.py`
+- `legacy/demian_runtime/hebbian.py`
   Fast-weight adaptation layer for moving beyond purely frozen recurrence.
 
 ## How To Read The Repo
@@ -281,8 +292,8 @@ Examples:
 ./venv/bin/python -m pytest tests/test_v9_5ch_evolution.py
 ./venv/bin/python development/summarize_v9_5ch_evolution.py data/evolution/v10_0_frozen_evolution_island_*_20260510 --experiment v10.0-frozen-evolution --eval-seed 94 --out /tmp/demian_v1_predecessor_summary.json
 ./venv/bin/python -c "from development.substrates.current import compare_current_target; import json; print(json.dumps(compare_current_target(seeds=[94], steps=64), indent=2))"
-./venv/bin/python run_mamba_batch.py --runs 3 --steps 1000
-./venv/bin/python run_competition.py --n-agents 50 --rounds 500 --machine-driver
+./venv/bin/python legacy/root_cli/run_mamba_batch.py --runs 3 --steps 1000
+./venv/bin/python legacy/root_cli/run_competition.py --n-agents 50 --rounds 500 --machine-driver
 ./venv/bin/python development/summarize_results.py
 ```
 

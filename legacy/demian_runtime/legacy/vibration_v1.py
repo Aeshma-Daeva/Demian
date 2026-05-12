@@ -25,8 +25,8 @@ from typing import List, Optional
 
 import torch
 
-from demian.noise import load_or_create_projection
-from demian.probe import LayerAttnInfo, InjectionLayerInfo
+from legacy.demian_runtime.noise import load_or_create_projection
+from legacy.demian_runtime.probe import LayerAttnInfo, InjectionLayerInfo
 
 log = logging.getLogger(__name__)
 

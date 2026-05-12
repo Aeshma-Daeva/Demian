@@ -9,12 +9,12 @@ import torch
 import yaml
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-from demian.vibration import VibrationTracker
-from demian.nous import NousInjector
-from demian.loop import generate_with_proprioception
-from demian.rhythm import FibonacciConsolidator, InjectionScheduler
-from demian.dream import DreamSynthesizer
-from demian.continuity import ContinuityRunner
+from legacy.demian_runtime.vibration import VibrationTracker
+from legacy.demian_runtime.nous import NousInjector
+from legacy.demian_runtime.loop import generate_with_proprioception
+from legacy.demian_runtime.rhythm import FibonacciConsolidator, InjectionScheduler
+from legacy.demian_runtime.dream import DreamSynthesizer
+from legacy.demian_runtime.continuity import ContinuityRunner
 
 log = logging.getLogger(__name__)
 
@@ -63,7 +63,7 @@ def main():
         format="%(asctime)s [%(name)s] %(levelname)s: %(message)s",
     )
 
-    cfg = yaml.safe_load(Path("config.yaml").read_text())
+    cfg = yaml.safe_load(Path(__file__).with_name("config.yaml").read_text())
     model_id = args.model or cfg.get("proprioceptor_model_id", "Qwen/Qwen2.5-3B-Instruct")
     temperature = args.temp if args.temp is not None else cfg.get("temperature", 0.7)
     max_new_tokens = cfg.get("max_new_tokens", 256)

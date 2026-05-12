@@ -496,7 +496,7 @@ def run_mamba_reservoir(
             for ha in hebbian_adapters.values():
                 ha.step(force_signals)
             if step_idx % dump_interval == 0 or step_idx == max_steps:
-                from demian.hebbian import save_adapters, adapter_summary
+                from legacy.demian_runtime.hebbian import save_adapters, adapter_summary
                 save_adapters(hebbian_adapters, adapter_checkpoint, step_idx)
                 step["hebbian"] = adapter_summary(hebbian_adapters)
 
@@ -584,7 +584,7 @@ def main():
         format="%(asctime)s [%(name)s] %(levelname)s: %(message)s",
     )
 
-    cfg = yaml.safe_load(Path("config.yaml").read_text())
+    cfg = yaml.safe_load(Path(__file__).resolve().parents[1] / "root_cli" / "config.yaml".read_text())
     model_id = args.model or cfg.get(
         "mamba_model_id", "state-spaces/mamba-2.8b-hf"
     )
@@ -616,7 +616,7 @@ def main():
 
     driver = None
     if args.machine_driver:
-        from demian.machine_observables import MachineDriver
+        from legacy.demian_runtime.machine_observables import MachineDriver
         driver = MachineDriver(
             d_model=d_model,
             base_scale=args.base_scale,
@@ -625,7 +625,7 @@ def main():
         )
         log.info("MachineDriver active (geometric observables)")
     elif args.force_driver:
-        from demian.force_driver import CriticalityDriver
+        from legacy.demian_runtime.force_driver import CriticalityDriver
         driver = CriticalityDriver(
             d_model=d_model,
             target_novelty=args.target_novelty,
@@ -639,7 +639,7 @@ def main():
     data_dir = args.data_dir or "data/mamba_reservoir"
     adapter_ckpt = args.adapter_checkpoint or f"{data_dir}/adapters.pt"
     if args.hebbian:
-        from demian.hebbian import apply_hebbian_adapters, load_adapters
+        from legacy.demian_runtime.hebbian import apply_hebbian_adapters, load_adapters
         targets = [t.strip() for t in args.hebbian_targets.split(",")]
         adapters = apply_hebbian_adapters(
             model,

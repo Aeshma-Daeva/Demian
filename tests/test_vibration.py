@@ -4,13 +4,13 @@ import os
 import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from demian.vibration import VibrationTracker
+from legacy.demian_runtime.vibration import VibrationTracker
 
 
 def _tracker():
     import tempfile
     with tempfile.TemporaryDirectory() as td:
-        from demian.vibration import VibrationTracker
+        from legacy.demian_runtime.vibration import VibrationTracker
         return VibrationTracker(d_model=64, target_dim=16, projection_path=td)
 
 

@@ -27,7 +27,7 @@ from typing import List, Optional
 import torch
 import torch.nn as nn
 
-from demian.vibration import VibrationTracker
+from legacy.demian_runtime.vibration import VibrationTracker
 
 log = logging.getLogger(__name__)
 

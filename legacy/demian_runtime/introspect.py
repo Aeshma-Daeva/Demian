@@ -28,7 +28,7 @@ from typing import List, Optional
 import torch
 import torch.nn as nn
 
-from demian.nous import NousInjector
+from legacy.demian_runtime.nous import NousInjector
 
 
 # ---------------------------------------------------------------------------

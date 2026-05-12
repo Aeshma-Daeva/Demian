@@ -12,7 +12,7 @@ ability to reproduce cited artifacts and keep active research surfaces obvious.
 
 The repo currently mixes:
 
-- active package code under `demian/`
+- legacy runtime package code, formerly under `demian/`
 - active substrate/evolution research code under `development/`
 - historical substrate lab code
 - live docs and generated docs
@@ -20,7 +20,7 @@ The repo currently mixes:
 - large/generated experiment artifacts under `data/`
 - visualization assets
 - OpenClaude/model-routing scripts
-- one-off scratch runners at repo root
+- root-era scratch runners and baseline CLIs
 
 This makes restart context fragile and increases the chance that old ancestry
 is mistaken for active direction.
@@ -35,7 +35,8 @@ is mistaken for active direction.
 
 ## Proposed Target Buckets
 
-- `demian/`: importable package code only.
+- `legacy/demian_runtime/`: old importable runtime package and baseline mechanisms.
+- `legacy/root_cli/`: old root-level CLIs and config.
 - `development/substrates/`: active substrate implementations and focused helpers.
 - `development/evolution/`: current v9 five-channel and Demian v1 helpers plus extracted evolutionary search code.
 - `development/archive/`: old probes and one-off scripts retained for ancestry.
@@ -79,3 +80,6 @@ is mistaken for active direction.
   `development/substrates/legacy.py`.
 - Current Demian v1 metadata, predecessor artifact validation, scoring,
   lineage, and generation diagnostics extracted into `development/evolution/`.
+- Root-era CLIs and the old `demian/` runtime package moved under `legacy/` so
+  the GitHub front page starts with active research, docs, data, tests, and
+  operational tools instead of historical entry points.

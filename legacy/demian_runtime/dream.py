@@ -19,7 +19,7 @@ from typing import List, Optional
 import numpy as np
 import torch
 
-from demian.rhythm import CompressedTrajectory, FibonacciConsolidator
+from legacy.demian_runtime.rhythm import CompressedTrajectory, FibonacciConsolidator
 
 log = logging.getLogger(__name__)
 

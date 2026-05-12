@@ -5,7 +5,7 @@ import os, sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import sys
 import torch
-from demian.noise import generate_projection, load_or_create_projection
+from legacy.demian_runtime.noise import generate_projection, load_or_create_projection
 import tempfile
 
 def test_shape():

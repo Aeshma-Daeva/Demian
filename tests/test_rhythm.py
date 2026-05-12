@@ -5,8 +5,8 @@ import torch
 import tempfile
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from demian.rhythm import FibonacciConsolidator, CompressedTrajectory
-from demian.vibration import VibrationTracker
+from legacy.demian_runtime.rhythm import FibonacciConsolidator, CompressedTrajectory
+from legacy.demian_runtime.vibration import VibrationTracker
 
 
 def _setup():

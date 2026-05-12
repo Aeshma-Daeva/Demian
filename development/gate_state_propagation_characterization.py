@@ -23,7 +23,7 @@ from pydantic import BaseModel, ConfigDict, Field, NonNegativeInt, field_validat
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from demian.machine_observables import classify_attractor, compute_observables
+from legacy.demian_runtime.machine_observables import classify_attractor, compute_observables
 from development.evolution.config import CHANNELS
 from development.evolution.scoring import NATIVE_EMERGENCE_RANK_MODE, rank_components, scalar_rank
 from development.evolve_v9_5ch_release import (
