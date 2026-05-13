@@ -17,6 +17,26 @@ systems behave when their own internal state, recurrence, memory, and
 inter-agent coupling become the substrate of continued evolution, then extract
 the mechanisms that matter enough to build Demian.
 
+## Plain-English Context
+
+A neural network is a learned computation made from many small numeric units
+whose connection weights are adjusted by data. A recurrent neural network
+(RNN) adds feedback: part of its previous internal state is fed back into the
+next step, so the system has a form of short-term memory and trajectory.
+
+This project began by treating each recurrent framework as an experimental
+substrate rather than as a finished model. The repo tests those substrates with
+the same style of methodology: controlled probes, ablations, stress tests,
+trajectory exports, visual diagnostics, and negative-result tracking. The
+native line from `demian_native_v0` through v9 five-channel records what held
+up, what failed, and which mechanisms kept reappearing.
+
+`Demian v1` is the current synthesis step. It is not a clean-room invention;
+it is an attempt to compress the findings from v0 through v9 five-channel into
+a custom recurrent substrate. The cycle now repeats: build the synthesis, test
+it the same way, preserve the failures, and use the evidence to decide the
+next substrate rather than assuming the design is already solved.
+
 **Strongest current result:** fixed-point surface behavior can hide structured internal channel dynamics, so surface labels alone are not enough to judge a substrate.
 
 **Current boundary:** v9 five-channel is interesting and worth continuing; it is not yet evidence of global superiority over v8 or other baselines. `Demian v1` is a prototype/design consequence, not a completed empirical result.
