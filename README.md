@@ -81,11 +81,11 @@ state, not as decorative illustrations.
 The neuron and gate heatmaps use quadratic color: normalized magnitude is
 squared before it becomes color intensity. This keeps low-amplitude background
 activity visually quiet while strong activations and gates remain visible.
-Matplotlib PNG variants are also generated with standard colormaps for export:
-`RdBu_r` for signed neuron activations and `viridis` with `PowerNorm(gamma=2.0)`
-for unsigned gate metrics. The row-normalized gate variant is an inspection
-view: each metric row is scaled to its own maximum, so it should not be read as
-a cross-metric magnitude comparison.
+Matplotlib PNG variants are also generated for export: a dark-centered
+diverging map for signed neuron activations and `viridis` with
+`PowerNorm(gamma=2.0)` for unsigned gate metrics. The row-normalized gate
+variant is an inspection view: each metric row is scaled to its own maximum, so
+it should not be read as a cross-metric magnitude comparison.
 
 ![v9 five-channel neuron heatmap](docs/assets/v9_5ch_neuron_heatmap.png)
 
