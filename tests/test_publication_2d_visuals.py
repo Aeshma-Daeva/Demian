@@ -22,11 +22,11 @@ def test_quadratic_color_maps_midpoint_to_quiet_intensity():
     mid = unsigned_quadratic_color(0.5, 1.0)
     high = unsigned_quadratic_color(1.0, 1.0)
 
-    assert low == "#161b22"
+    assert low == "#20242b"
     assert mid not in {low, high}
-    assert high == "#2a578d"
-    assert signed_quadratic_color(-1.0, 1.0) == "#a84e4b"
-    assert signed_quadratic_color(1.0, 1.0) == "#137970"
+    assert high == "#60a5fa"
+    assert signed_quadratic_color(-1.0, 1.0) == "#fb7185"
+    assert signed_quadratic_color(1.0, 1.0) == "#2dd4bf"
 
 
 def test_publication_visual_renderers_emit_svg_from_trace():

@@ -41,13 +41,13 @@ GATES = (
 )
 
 SVG_BG = "#0d1117"
-SVG_CELL_BG = "#161b22"
+SVG_CELL_BG = "#20242b"
 SVG_TEXT = "#f0f6fc"
 SVG_MUTED = "#8b949e"
 SVG_GRID = "#30363d"
-SIGNED_POSITIVE = (19, 121, 112)
-SIGNED_NEGATIVE = (168, 78, 75)
-UNSIGNED_HIGH = (42, 87, 141)
+SIGNED_POSITIVE = (45, 212, 191)
+SIGNED_NEGATIVE = (251, 113, 133)
+UNSIGNED_HIGH = (96, 165, 250)
 
 
 def clamp01(value: float) -> float:
@@ -66,7 +66,7 @@ def signed_quadratic_color(value: float, scale: float) -> str:
     if scale <= 1e-12:
         return SVG_CELL_BG
     strength = clamp01(abs(value) / scale) ** 2
-    base = (22, 27, 34)
+    base = (32, 36, 43)
     target = SIGNED_POSITIVE if value >= 0 else SIGNED_NEGATIVE
     return rgb_hex(tuple(mix_channel(base[i], target[i], strength) for i in range(3)))
 
@@ -75,7 +75,7 @@ def unsigned_quadratic_color(value: float, scale: float) -> str:
     if scale <= 1e-12:
         return SVG_CELL_BG
     strength = clamp01(value / scale) ** 2
-    base = (22, 27, 34)
+    base = (32, 36, 43)
     target = UNSIGNED_HIGH
     return rgb_hex(tuple(mix_channel(base[i], target[i], strength) for i in range(3)))
 
