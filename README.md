@@ -80,8 +80,9 @@ state, not as decorative illustrations.
 
 The neuron overview is meant to be readable without knowing the model internals:
 read left to right over time, with each channel showing only its four loudest
-neurons. Teal means the neuron pushes up, pink means it pushes down, and dark
-means quiet. This is an overview for humans, not the full dense trace.
+neurons. Berlin scientific colors show blue for upward activation, red for
+downward activation, and dark for quiet. This is an overview for humans, not
+the full dense trace.
 
 The gate heatmaps still use quadratic color intensity for compact comparison.
 Matplotlib PNG variants are also generated for export with the same dark

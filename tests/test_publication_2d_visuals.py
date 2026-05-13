@@ -11,6 +11,7 @@ from development.render_publication_2d_visuals import (
     render_neuron_heatmap_png,
     render_neuron_svg,
     row_normalized_matrix,
+    signed_readable_color,
     signed_quadratic_color,
     trace_v9_five_channel,
     unsigned_quadratic_color,
@@ -29,6 +30,12 @@ def test_quadratic_color_maps_midpoint_to_quiet_intensity():
     assert signed_quadratic_color(1.0, 1.0) == "#2dd4bf"
 
 
+def test_signed_readable_color_uses_berlin_scientific_palette():
+    assert signed_readable_color(-1.0, 1.0) == "#ffadad"
+    assert signed_readable_color(0.0, 1.0) == "#180c0a"
+    assert signed_readable_color(1.0, 1.0) == "#9eb0ff"
+
+
 def test_publication_visual_renderers_emit_svg_from_trace():
     trace = trace_v9_five_channel(hidden_size=4, seed=94, steps=4)
     neuron_svg = render_neuron_svg(trace)
@@ -37,7 +44,12 @@ def test_publication_visual_renderers_emit_svg_from_trace():
     assert "<svg" in neuron_svg
     assert "Neuron activity: the readable version" in neuron_svg
     assert "Each channel shows its 4 loudest neurons" in neuron_svg
+    assert "Berlin scientific colors" in neuron_svg
+    assert "blue: pushes up" in neuron_svg
+    assert "red: pushes down" in neuron_svg
     assert "This is an overview, not every neuron" in neuron_svg
+    assert "teal" not in neuron_svg.lower()
+    assert "pink" not in neuron_svg.lower()
     assert "fast step 1 neuron 0" in neuron_svg
     assert "<svg" in gate_svg
     assert "Gating activations, quadratic color" in gate_svg
