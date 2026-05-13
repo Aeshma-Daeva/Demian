@@ -22,7 +22,7 @@ def test_quadratic_color_maps_midpoint_to_quiet_intensity():
     mid = unsigned_quadratic_color(0.5, 1.0)
     high = unsigned_quadratic_color(1.0, 1.0)
 
-    assert low == "#f1f2ef"
+    assert low == "#161b22"
     assert mid not in {low, high}
     assert high == "#2a578d"
     assert signed_quadratic_color(-1.0, 1.0) == "#a84e4b"

@@ -41,8 +41,13 @@ GATES = (
 )
 
 SVG_BG = "#0d1117"
+SVG_CELL_BG = "#161b22"
 SVG_TEXT = "#f0f6fc"
 SVG_MUTED = "#8b949e"
+SVG_GRID = "#30363d"
+SIGNED_POSITIVE = (19, 121, 112)
+SIGNED_NEGATIVE = (168, 78, 75)
+UNSIGNED_HIGH = (42, 87, 141)
 
 
 def clamp01(value: float) -> float:
@@ -59,21 +64,19 @@ def rgb_hex(rgb: tuple[int, int, int]) -> str:
 
 def signed_quadratic_color(value: float, scale: float) -> str:
     if scale <= 1e-12:
-        return "#f1f2ef"
+        return SVG_CELL_BG
     strength = clamp01(abs(value) / scale) ** 2
-    base = (241, 242, 239)
-    positive = (19, 121, 112)
-    negative = (168, 78, 75)
-    target = positive if value >= 0 else negative
+    base = (22, 27, 34)
+    target = SIGNED_POSITIVE if value >= 0 else SIGNED_NEGATIVE
     return rgb_hex(tuple(mix_channel(base[i], target[i], strength) for i in range(3)))
 
 
 def unsigned_quadratic_color(value: float, scale: float) -> str:
     if scale <= 1e-12:
-        return "#f1f2ef"
+        return SVG_CELL_BG
     strength = clamp01(value / scale) ** 2
-    base = (241, 242, 239)
-    target = (42, 87, 141)
+    base = (22, 27, 34)
+    target = UNSIGNED_HIGH
     return rgb_hex(tuple(mix_channel(base[i], target[i], strength) for i in range(3)))
 
 
@@ -161,7 +164,7 @@ def row_normalized_matrix(matrix: list[list[float]]) -> list[list[float]]:
     return rows
 
 
-def _import_matplotlib() -> tuple[Any, Any, Any]:
+def _import_matplotlib() -> tuple[Any, Any, Any, Any]:
     try:
         mpl_config_dir = Path(tempfile.gettempdir()) / "demian-matplotlib"
         mpl_config_dir.mkdir(parents=True, exist_ok=True)
@@ -171,18 +174,36 @@ def _import_matplotlib() -> tuple[Any, Any, Any]:
 
         matplotlib.use("Agg")
         import matplotlib.pyplot as plt
-        from matplotlib.colors import PowerNorm, TwoSlopeNorm
+        from matplotlib.colors import LinearSegmentedColormap, PowerNorm, TwoSlopeNorm
     except ModuleNotFoundError as exc:
         raise SystemExit(
             "Matplotlib is required for PNG heatmap rendering. "
             "Install project requirements first: ./venv/bin/pip install -r requirements.txt"
         ) from exc
-    return plt, PowerNorm, TwoSlopeNorm
+    return plt, LinearSegmentedColormap, PowerNorm, TwoSlopeNorm
+
+
+def style_dark_matplotlib_figure(fig: Any, ax: Any) -> None:
+    fig.patch.set_facecolor(SVG_BG)
+    ax.set_facecolor(SVG_CELL_BG)
+    ax.title.set_color(SVG_TEXT)
+    ax.xaxis.label.set_color(SVG_MUTED)
+    ax.yaxis.label.set_color(SVG_MUTED)
+    ax.tick_params(colors=SVG_MUTED)
+    for spine in ax.spines.values():
+        spine.set_color(SVG_GRID)
+
+
+def style_dark_colorbar(colorbar: Any) -> None:
+    colorbar.ax.set_facecolor(SVG_BG)
+    colorbar.outline.set_edgecolor(SVG_GRID)
+    colorbar.ax.yaxis.label.set_color(SVG_MUTED)
+    colorbar.ax.tick_params(colors=SVG_MUTED)
 
 
 def render_neuron_heatmap_png(trace: dict[str, Any], path: Path, *, dpi: int = 200) -> None:
-    """Render signed neuron activations with a centered RdBu_r colormap."""
-    plt, _power_norm, two_slope_norm = _import_matplotlib()
+    """Render signed neuron activations with the SVG palette on a dark canvas."""
+    plt, linear_segmented_colormap, _power_norm, two_slope_norm = _import_matplotlib()
     matrix = neuron_heatmap_matrix(trace)
     max_abs = max((abs(value) for row in matrix for value in row), default=0.0)
     if max_abs <= 1e-12:
@@ -197,7 +218,12 @@ def render_neuron_heatmap_png(trace: dict[str, Any], path: Path, *, dpi: int = 2
     fig_height = max(4.8, len(matrix) * 0.075 + 1.9)
     fig_width = max(8.0, steps * 0.08 + 2.4)
     fig, ax = plt.subplots(figsize=(fig_width, fig_height), constrained_layout=True)
-    image = ax.imshow(matrix, aspect="auto", interpolation="nearest", cmap="RdBu_r", norm=norm)
+    style_dark_matplotlib_figure(fig, ax)
+    cmap = linear_segmented_colormap.from_list(
+        "demian_signed_dark",
+        [rgb_hex(SIGNED_NEGATIVE), SVG_CELL_BG, rgb_hex(SIGNED_POSITIVE)],
+    )
+    image = ax.imshow(matrix, aspect="auto", interpolation="nearest", cmap=cmap, norm=norm)
     centers: list[float] = []
     row_offset = 0
     for width in channel_widths:
@@ -213,16 +239,17 @@ def render_neuron_heatmap_png(trace: dict[str, Any], path: Path, *, dpi: int = 2
     boundary_row = 0
     for width in channel_widths[:-1]:
         boundary_row += width
-        ax.axhline(boundary_row - 0.5, color="black", linewidth=0.35, alpha=0.35)
+        ax.axhline(boundary_row - 0.5, color=SVG_GRID, linewidth=0.5, alpha=0.8)
     colorbar = fig.colorbar(image, ax=ax, shrink=0.78)
     colorbar.set_label("activation")
+    style_dark_colorbar(colorbar)
     fig.savefig(path, dpi=dpi, bbox_inches="tight")
     plt.close(fig)
 
 
 def render_gate_heatmap_png(trace: dict[str, Any], path: Path, *, dpi: int = 200) -> None:
     """Render unsigned gate metrics with viridis and quadratic PowerNorm."""
-    plt, power_norm, _two_slope_norm = _import_matplotlib()
+    plt, _linear_segmented_colormap, power_norm, _two_slope_norm = _import_matplotlib()
     matrix = gate_heatmap_matrix(trace)
     max_value = max((value for row in matrix for value in row), default=0.0)
     if max_value <= 1e-12:
@@ -232,6 +259,7 @@ def render_gate_heatmap_png(trace: dict[str, Any], path: Path, *, dpi: int = 200
 
     fig_width = max(8.0, steps * 0.08 + 2.8)
     fig, ax = plt.subplots(figsize=(fig_width, 4.6), constrained_layout=True)
+    style_dark_matplotlib_figure(fig, ax)
     image = ax.imshow(
         matrix,
         aspect="auto",
@@ -248,6 +276,7 @@ def render_gate_heatmap_png(trace: dict[str, Any], path: Path, *, dpi: int = 200
     ax.set_xticks([0, steps - 1], [1, steps])
     colorbar = fig.colorbar(image, ax=ax, shrink=0.78)
     colorbar.set_label("metric value, PowerNorm gamma=2.0")
+    style_dark_colorbar(colorbar)
     fig.savefig(path, dpi=dpi, bbox_inches="tight")
     plt.close(fig)
 
@@ -256,13 +285,14 @@ def render_gate_row_normalized_heatmap_png(
     trace: dict[str, Any], path: Path, *, dpi: int = 200
 ) -> None:
     """Render gate metrics with each row normalized to its own maximum."""
-    plt, power_norm, _two_slope_norm = _import_matplotlib()
+    plt, _linear_segmented_colormap, power_norm, _two_slope_norm = _import_matplotlib()
     matrix = row_normalized_matrix(gate_heatmap_matrix(trace))
     config = trace["config"]
     steps = int(config["steps"])
 
     fig_width = max(8.0, steps * 0.08 + 2.8)
     fig, ax = plt.subplots(figsize=(fig_width, 4.6), constrained_layout=True)
+    style_dark_matplotlib_figure(fig, ax)
     image = ax.imshow(
         matrix,
         aspect="auto",
@@ -280,6 +310,7 @@ def render_gate_row_normalized_heatmap_png(
     ax.set_xticks([0, steps - 1], [1, steps])
     colorbar = fig.colorbar(image, ax=ax, shrink=0.78)
     colorbar.set_label("within-row fraction of max, PowerNorm gamma=2.0")
+    style_dark_colorbar(colorbar)
     fig.savefig(path, dpi=dpi, bbox_inches="tight")
     plt.close(fig)
 
