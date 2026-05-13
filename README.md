@@ -62,8 +62,6 @@ state, not as decorative illustrations.
 
 - **Probe summary figure:** `docs/assets/capsule_continuity.svg` is generated
   from the capsule-continuity probe summary.
-- **Anatomy diagram:** `docs/assets/v9_5ch_anatomy.svg` is generated from the
-  v9 five-channel channel/routing definition.
 - **Trace-derived activation heatmaps:** the neuron and gate SVG/PNG figures
   are generated from deterministic v9 five-channel traces by
   `development/render_publication_2d_visuals.py`.
@@ -73,10 +71,6 @@ state, not as decorative illustrations.
 ### Probe Summary Figure
 
 ![Capsule continuity sweep](docs/assets/capsule_continuity.svg)
-
-### Anatomy Diagram
-
-![v9 five-channel anatomy](docs/assets/v9_5ch_anatomy.svg)
 
 ### Trace-Derived Activation Heatmaps
 
