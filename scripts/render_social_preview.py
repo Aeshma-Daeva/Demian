@@ -116,8 +116,8 @@ def render() -> None:
 
     draw.text((112, 110), "DEMIAN", fill=(29, 43, 45), font=title_font)
     draw.text((116, 220), "Gate-State Causal Propagation", fill=(30, 67, 73), font=subtitle_font)
-    draw.text((116, 292), "Native mechanisms in structured", fill=(68, 77, 79), font=body_font)
-    draw.text((116, 332), "recurrent substrates.", fill=(68, 77, 79), font=body_font)
+    draw.text((116, 292), "Native recurrent substrate", fill=(68, 77, 79), font=body_font)
+    draw.text((116, 332), "from structured recurrence.", fill=(68, 77, 79), font=body_font)
 
     meta = "V9 5CH  /  CAPSULE CONTINUITY  /  DIAGNOSTICS"
     draw.text((116, 407), meta, fill=(85, 99, 101), font=small_font)

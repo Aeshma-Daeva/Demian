@@ -37,7 +37,7 @@ Publication entry points:
 
 Recommended public metadata:
 
-- Description: `Research lab for discovering native mechanisms in structured recurrent substrates.`
+- Description: `Native recurrent substrate program for structured recurrence and gate-state causal propagation.`
 - Topics: `recurrent-neural-networks`, `dynamical-systems`,
   `mechanistic-interpretability`, `evolutionary-search`, `ai-research`
 
@@ -58,7 +58,8 @@ language. It is not AI-generated art.
 
 ## Position
 
-Demian is publishable as an ongoing computational research notebook, not as a finished architecture claim.
+The Demian repository is publishable as an ongoing computational research
+notebook, not as a finished architecture claim.
 
 The strongest value is the experimental lineage and measurement discipline:
 

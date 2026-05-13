@@ -1,6 +1,8 @@
 # Demian
 
-Demian is a research lab for discovering native mechanisms in structured recurrent substrates.
+Demian is the target native recurrent substrate: a custom architecture program
+distilled from structured recurrence, gate-state causality, and substrate
+lineage experiments.
 
 [![Release](https://img.shields.io/github/v/release/Aeshma-Daeva/Demian?include_prereleases&label=release)](https://github.com/Aeshma-Daeva/Demian/releases)
 [![Tests](https://img.shields.io/badge/tests-pytest%20local-2f6f6a)](#environment)
@@ -8,7 +10,12 @@ Demian is a research lab for discovering native mechanisms in structured recurre
 [![Python](https://img.shields.io/badge/python-3.12%2B-315f8f)](pyproject.toml)
 [![Technical Report](https://img.shields.io/badge/technical%20report-GitHub-3b5f7a)](docs/TECHNICAL_REPORT.md)
 
-The project is not aimed at productizing a chatbot, chasing benchmarks, or optimizing for human-facing output quality. The working goal is to study how frozen and semi-adaptive AI systems behave when their own internal state, recurrence, memory, and inter-agent coupling become the substrate of continued evolution, then extract the mechanisms that matter enough to build a custom substrate.
+The surrounding repo is the Native Substrate Research Lab. It is not aimed at
+productizing a chatbot, chasing benchmarks, or optimizing for human-facing
+output quality. The working goal is to study how frozen and semi-adaptive AI
+systems behave when their own internal state, recurrence, memory, and
+inter-agent coupling become the substrate of continued evolution, then extract
+the mechanisms that matter enough to build Demian.
 
 **Strongest current result:** fixed-point surface behavior can hide structured internal channel dynamics, so surface labels alone are not enough to judge a substrate.
 
@@ -18,7 +25,8 @@ Quick links: [Technical Report](docs/TECHNICAL_REPORT.md) | [Reproducibility](do
 
 ## At A Glance
 
-Demian is publishable today as an ongoing research notebook with a clear evidence ledger, not as a finished architecture announcement.
+The repo is publishable today as an ongoing research notebook with a clear
+evidence ledger, not as a finished architecture announcement.
 
 Current public center:
 
