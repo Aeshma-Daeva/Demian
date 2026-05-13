@@ -585,6 +585,7 @@ def main() -> None:
             "v9_5ch_neuron_activations.svg": render_neuron_svg(trace),
             "v9_5ch_neuron_activations_dark.svg": render_neuron_svg(trace),
             "v9_5ch_neuron_activations_solid.svg": render_neuron_svg(trace),
+            "v9_5ch_neuron_activity_overview.svg": render_neuron_svg(trace),
             "v9_5ch_gating_activations.svg": render_gate_svg(trace),
             "v9_5ch_gating_activations_dark.svg": render_gate_svg(trace),
             "v9_5ch_gating_activations_solid.svg": render_gate_svg(trace),
@@ -599,6 +600,7 @@ def main() -> None:
         png_files = {
             "v9_5ch_neuron_heatmap.png": render_neuron_heatmap_png,
             "v9_5ch_neuron_heatmap_solid.png": render_neuron_heatmap_png,
+            "v9_5ch_neuron_activity_overview.png": render_neuron_heatmap_png,
             "v9_5ch_gate_heatmap.png": render_gate_heatmap_png,
             "v9_5ch_gate_heatmap_solid.png": render_gate_heatmap_png,
             "v9_5ch_gate_heatmap_row_normalized.png": render_gate_row_normalized_heatmap_png,

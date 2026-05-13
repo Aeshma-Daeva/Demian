@@ -74,7 +74,7 @@ state, not as decorative illustrations.
 
 ### Trace-Derived Activation Heatmaps
 
-![v9 five-channel neuron activations](docs/assets/v9_5ch_neuron_activations_solid.svg)
+![v9 five-channel neuron activity overview](docs/assets/v9_5ch_neuron_activity_overview.svg)
 
 ![v9 five-channel gating activations](docs/assets/v9_5ch_gating_activations_solid.svg)
 
@@ -90,7 +90,7 @@ near-zero baseline; unsigned gate metrics use `viridis` with
 each metric row is scaled to its own maximum, so it should not be read as a
 cross-metric magnitude comparison.
 
-![v9 five-channel neuron heatmap](docs/assets/v9_5ch_neuron_heatmap_solid.png)
+![v9 five-channel neuron activity overview export](docs/assets/v9_5ch_neuron_activity_overview.png)
 
 ![v9 five-channel gate heatmap](docs/assets/v9_5ch_gate_heatmap_solid.png)
 
