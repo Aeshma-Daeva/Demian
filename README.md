@@ -1,8 +1,20 @@
 # Demian
 
-Demian is an experimental lab for self-referential AI dynamics and architecture extraction.
+Demian is a research lab for discovering native mechanisms in structured recurrent substrates.
+
+[![Release](https://img.shields.io/github/v/release/Aeshma-Daeva/Demian?include_prereleases&label=release)](https://github.com/Aeshma-Daeva/Demian/releases)
+[![Tests](https://img.shields.io/badge/tests-pytest%20local-2f6f6a)](#environment)
+[![License](https://img.shields.io/github/license/Aeshma-Daeva/Demian)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.12%2B-315f8f)](pyproject.toml)
+[![Technical Report](https://img.shields.io/badge/technical%20report-GitHub-3b5f7a)](docs/TECHNICAL_REPORT.md)
 
 The project is not aimed at productizing a chatbot, chasing benchmarks, or optimizing for human-facing output quality. The working goal is to study how frozen and semi-adaptive AI systems behave when their own internal state, recurrence, memory, and inter-agent coupling become the substrate of continued evolution, then extract the mechanisms that matter enough to build a custom substrate.
+
+**Strongest current result:** fixed-point surface behavior can hide structured internal channel dynamics, so surface labels alone are not enough to judge a substrate.
+
+**Current boundary:** v9 five-channel is interesting and worth continuing; it is not yet evidence of global superiority over v8 or other baselines. `Demian v1` is a prototype/design consequence, not a completed empirical result.
+
+Quick links: [Technical Report](docs/TECHNICAL_REPORT.md) | [Reproducibility](docs/REPRODUCIBILITY.md) | [Claims](docs/CLAIMS.md) | [Lineage](docs/RESEARCH_LINEAGE.md) | [Glossary](docs/GLOSSARY.md)
 
 ## At A Glance
 
@@ -11,9 +23,8 @@ Demian is publishable today as an ongoing research notebook with a clear evidenc
 Current public center:
 
 - **Primary line:** v9 five-channel substrate work (`fast`, `slow`, `control`, `message`, `carrier`) and the next named `Demian v1` program.
-- **Strongest cautious claim:** fixed-point surface behavior can hide structured internal channel dynamics, so surface labels alone are not enough to judge a substrate.
 - **Fresh side result:** capsule-continuity probes show that full internal-state resume preserves trajectory continuation while surface-only replay fails in canonical v9 and v9 five-channel.
-- **Main boundary:** v9 five-channel is interesting and worth continuing; it is not yet evidence of global superiority over v8 or other baselines.
+- **Main boundary:** current release-local causal effect remains weak, and archived v10 predecessor evidence is a falsification target rather than a stable finding.
 
 For the complete historical trail from KV-cache transformer probes and Mamba
 recurrence through native substrates, Track B discovery, and Demian v1
@@ -33,14 +44,33 @@ front page is selective; the lineage doc preserves the full path of thought.
 - [docs/RESEARCH_LINEAGE.md](docs/RESEARCH_LINEAGE.md): complete historical
   trail and legacy-mode chronology.
 
-![Capsule continuity sweep](docs/assets/capsule_continuity.svg)
-
 ## Visual Readouts
 
-These 2D figures are generated from deterministic v9 five-channel traces. They
-are meant as inspection surfaces, not decorative illustrations.
+These figures are deterministic code-generated diagnostics, not AI-generated
+art. They are meant as inspection surfaces for traces, probes, and substrate
+state, not as decorative illustrations.
+
+### How These Figures Were Made
+
+- **Probe summary figure:** `docs/assets/capsule_continuity.svg` is generated
+  from the capsule-continuity probe summary.
+- **Anatomy diagram:** `docs/assets/v9_5ch_anatomy.svg` is generated from the
+  v9 five-channel channel/routing definition.
+- **Trace-derived activation heatmaps:** the neuron and gate SVG/PNG figures
+  are generated from deterministic v9 five-channel traces by
+  `development/render_publication_2d_visuals.py`.
+- **Machine-native diagnostic renders:** the machine visual groups are
+  generated from trajectory exports by `development/render_machine_visuals.py`.
+
+### Probe Summary Figure
+
+![Capsule continuity sweep](docs/assets/capsule_continuity.svg)
+
+### Anatomy Diagram
 
 ![v9 five-channel anatomy](docs/assets/v9_5ch_anatomy.svg)
+
+### Trace-Derived Activation Heatmaps
 
 ![v9 five-channel neuron activations](docs/assets/v9_5ch_neuron_activations.svg)
 
@@ -60,6 +90,8 @@ a cross-metric magnitude comparison.
 ![v9 five-channel gate heatmap](docs/assets/v9_5ch_gate_heatmap.png)
 
 ![v9 five-channel row-normalized gate heatmap](docs/assets/v9_5ch_gate_heatmap_row_normalized.png)
+
+### Machine-Native Diagnostic Renders
 
 Machine-native diagnostics are generated from `trajectory_3d.json` exports by
 `development/render_machine_visuals.py`. These prioritize event locality,

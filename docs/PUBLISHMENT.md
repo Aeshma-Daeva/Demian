@@ -33,6 +33,29 @@ Publication entry points:
 - [REPRODUCIBILITY.md](REPRODUCIBILITY.md): compact CPU checks.
 - [RESEARCH_LINEAGE.md](RESEARCH_LINEAGE.md): complete historical trail.
 
+## GitHub Repository Settings
+
+Recommended public metadata:
+
+- Description: `Research lab for discovering native mechanisms in structured recurrent substrates.`
+- Topics: `recurrent-neural-networks`, `dynamical-systems`,
+  `mechanistic-interpretability`, `evolutionary-search`, `ai-research`
+
+Social preview:
+
+1. Generate the deterministic preview asset:
+
+   ```bash
+   ./venv/bin/python scripts/render_social_preview.py
+   ```
+
+2. Confirm `docs/assets/social_preview.png` is `1280x640` and under 1 MB.
+3. Upload it in GitHub repository settings:
+   **Settings -> General -> Social preview -> Edit -> Upload an image**.
+
+The preview is code-generated from the repo's existing scientific visual
+language. It is not AI-generated art.
+
 ## Position
 
 Demian is publishable as an ongoing computational research notebook, not as a finished architecture claim.
