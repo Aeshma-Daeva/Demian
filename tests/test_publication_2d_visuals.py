@@ -35,7 +35,9 @@ def test_publication_visual_renderers_emit_svg_from_trace():
     gate_svg = render_gate_svg(trace)
 
     assert "<svg" in neuron_svg
-    assert "Neuron activations, quadratic color" in neuron_svg
+    assert "Neuron activity: the readable version" in neuron_svg
+    assert "Each channel shows its 4 loudest neurons" in neuron_svg
+    assert "This is an overview, not every neuron" in neuron_svg
     assert "fast step 1 neuron 0" in neuron_svg
     assert "<svg" in gate_svg
     assert "Gating activations, quadratic color" in gate_svg

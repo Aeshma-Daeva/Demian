@@ -78,11 +78,14 @@ state, not as decorative illustrations.
 
 ![v9 five-channel gating activations](docs/assets/v9_5ch_gating_activations_solid.svg)
 
-The neuron and gate heatmaps use quadratic color: normalized magnitude is
-squared before it becomes color intensity. This keeps low-amplitude background
-activity visually quiet while strong activations and gates remain visible.
+The neuron overview is meant to be readable without knowing the model internals:
+read left to right over time, with each channel showing only its four loudest
+neurons. Teal means the neuron pushes up, pink means it pushes down, and dark
+means quiet. This is an overview for humans, not the full dense trace.
+
+The gate heatmaps still use quadratic color intensity for compact comparison.
 Matplotlib PNG variants are also generated for export with the same dark
-near-zero baseline; unsigned gate metrics still use `viridis` with
+near-zero baseline; unsigned gate metrics use `viridis` with
 `PowerNorm(gamma=2.0)`. The row-normalized gate variant is an inspection view:
 each metric row is scaled to its own maximum, so it should not be read as a
 cross-metric magnitude comparison.

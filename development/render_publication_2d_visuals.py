@@ -44,6 +44,7 @@ SVG_BG = "#0d1117"
 SVG_CELL_BG = "#20242b"
 SVG_TEXT = "#f0f6fc"
 SVG_MUTED = "#8b949e"
+SVG_AXIS = "#c9d1d9"
 SVG_GRID = "#30363d"
 SIGNED_POSITIVE = (45, 212, 191)
 SIGNED_NEGATIVE = (251, 113, 133)
@@ -69,6 +70,26 @@ def signed_quadratic_color(value: float, scale: float) -> str:
     base = (32, 36, 43)
     target = SIGNED_POSITIVE if value >= 0 else SIGNED_NEGATIVE
     return rgb_hex(tuple(mix_channel(base[i], target[i], strength) for i in range(3)))
+
+
+def signed_readable_color(value: float, scale: float) -> str:
+    """High-contrast signed color for reader-facing overview SVGs."""
+    if scale <= 1e-12:
+        return SVG_CELL_BG
+    strength = clamp01(abs(value) / scale) ** 0.72
+    base = (32, 36, 43)
+    target = SIGNED_POSITIVE if value >= 0 else SIGNED_NEGATIVE
+    return rgb_hex(tuple(mix_channel(base[i], target[i], strength) for i in range(3)))
+
+
+def percentile_abs_scale(values: list[float], percentile: float) -> float:
+    """Return a robust signed-display scale so one outlier does not mute a figure."""
+    magnitudes = sorted(abs(value) for value in values)
+    if not magnitudes:
+        return 1.0
+    index = min(len(magnitudes) - 1, max(0, math.ceil(len(magnitudes) * percentile) - 1))
+    scale = magnitudes[index]
+    return scale if scale > 1e-12 else 1.0
 
 
 def unsigned_quadratic_color(value: float, scale: float) -> str:
@@ -164,6 +185,32 @@ def row_normalized_matrix(matrix: list[list[float]]) -> list[list[float]]:
     return rows
 
 
+def selected_channel_neurons(trace: dict[str, Any], limit: int) -> dict[str, list[int]]:
+    """Select the most active neuron rows per channel for reader-facing views."""
+    channels: dict[str, list[list[float]]] = trace["channels"]
+    selected: dict[str, list[int]] = {}
+    for name in CHANNELS:
+        channel_rows = channels[name]
+        channel_width = len(channel_rows[0]) if channel_rows else 0
+        scores = []
+        for neuron_index in range(channel_width):
+            score = max((abs(float(step_values[neuron_index])) for step_values in channel_rows), default=0.0)
+            scores.append((score, neuron_index))
+        scores.sort(reverse=True)
+        selected[name] = [neuron_index for _score, neuron_index in scores[:limit]]
+    return selected
+
+
+def neuron_overview_matrix(trace: dict[str, Any], selected: dict[str, list[int]]) -> list[list[float]]:
+    """Return only selected neuron rows, grouped by channel, for readable plots."""
+    channels: dict[str, list[list[float]]] = trace["channels"]
+    rows: list[list[float]] = []
+    for name in CHANNELS:
+        for neuron_index in selected[name]:
+            rows.append([float(step_values[neuron_index]) for step_values in channels[name]])
+    return rows
+
+
 def _import_matplotlib() -> tuple[Any, Any, Any, Any]:
     try:
         mpl_config_dir = Path(tempfile.gettempdir()) / "demian-matplotlib"
@@ -202,21 +249,18 @@ def style_dark_colorbar(colorbar: Any) -> None:
 
 
 def render_neuron_heatmap_png(trace: dict[str, Any], path: Path, *, dpi: int = 200) -> None:
-    """Render signed neuron activations with the SVG palette on a dark canvas."""
+    """Render a reader-facing signed neuron activation overview on a dark canvas."""
     plt, linear_segmented_colormap, _power_norm, two_slope_norm = _import_matplotlib()
-    matrix = neuron_heatmap_matrix(trace)
-    max_abs = max((abs(value) for row in matrix for value in row), default=0.0)
-    if max_abs <= 1e-12:
-        max_abs = 1.0
+    selected = selected_channel_neurons(trace, 4)
+    matrix = neuron_overview_matrix(trace, selected)
+    max_abs = percentile_abs_scale([value for row in matrix for value in row], 0.92)
     norm = two_slope_norm(vmin=-max_abs, vcenter=0.0, vmax=max_abs)
     config = trace["config"]
     steps = int(config["steps"])
-    channel_widths = [
-        len(trace["channels"][name][0]) if trace["channels"][name] else 0 for name in CHANNELS
-    ]
+    channel_widths = [len(selected[name]) for name in CHANNELS]
 
-    fig_height = max(4.8, len(matrix) * 0.075 + 1.9)
-    fig_width = max(8.0, steps * 0.08 + 2.4)
+    fig_height = max(5.0, len(matrix) * 0.18 + 2.7)
+    fig_width = max(9.6, steps * 0.095 + 3.8)
     fig, ax = plt.subplots(figsize=(fig_width, fig_height), constrained_layout=True)
     style_dark_matplotlib_figure(fig, ax)
     cmap = linear_segmented_colormap.from_list(
@@ -229,19 +273,19 @@ def render_neuron_heatmap_png(trace: dict[str, Any], path: Path, *, dpi: int = 2
     for width in channel_widths:
         centers.append(row_offset + (width - 1) / 2 if width else row_offset)
         row_offset += width
-    ax.set_yticks(centers, CHANNELS)
-    ax.set_xlabel("step")
-    ax.set_ylabel("channel")
+    ax.set_yticks(centers, [f"{name}: loudest 4 neurons" for name in CHANNELS])
+    ax.set_xlabel("time step")
+    ax.set_ylabel("channel overview")
     ax.set_title(
-        f"v9 five-channel neuron activations: seed={config['seed']}, hidden={config['hidden_size']}, steps={steps}"
+        "Neuron activity overview: teal pushes up, pink pushes down"
     )
-    ax.set_xticks([0, steps - 1], [1, steps])
+    ax.set_xticks([0, steps // 2, steps - 1], [1, steps // 2 + 1, steps])
     boundary_row = 0
     for width in channel_widths[:-1]:
         boundary_row += width
         ax.axhline(boundary_row - 0.5, color=SVG_GRID, linewidth=0.5, alpha=0.8)
     colorbar = fig.colorbar(image, ax=ax, shrink=0.78)
-    colorbar.set_label("activation")
+    colorbar.set_label("activation strength")
     style_dark_colorbar(colorbar)
     fig.savefig(path, dpi=dpi, bbox_inches="tight")
     plt.close(fig)
@@ -320,56 +364,88 @@ def render_neuron_svg(trace: dict[str, Any]) -> str:
     channels: dict[str, list[list[float]]] = trace["channels"]
     steps = int(config["steps"])
     hidden_size = int(config["hidden_size"])
-    cell = 7
+    visible_neurons = min(4, hidden_size)
+    cell = 11
     gap = 0
-    left = 110
-    top = 104
-    panel_gap = 22
-    label_gap = 18
-    panel_h = hidden_size * cell + (hidden_size - 1) * gap
+    left = 202
+    top = 152
+    panel_gap = 48
+    label_gap = 20
+    panel_h = visible_neurons * cell + (visible_neurons - 1) * gap
     plot_w = steps * cell + (steps - 1) * gap
-    width = left + plot_w + 42
-    height = top + len(CHANNELS) * panel_h + (len(CHANNELS) - 1) * panel_gap + 72
-    max_abs = max(
-        abs(value)
+    width = left + plot_w + 124
+    height = top + len(CHANNELS) * panel_h + (len(CHANNELS) - 1) * panel_gap + 150
+    values = [
+        float(value)
         for rows in channels.values()
         for step_values in rows
         for value in step_values
-    )
+    ]
+    display_abs = percentile_abs_scale(values, 0.82)
+    true_max_abs = max((abs(value) for value in values), default=display_abs)
+    selected_neurons = selected_channel_neurons(trace, visible_neurons)
 
     parts = [
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}" role="img" aria-labelledby="title desc">',
         '<title id="title">v9 five-channel neuron activation trace</title>',
-        '<desc id="desc">Quadratic-color heatmap of per-neuron activations for fast, slow, control, message, and carrier channels.</desc>',
+        '<desc id="desc">Beginner-readable overview of the strongest neuron activations for fast, slow, control, message, and carrier channels. Teal cells are positive activations, pink cells are negative activations, and darker cells are quiet.</desc>',
         f'<rect width="{width}" height="{height}" fill="{SVG_BG}"/>',
-        f'<text x="34" y="42" font-family="Arial, sans-serif" font-size="23" font-weight="700" fill="{SVG_TEXT}">Neuron activations, quadratic color</text>',
-        f'<text x="34" y="70" font-family="Arial, sans-serif" font-size="13" fill="{SVG_MUTED}">v9 five-channel, seed={config["seed"]}, hidden={hidden_size}, steps={steps}; teal=positive, red=negative, intensity=(|x|/max)^2</text>',
+        f'<text x="34" y="42" font-family="Arial, sans-serif" font-size="25" font-weight="700" fill="{SVG_TEXT}">Neuron activity: the readable version</text>',
+        f'<text x="34" y="72" font-family="Arial, sans-serif" font-size="15" fill="{SVG_AXIS}">Each channel shows its 4 loudest neurons. Read left to right as time passes.</text>',
+        f'<text x="34" y="98" font-family="Arial, sans-serif" font-size="15" fill="{SVG_MUTED}">Teal means push up, pink means push down, dark means quiet. Brighter color means stronger activity.</text>',
+        f'<text x="{left}" y="{top - 18}" font-family="Arial, sans-serif" font-size="12" fill="{SVG_MUTED}">step 1</text>',
+        f'<text x="{left + plot_w // 2 - 18}" y="{top - 18}" font-family="Arial, sans-serif" font-size="12" fill="{SVG_MUTED}">step {steps // 2 + 1}</text>',
+        f'<text x="{left + plot_w - 42}" y="{top - 18}" font-family="Arial, sans-serif" font-size="12" fill="{SVG_MUTED}">step {steps}</text>',
     ]
     for channel_index, name in enumerate(CHANNELS):
         y0 = top + channel_index * (panel_h + panel_gap)
         parts.append(
-            f'<rect x="{left}" y="{y0}" width="{plot_w}" height="{panel_h}" fill="{SVG_CELL_BG}"/>'
+            f'<rect x="{left}" y="{y0}" width="{plot_w}" height="{panel_h}" fill="{SVG_CELL_BG}" stroke="{SVG_GRID}" stroke-width="1"/>'
+        )
+        channel_values = [
+            float(step_values[neuron_index])
+            for step_values in channels[name]
+            for neuron_index in selected_neurons[name]
+        ]
+        max_channel = max(channel_values, default=0.0)
+        min_channel = min(channel_values, default=0.0)
+        if abs(max_channel) >= abs(min_channel):
+            summary = f"main signal pushes up to +{max_channel:.1f}"
+        else:
+            summary = f"main signal pushes down to {min_channel:.1f}"
+        parts.append(
+            f'<text x="34" y="{y0 + label_gap}" font-family="Arial, sans-serif" font-size="15" font-weight="700" fill="{SVG_TEXT}">{escape_xml(name)}</text>'
         )
         parts.append(
-            f'<text x="34" y="{y0 + label_gap}" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="{SVG_TEXT}">{escape_xml(name)}</text>'
+            f'<text x="34" y="{y0 + label_gap + 22}" font-family="Arial, sans-serif" font-size="12" fill="{SVG_MUTED}">{escape_xml(summary)}</text>'
         )
+        for tick_step in (0, steps // 2, steps - 1):
+            x = left + tick_step * (cell + gap)
+            parts.append(
+                f'<line x1="{x}" y1="{y0}" x2="{x}" y2="{y0 + panel_h}" stroke="{SVG_GRID}" stroke-width="1" opacity="0.75"/>'
+            )
         for step_index, values in enumerate(channels[name]):
             x = left + step_index * (cell + gap)
-            for neuron_index, value in enumerate(values):
-                y = y0 + neuron_index * (cell + gap)
-                fill = signed_quadratic_color(float(value), max_abs)
+            for row_index, neuron_index in enumerate(selected_neurons[name]):
+                value = values[neuron_index]
+                y = y0 + row_index * (cell + gap)
+                fill = signed_readable_color(float(value), display_abs)
                 parts.append(
                     f'<rect x="{x}" y="{y}" width="{cell}" height="{cell}" fill="{fill}"><title>{escape_xml(name)} step {step_index + 1} neuron {neuron_index}: {float(value):.6f}</title></rect>'
                 )
+        parts.append(
+            f'<text x="{left + plot_w + 14}" y="{y0 + panel_h // 2 + 4}" font-family="Arial, sans-serif" font-size="11" fill="{SVG_MUTED}">top 4</text>'
+        )
     legend_y = height - 38
     parts.extend(
         [
-            f'<rect x="34" y="{legend_y - 10}" width="12" height="12" fill="{signed_quadratic_color(-max_abs, max_abs)}"/>',
-            f'<text x="54" y="{legend_y}" font-family="Arial, sans-serif" font-size="12" fill="{SVG_MUTED}">negative max</text>',
-            f'<rect x="160" y="{legend_y - 10}" width="12" height="12" fill="{signed_quadratic_color(0.0, max_abs)}"/>',
-            f'<text x="180" y="{legend_y}" font-family="Arial, sans-serif" font-size="12" fill="{SVG_MUTED}">near zero</text>',
-            f'<rect x="270" y="{legend_y - 10}" width="12" height="12" fill="{signed_quadratic_color(max_abs, max_abs)}"/>',
-            f'<text x="290" y="{legend_y}" font-family="Arial, sans-serif" font-size="12" fill="{SVG_MUTED}">positive max</text>',
+            f'<rect x="34" y="{legend_y - 44}" width="18" height="18" fill="{signed_readable_color(-display_abs, display_abs)}"/>',
+            f'<text x="62" y="{legend_y - 30}" font-family="Arial, sans-serif" font-size="14" fill="{SVG_AXIS}">pink: pushes down</text>',
+            f'<rect x="224" y="{legend_y - 44}" width="18" height="18" fill="{signed_readable_color(0.0, display_abs)}"/>',
+            f'<text x="252" y="{legend_y - 30}" font-family="Arial, sans-serif" font-size="14" fill="{SVG_AXIS}">dark: quiet</text>',
+            f'<rect x="360" y="{legend_y - 44}" width="18" height="18" fill="{signed_readable_color(display_abs, display_abs)}"/>',
+            f'<text x="388" y="{legend_y - 30}" font-family="Arial, sans-serif" font-size="14" fill="{SVG_AXIS}">teal: pushes up</text>',
+            f'<text x="34" y="{legend_y + 2}" font-family="Arial, sans-serif" font-size="12" fill="{SVG_MUTED}">This is an overview, not every neuron. Full trace: seed={config["seed"]}, hidden={hidden_size}, steps={steps}; display scale +/-{display_abs:.2f}, true max |activation|={true_max_abs:.2f}</text>',
             "</svg>",
         ]
     )
