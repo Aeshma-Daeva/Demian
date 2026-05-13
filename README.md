@@ -74,9 +74,9 @@ state, not as decorative illustrations.
 
 ### Trace-Derived Activation Heatmaps
 
-![v9 five-channel neuron activations](docs/assets/v9_5ch_neuron_activations_dark.svg)
+![v9 five-channel neuron activations](docs/assets/v9_5ch_neuron_activations_solid.svg)
 
-![v9 five-channel gating activations](docs/assets/v9_5ch_gating_activations_dark.svg)
+![v9 five-channel gating activations](docs/assets/v9_5ch_gating_activations_solid.svg)
 
 The neuron and gate heatmaps use quadratic color: normalized magnitude is
 squared before it becomes color intensity. This keeps low-amplitude background
@@ -87,11 +87,11 @@ near-zero baseline; unsigned gate metrics still use `viridis` with
 each metric row is scaled to its own maximum, so it should not be read as a
 cross-metric magnitude comparison.
 
-![v9 five-channel neuron heatmap](docs/assets/v9_5ch_neuron_heatmap.png)
+![v9 five-channel neuron heatmap](docs/assets/v9_5ch_neuron_heatmap_solid.png)
 
-![v9 five-channel gate heatmap](docs/assets/v9_5ch_gate_heatmap.png)
+![v9 five-channel gate heatmap](docs/assets/v9_5ch_gate_heatmap_solid.png)
 
-![v9 five-channel row-normalized gate heatmap](docs/assets/v9_5ch_gate_heatmap_row_normalized.png)
+![v9 five-channel row-normalized gate heatmap](docs/assets/v9_5ch_gate_heatmap_row_normalized_solid.png)
 
 ### Machine-Native Diagnostic Renders
 

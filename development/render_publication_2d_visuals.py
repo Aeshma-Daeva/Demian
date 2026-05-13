@@ -321,7 +321,7 @@ def render_neuron_svg(trace: dict[str, Any]) -> str:
     steps = int(config["steps"])
     hidden_size = int(config["hidden_size"])
     cell = 7
-    gap = 1
+    gap = 0
     left = 110
     top = 104
     panel_gap = 22
@@ -347,6 +347,9 @@ def render_neuron_svg(trace: dict[str, Any]) -> str:
     ]
     for channel_index, name in enumerate(CHANNELS):
         y0 = top + channel_index * (panel_h + panel_gap)
+        parts.append(
+            f'<rect x="{left}" y="{y0}" width="{plot_w}" height="{panel_h}" fill="{SVG_CELL_BG}"/>'
+        )
         parts.append(
             f'<text x="34" y="{y0 + label_gap}" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="{SVG_TEXT}">{escape_xml(name)}</text>'
         )
@@ -378,7 +381,7 @@ def render_gate_svg(trace: dict[str, Any]) -> str:
     gates: dict[str, list[float]] = trace["gates"]
     steps = int(config["steps"])
     cell = 9
-    gap = 2
+    gap = 0
     left = 154
     top = 106
     row_h = 18
@@ -392,6 +395,7 @@ def render_gate_svg(trace: dict[str, Any]) -> str:
         '<title id="title">v9 five-channel gate activation trace</title>',
         '<desc id="desc">Quadratic-color heatmap of route and release gate metrics over time.</desc>',
         f'<rect width="{width}" height="{height}" fill="{SVG_BG}"/>',
+        f'<rect x="{left}" y="{top}" width="{plot_w}" height="{len(GATES) * row_h - 6}" fill="{SVG_CELL_BG}"/>',
         f'<text x="34" y="42" font-family="Arial, sans-serif" font-size="23" font-weight="700" fill="{SVG_TEXT}">Gating activations, quadratic color</text>',
         f'<text x="34" y="70" font-family="Arial, sans-serif" font-size="13" fill="{SVG_MUTED}">v9 five-channel, seed={config["seed"]}, hidden={config["hidden_size"]}, steps={steps}; intensity=(metric/max)^2</text>',
     ]
@@ -504,8 +508,10 @@ def main() -> None:
         files = {
             "v9_5ch_neuron_activations.svg": render_neuron_svg(trace),
             "v9_5ch_neuron_activations_dark.svg": render_neuron_svg(trace),
+            "v9_5ch_neuron_activations_solid.svg": render_neuron_svg(trace),
             "v9_5ch_gating_activations.svg": render_gate_svg(trace),
             "v9_5ch_gating_activations_dark.svg": render_gate_svg(trace),
+            "v9_5ch_gating_activations_solid.svg": render_gate_svg(trace),
             "v9_5ch_anatomy.svg": render_anatomy_svg(),
         }
         for name, svg in files.items():
@@ -516,8 +522,11 @@ def main() -> None:
     if args.formats in {"png", "all"}:
         png_files = {
             "v9_5ch_neuron_heatmap.png": render_neuron_heatmap_png,
+            "v9_5ch_neuron_heatmap_solid.png": render_neuron_heatmap_png,
             "v9_5ch_gate_heatmap.png": render_gate_heatmap_png,
+            "v9_5ch_gate_heatmap_solid.png": render_gate_heatmap_png,
             "v9_5ch_gate_heatmap_row_normalized.png": render_gate_row_normalized_heatmap_png,
+            "v9_5ch_gate_heatmap_row_normalized_solid.png": render_gate_row_normalized_heatmap_png,
         }
         for name, renderer in png_files.items():
             path = out_dir / name
