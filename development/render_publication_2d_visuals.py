@@ -16,6 +16,7 @@ from __future__ import annotations
 import argparse
 import math
 import os
+import shutil
 import sys
 import tempfile
 from pathlib import Path
@@ -516,7 +517,9 @@ def main() -> None:
     if args.formats in {"svg", "all"}:
         files = {
             "v9_5ch_neuron_activations.svg": render_neuron_svg(trace),
+            "v9_5ch_neuron_activations_dark.svg": render_neuron_svg(trace),
             "v9_5ch_gating_activations.svg": render_gate_svg(trace),
+            "v9_5ch_gating_activations_dark.svg": render_gate_svg(trace),
             "v9_5ch_anatomy.svg": render_anatomy_svg(),
         }
         for name, svg in files.items():
@@ -530,10 +533,18 @@ def main() -> None:
             "v9_5ch_gate_heatmap.png": render_gate_heatmap_png,
             "v9_5ch_gate_heatmap_row_normalized.png": render_gate_row_normalized_heatmap_png,
         }
+        readme_aliases = {
+            "v9_5ch_neuron_heatmap.png": "v9_5ch_neuron_heatmap_dark.png",
+            "v9_5ch_gate_heatmap.png": "v9_5ch_gate_heatmap_dark.png",
+            "v9_5ch_gate_heatmap_row_normalized.png": "v9_5ch_gate_heatmap_row_normalized_dark.png",
+        }
         for name, renderer in png_files.items():
             path = out_dir / name
             renderer(trace, path, dpi=args.dpi)
             print(f"saved: {path}")
+            alias = out_dir / readme_aliases[name]
+            shutil.copyfile(path, alias)
+            print(f"saved: {alias}")
 
 
 if __name__ == "__main__":
