@@ -6,9 +6,9 @@ quadratic mapping: normalized magnitude is squared before being mapped to fill
 color. This keeps low-amplitude background activity visually quiet and makes
 strong neuron/gate activations visible without inventing categorical labels.
 
-The script also emits Matplotlib PNG heatmaps. Those are useful for
-publication/export contexts where a real colormap and colorbar are clearer than
-hand-authored SVG cells.
+The script also emits Matplotlib PNG heatmaps using standard colormaps. Those
+are useful for publication/export contexts where a real colormap and colorbar
+are clearer than hand-authored SVG cells.
 """
 
 from __future__ import annotations
@@ -16,7 +16,6 @@ from __future__ import annotations
 import argparse
 import math
 import os
-import shutil
 import sys
 import tempfile
 from pathlib import Path
@@ -42,15 +41,8 @@ GATES = (
 )
 
 SVG_BG = "#0d1117"
-SVG_PANEL = "#161b22"
-SVG_GRID = "#30363d"
 SVG_TEXT = "#f0f6fc"
 SVG_MUTED = "#8b949e"
-SVG_POSITIVE = "#2dd4bf"
-SVG_NEGATIVE = "#fb7185"
-SVG_UNSIGNED = "#60a5fa"
-SVG_WARNING = "#f59e0b"
-SVG_EDGE = "#c9d1d9"
 
 
 def clamp01(value: float) -> float:
@@ -65,28 +57,23 @@ def rgb_hex(rgb: tuple[int, int, int]) -> str:
     return "#{:02x}{:02x}{:02x}".format(*rgb)
 
 
-def hex_rgb(value: str) -> tuple[int, int, int]:
-    value = value.removeprefix("#")
-    return (int(value[0:2], 16), int(value[2:4], 16), int(value[4:6], 16))
-
-
 def signed_quadratic_color(value: float, scale: float) -> str:
     if scale <= 1e-12:
-        return SVG_PANEL
+        return "#f1f2ef"
     strength = clamp01(abs(value) / scale) ** 2
-    base = hex_rgb(SVG_PANEL)
-    positive = hex_rgb(SVG_POSITIVE)
-    negative = hex_rgb(SVG_NEGATIVE)
+    base = (241, 242, 239)
+    positive = (19, 121, 112)
+    negative = (168, 78, 75)
     target = positive if value >= 0 else negative
     return rgb_hex(tuple(mix_channel(base[i], target[i], strength) for i in range(3)))
 
 
 def unsigned_quadratic_color(value: float, scale: float) -> str:
     if scale <= 1e-12:
-        return SVG_PANEL
+        return "#f1f2ef"
     strength = clamp01(value / scale) ** 2
-    base = hex_rgb(SVG_PANEL)
-    target = hex_rgb(SVG_UNSIGNED)
+    base = (241, 242, 239)
+    target = (42, 87, 141)
     return rgb_hex(tuple(mix_channel(base[i], target[i], strength) for i in range(3)))
 
 
@@ -174,7 +161,7 @@ def row_normalized_matrix(matrix: list[list[float]]) -> list[list[float]]:
     return rows
 
 
-def _import_matplotlib() -> tuple[Any, Any, Any, Any]:
+def _import_matplotlib() -> tuple[Any, Any, Any]:
     try:
         mpl_config_dir = Path(tempfile.gettempdir()) / "demian-matplotlib"
         mpl_config_dir.mkdir(parents=True, exist_ok=True)
@@ -184,36 +171,18 @@ def _import_matplotlib() -> tuple[Any, Any, Any, Any]:
 
         matplotlib.use("Agg")
         import matplotlib.pyplot as plt
-        from matplotlib.colors import LinearSegmentedColormap, PowerNorm, TwoSlopeNorm
+        from matplotlib.colors import PowerNorm, TwoSlopeNorm
     except ModuleNotFoundError as exc:
         raise SystemExit(
             "Matplotlib is required for PNG heatmap rendering. "
             "Install project requirements first: ./venv/bin/pip install -r requirements.txt"
         ) from exc
-    return plt, LinearSegmentedColormap, PowerNorm, TwoSlopeNorm
-
-
-def style_dark_matplotlib_figure(fig: Any, ax: Any) -> None:
-    fig.patch.set_facecolor(SVG_BG)
-    ax.set_facecolor(SVG_PANEL)
-    ax.title.set_color(SVG_TEXT)
-    ax.xaxis.label.set_color(SVG_MUTED)
-    ax.yaxis.label.set_color(SVG_MUTED)
-    ax.tick_params(colors=SVG_MUTED)
-    for spine in ax.spines.values():
-        spine.set_color(SVG_GRID)
-
-
-def style_dark_colorbar(colorbar: Any) -> None:
-    colorbar.ax.set_facecolor(SVG_BG)
-    colorbar.outline.set_edgecolor(SVG_GRID)
-    colorbar.ax.yaxis.label.set_color(SVG_MUTED)
-    colorbar.ax.tick_params(colors=SVG_MUTED)
+    return plt, PowerNorm, TwoSlopeNorm
 
 
 def render_neuron_heatmap_png(trace: dict[str, Any], path: Path, *, dpi: int = 200) -> None:
-    """Render signed neuron activations with a dark-centered diverging colormap."""
-    plt, linear_segmented_colormap, _power_norm, two_slope_norm = _import_matplotlib()
+    """Render signed neuron activations with a centered RdBu_r colormap."""
+    plt, _power_norm, two_slope_norm = _import_matplotlib()
     matrix = neuron_heatmap_matrix(trace)
     max_abs = max((abs(value) for row in matrix for value in row), default=0.0)
     if max_abs <= 1e-12:
@@ -228,12 +197,7 @@ def render_neuron_heatmap_png(trace: dict[str, Any], path: Path, *, dpi: int = 2
     fig_height = max(4.8, len(matrix) * 0.075 + 1.9)
     fig_width = max(8.0, steps * 0.08 + 2.4)
     fig, ax = plt.subplots(figsize=(fig_width, fig_height), constrained_layout=True)
-    style_dark_matplotlib_figure(fig, ax)
-    cmap = linear_segmented_colormap.from_list(
-        "demian_dark_signed",
-        [SVG_NEGATIVE, SVG_PANEL, SVG_POSITIVE],
-    )
-    image = ax.imshow(matrix, aspect="auto", interpolation="nearest", cmap=cmap, norm=norm)
+    image = ax.imshow(matrix, aspect="auto", interpolation="nearest", cmap="RdBu_r", norm=norm)
     centers: list[float] = []
     row_offset = 0
     for width in channel_widths:
@@ -249,17 +213,16 @@ def render_neuron_heatmap_png(trace: dict[str, Any], path: Path, *, dpi: int = 2
     boundary_row = 0
     for width in channel_widths[:-1]:
         boundary_row += width
-        ax.axhline(boundary_row - 0.5, color=SVG_GRID, linewidth=0.5, alpha=0.9)
+        ax.axhline(boundary_row - 0.5, color="black", linewidth=0.35, alpha=0.35)
     colorbar = fig.colorbar(image, ax=ax, shrink=0.78)
     colorbar.set_label("activation")
-    style_dark_colorbar(colorbar)
     fig.savefig(path, dpi=dpi, bbox_inches="tight")
     plt.close(fig)
 
 
 def render_gate_heatmap_png(trace: dict[str, Any], path: Path, *, dpi: int = 200) -> None:
     """Render unsigned gate metrics with viridis and quadratic PowerNorm."""
-    plt, _linear_segmented_colormap, power_norm, _two_slope_norm = _import_matplotlib()
+    plt, power_norm, _two_slope_norm = _import_matplotlib()
     matrix = gate_heatmap_matrix(trace)
     max_value = max((value for row in matrix for value in row), default=0.0)
     if max_value <= 1e-12:
@@ -269,7 +232,6 @@ def render_gate_heatmap_png(trace: dict[str, Any], path: Path, *, dpi: int = 200
 
     fig_width = max(8.0, steps * 0.08 + 2.8)
     fig, ax = plt.subplots(figsize=(fig_width, 4.6), constrained_layout=True)
-    style_dark_matplotlib_figure(fig, ax)
     image = ax.imshow(
         matrix,
         aspect="auto",
@@ -286,7 +248,6 @@ def render_gate_heatmap_png(trace: dict[str, Any], path: Path, *, dpi: int = 200
     ax.set_xticks([0, steps - 1], [1, steps])
     colorbar = fig.colorbar(image, ax=ax, shrink=0.78)
     colorbar.set_label("metric value, PowerNorm gamma=2.0")
-    style_dark_colorbar(colorbar)
     fig.savefig(path, dpi=dpi, bbox_inches="tight")
     plt.close(fig)
 
@@ -295,14 +256,13 @@ def render_gate_row_normalized_heatmap_png(
     trace: dict[str, Any], path: Path, *, dpi: int = 200
 ) -> None:
     """Render gate metrics with each row normalized to its own maximum."""
-    plt, _linear_segmented_colormap, power_norm, _two_slope_norm = _import_matplotlib()
+    plt, power_norm, _two_slope_norm = _import_matplotlib()
     matrix = row_normalized_matrix(gate_heatmap_matrix(trace))
     config = trace["config"]
     steps = int(config["steps"])
 
     fig_width = max(8.0, steps * 0.08 + 2.8)
     fig, ax = plt.subplots(figsize=(fig_width, 4.6), constrained_layout=True)
-    style_dark_matplotlib_figure(fig, ax)
     image = ax.imshow(
         matrix,
         aspect="auto",
@@ -320,7 +280,6 @@ def render_gate_row_normalized_heatmap_png(
     ax.set_xticks([0, steps - 1], [1, steps])
     colorbar = fig.colorbar(image, ax=ax, shrink=0.78)
     colorbar.set_label("within-row fraction of max, PowerNorm gamma=2.0")
-    style_dark_colorbar(colorbar)
     fig.savefig(path, dpi=dpi, bbox_inches="tight")
     plt.close(fig)
 
@@ -353,13 +312,10 @@ def render_neuron_svg(trace: dict[str, Any]) -> str:
         '<desc id="desc">Quadratic-color heatmap of per-neuron activations for fast, slow, control, message, and carrier channels.</desc>',
         f'<rect width="{width}" height="{height}" fill="{SVG_BG}"/>',
         f'<text x="34" y="42" font-family="Arial, sans-serif" font-size="23" font-weight="700" fill="{SVG_TEXT}">Neuron activations, quadratic color</text>',
-        f'<text x="34" y="70" font-family="Arial, sans-serif" font-size="13" fill="{SVG_MUTED}">v9 five-channel, seed={config["seed"]}, hidden={hidden_size}, steps={steps}; cyan=positive, rose=negative, intensity=(|x|/max)^2</text>',
+        f'<text x="34" y="70" font-family="Arial, sans-serif" font-size="13" fill="{SVG_MUTED}">v9 five-channel, seed={config["seed"]}, hidden={hidden_size}, steps={steps}; teal=positive, red=negative, intensity=(|x|/max)^2</text>',
     ]
     for channel_index, name in enumerate(CHANNELS):
         y0 = top + channel_index * (panel_h + panel_gap)
-        parts.append(
-            f'<rect x="{left - 6}" y="{y0 - 6}" width="{plot_w + 12}" height="{panel_h + 12}" rx="3" fill="{SVG_PANEL}" stroke="{SVG_GRID}" stroke-width="1"/>'
-        )
         parts.append(
             f'<text x="34" y="{y0 + label_gap}" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="{SVG_TEXT}">{escape_xml(name)}</text>'
         )
@@ -405,7 +361,6 @@ def render_gate_svg(trace: dict[str, Any]) -> str:
         '<title id="title">v9 five-channel gate activation trace</title>',
         '<desc id="desc">Quadratic-color heatmap of route and release gate metrics over time.</desc>',
         f'<rect width="{width}" height="{height}" fill="{SVG_BG}"/>',
-        f'<rect x="{left - 6}" y="{top - 8}" width="{plot_w + 12}" height="{len(GATES) * row_h + 4}" rx="3" fill="{SVG_PANEL}" stroke="{SVG_GRID}" stroke-width="1"/>',
         f'<text x="34" y="42" font-family="Arial, sans-serif" font-size="23" font-weight="700" fill="{SVG_TEXT}">Gating activations, quadratic color</text>',
         f'<text x="34" y="70" font-family="Arial, sans-serif" font-size="13" fill="{SVG_MUTED}">v9 five-channel, seed={config["seed"]}, hidden={config["hidden_size"]}, steps={steps}; intensity=(metric/max)^2</text>',
     ]
@@ -440,11 +395,11 @@ def render_anatomy_svg() -> str:
     width = 920
     height = 420
     nodes = {
-        "fast": (178, 188, SVG_POSITIVE),
-        "message": (352, 120, SVG_UNSIGNED),
-        "carrier": (552, 120, "#a78bfa"),
-        "slow": (724, 188, SVG_NEGATIVE),
-        "control": (452, 286, SVG_WARNING),
+        "fast": (178, 188, "#137970"),
+        "message": (352, 120, "#2a578d"),
+        "carrier": (552, 120, "#6d5c9c"),
+        "slow": (724, 188, "#a84e4b"),
+        "control": (452, 286, "#8a6a23"),
     }
     edges = [
         ("fast", "message", 0.25),
@@ -459,10 +414,10 @@ def render_anatomy_svg() -> str:
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}" role="img" aria-labelledby="title desc">',
         '<title id="title">v9 five-channel anatomy</title>',
         '<desc id="desc">2D routing diagram for fast, slow, control, message, and carrier channels with quadratic edge opacity.</desc>',
-        f'<rect width="{width}" height="{height}" fill="{SVG_BG}"/>',
-        f'<defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="{SVG_EDGE}"/></marker></defs>',
-        f'<text x="42" y="54" font-family="Arial, sans-serif" font-size="24" font-weight="700" fill="{SVG_TEXT}">v9 five-channel anatomy</text>',
-        f'<text x="42" y="84" font-family="Arial, sans-serif" font-size="13" fill="{SVG_MUTED}">routing scaffold for Demian v1 work; edge opacity uses squared route scale</text>',
+        f'<rect width="{width}" height="{height}" fill="#f7f7f4"/>',
+        '<defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#33383d"/></marker></defs>',
+        '<text x="42" y="54" font-family="Arial, sans-serif" font-size="24" font-weight="700" fill="#202124">v9 five-channel anatomy</text>',
+        '<text x="42" y="84" font-family="Arial, sans-serif" font-size="13" fill="#4c535a">routing scaffold for Demian v1 work; edge opacity uses squared route scale</text>',
     ]
     max_weight = max(weight for _src, _dst, weight in edges)
     for src, dst, weight in edges:
@@ -471,7 +426,7 @@ def render_anatomy_svg() -> str:
         opacity = 0.16 + 0.78 * (weight / max_weight) ** 2
         width_px = 1.5 + 5.0 * (weight / max_weight) ** 2
         parts.append(
-            f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="{SVG_EDGE}" stroke-width="{width_px:.2f}" opacity="{opacity:.3f}" marker-end="url(#arrow)"><title>{src} to {dst}: scale {weight}</title></line>'
+            f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="#33383d" stroke-width="{width_px:.2f}" opacity="{opacity:.3f}" marker-end="url(#arrow)"><title>{src} to {dst}: scale {weight}</title></line>'
         )
     for name, (x, y, color) in nodes.items():
         parts.extend(
@@ -482,7 +437,7 @@ def render_anatomy_svg() -> str:
         )
     parts.extend(
         [
-            f'<text x="42" y="368" font-family="Arial, sans-serif" font-size="12" fill="{SVG_MUTED}">The visual is an anatomy map, not a performance claim. It shows explicit state owners and route directions used by the current v9 five-channel probe.</text>',
+            '<text x="42" y="368" font-family="Arial, sans-serif" font-size="12" fill="#4c535a">The visual is an anatomy map, not a performance claim. It shows explicit state owners and route directions used by the current v9 five-channel probe.</text>',
             "</svg>",
         ]
     )
@@ -533,18 +488,10 @@ def main() -> None:
             "v9_5ch_gate_heatmap.png": render_gate_heatmap_png,
             "v9_5ch_gate_heatmap_row_normalized.png": render_gate_row_normalized_heatmap_png,
         }
-        readme_aliases = {
-            "v9_5ch_neuron_heatmap.png": "v9_5ch_neuron_heatmap_dark.png",
-            "v9_5ch_gate_heatmap.png": "v9_5ch_gate_heatmap_dark.png",
-            "v9_5ch_gate_heatmap_row_normalized.png": "v9_5ch_gate_heatmap_row_normalized_dark.png",
-        }
         for name, renderer in png_files.items():
             path = out_dir / name
             renderer(trace, path, dpi=args.dpi)
             print(f"saved: {path}")
-            alias = out_dir / readme_aliases[name]
-            shutil.copyfile(path, alias)
-            print(f"saved: {alias}")
 
 
 if __name__ == "__main__":
