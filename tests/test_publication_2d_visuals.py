@@ -11,6 +11,7 @@ from development.render_publication_2d_visuals import (
     render_neuron_heatmap_png,
     render_neuron_svg,
     row_normalized_matrix,
+    scientific_sequential_red_colormap,
     signed_readable_color,
     signed_quadratic_color,
     trace_v9_five_channel,
@@ -25,9 +26,22 @@ def test_quadratic_color_maps_midpoint_to_quiet_intensity():
 
     assert low == "#20242b"
     assert mid not in {low, high}
-    assert high == "#60a5fa"
+    assert high == "#ffadad"
     assert signed_quadratic_color(-1.0, 1.0) == "#fb7185"
     assert signed_quadratic_color(1.0, 1.0) == "#2dd4bf"
+
+
+def test_unsigned_scientific_sequential_palette_runs_dark_to_red():
+    pytest.importorskip("matplotlib")
+    colormap = scientific_sequential_red_colormap()
+
+    low = tuple(round(channel * 255) for channel in colormap(0.0)[:3])
+    high = tuple(round(channel * 255) for channel in colormap(1.0)[:3])
+
+    assert low == (32, 36, 43)
+    assert high == (255, 173, 173)
+    assert high[0] > high[1] > low[1]
+    assert high[0] > high[2] > low[2]
 
 
 def test_signed_readable_color_uses_berlin_scientific_palette():
@@ -53,6 +67,7 @@ def test_publication_visual_renderers_emit_svg_from_trace():
     assert "fast step 1 neuron 0" in neuron_svg
     assert "<svg" in gate_svg
     assert "Gating activations, quadratic color" in gate_svg
+    assert "red means high unsigned intensity" in gate_svg
     assert "release open step 1" in gate_svg
 
 

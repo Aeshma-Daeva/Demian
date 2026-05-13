@@ -1,5 +1,14 @@
 {
   "input": "data/substrate_lab/v9_release_gate_trajectory_3d_seed_sweep_20260511/trajectory_3d.json",
+  "line_colors": [
+    "#ffadad",
+    "#9eb0ff",
+    "#ffd166",
+    "#6ee7b7",
+    "#f4a261",
+    "#c4b5fd",
+    "#fca5a5"
+  ],
   "metrics": [
     "route_metrics.release_pressure_mean",
     "route_metrics.release_open_mean",
@@ -7,6 +16,7 @@
     "residual_delta",
     "route_metrics.carrier_residual_norm"
   ],
+  "palette_policy": "dark_background_categorical_lines",
   "run_filter": "all",
   "seed": "all",
   "selected_run": [

@@ -1,4 +1,5 @@
 {
+  "colormap_family": "dark_to_red_sequential",
   "input": "data/substrate_lab/v9_5ch_evo_trajectory_3d_20260509_full/trajectory_3d.json",
   "metrics": [
     "residual_delta",
@@ -11,6 +12,7 @@
     "route_metrics.carrier_residual_norm"
   ],
   "normalization": "row_abs_max",
+  "palette_policy": "unsigned magnitude uses a dark-to-red scientific sequential palette",
   "run_filter": "all",
   "seed": "all",
   "selected_run": [

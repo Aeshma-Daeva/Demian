@@ -1,5 +1,7 @@
 {
+  "colormap_family": "dark_to_red_sequential",
   "input": "data/substrate_lab/v10_0_frozen_evolution_island_1_trajectory_3d_20260511/trajectory_3d.json",
+  "palette_policy": "unsigned magnitude uses a dark-to-red scientific sequential palette",
   "rows": 4,
   "run_filter": "all",
   "seed": "all",

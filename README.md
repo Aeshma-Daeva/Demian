@@ -86,8 +86,10 @@ the full dense trace.
 
 The gate heatmaps still use quadratic color intensity for compact comparison.
 Matplotlib PNG variants are also generated for export with the same dark
-near-zero baseline; unsigned gate metrics use `viridis` with
-`PowerNorm(gamma=2.0)`. The row-normalized gate variant is an inspection view:
+near-zero baseline. Unsigned magnitude and intensity metrics use a dark-to-red
+scientific sequential palette with `PowerNorm(gamma=2.0)`, while signed or
+centered data keeps a red/blue diverging palette with an explicit midpoint. The
+row-normalized gate variant is an inspection view:
 each metric row is scaled to its own maximum, so it should not be read as a
 cross-metric magnitude comparison.
 

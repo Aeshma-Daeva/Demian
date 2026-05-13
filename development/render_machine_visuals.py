@@ -18,6 +18,24 @@ import numpy as np
 DEFAULT_INPUT = Path("data/substrate_lab/v9_release_gate_trajectory_3d_20260509/trajectory_3d.json")
 DEFAULT_OUT_DIR = Path("docs/assets/machine_visuals")
 PNG_MAGIC = b"\x89PNG\r\n\x1a\n"
+DARK_BG = "#0d1117"
+DARK_PANEL = "#20242b"
+DARK_TEXT = "#f0f6fc"
+DARK_MUTED = "#8b949e"
+DARK_GRID = "#30363d"
+UNSIGNED_SEQUENTIAL_COLORMAP = "demian_berlin_red_sequential"
+SIGNED_DIVERGING_COLORMAP = "berlin_r"
+UNSIGNED_PALETTE_POLICY = "unsigned magnitude uses a dark-to-red scientific sequential palette"
+DIVERGING_PALETTE_POLICY = "signed or centered data uses Berlin red-blue diverging colors with an explicit midpoint"
+CATEGORICAL_LINE_COLORS = (
+    "#ffadad",
+    "#9eb0ff",
+    "#ffd166",
+    "#6ee7b7",
+    "#f4a261",
+    "#c4b5fd",
+    "#fca5a5",
+)
 
 CORE_DELTA_METRICS = (
     "residual_delta",
@@ -165,7 +183,7 @@ def run_summary(rows: list[dict[str, Any]], events: list[dict[str, Any]], *, win
         "perturb_scale": first.get("perturb_scale"),
         "perturb_family": first.get("perturb_family"),
         "motif_index": first.get("motif_index"),
-        "release_duty_fraction": float(np.mean(release_strength > 1e-12)) if release_strength.size else 0.0,
+        "release_duty_fraction": float(np.mean(release_open > 1e-12)) if release_open.size else 0.0,
         "release_strength_max": float(np.max(release_strength)) if release_strength.size else 0.0,
         "release_pressure_max": pressure_max,
         "carrier_residual_final": float(carrier_residual[-1]) if carrier_residual.size else 0.0,
@@ -294,7 +312,7 @@ def collect_event_windows(
     return windows
 
 
-def _import_matplotlib() -> tuple[Any, Any, Any]:
+def _import_matplotlib() -> tuple[Any, Any, Any, Any, Any]:
     mpl_config_dir = Path(tempfile.gettempdir()) / "demian-matplotlib"
     mpl_config_dir.mkdir(parents=True, exist_ok=True)
     os.environ.setdefault("MPLCONFIGDIR", str(mpl_config_dir))
@@ -302,9 +320,49 @@ def _import_matplotlib() -> tuple[Any, Any, Any]:
 
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
-    from matplotlib.colors import PowerNorm
+    from matplotlib.colors import LinearSegmentedColormap, PowerNorm, TwoSlopeNorm
 
-    return plt, PowerNorm, matplotlib
+    return plt, PowerNorm, LinearSegmentedColormap, TwoSlopeNorm, matplotlib
+
+
+def unsigned_scientific_colormap(linear_segmented_colormap: Any) -> Any:
+    """Return the dark-to-red sequential map used for unsigned diagnostics."""
+    low = tuple(channel / 255.0 for channel in (32, 36, 43))
+    high = tuple(channel / 255.0 for channel in (255, 173, 173))
+    return linear_segmented_colormap.from_list(UNSIGNED_SEQUENTIAL_COLORMAP, [low, high])
+
+
+def signed_scientific_colormap(linear_segmented_colormap: Any) -> Any:
+    """Return Berlin diverging colors, with a local fallback for older Matplotlib."""
+    from matplotlib import colormaps
+
+    try:
+        return colormaps[SIGNED_DIVERGING_COLORMAP]
+    except KeyError:
+        return linear_segmented_colormap.from_list(
+            SIGNED_DIVERGING_COLORMAP,
+            ["#ffadad", "#180c0a", "#9eb0ff"],
+        )
+
+
+def style_dark_figure(fig: Any, axes: Any) -> None:
+    fig.patch.set_facecolor(DARK_BG)
+    for ax in np.atleast_1d(axes).flat:
+        ax.set_facecolor(DARK_PANEL)
+        ax.title.set_color(DARK_TEXT)
+        ax.xaxis.label.set_color(DARK_MUTED)
+        ax.yaxis.label.set_color(DARK_MUTED)
+        ax.tick_params(colors=DARK_MUTED)
+        for spine in ax.spines.values():
+            spine.set_color(DARK_GRID)
+        ax.grid(color=DARK_GRID, alpha=0.25, linewidth=0.5)
+
+
+def style_dark_colorbar(colorbar: Any) -> None:
+    colorbar.ax.set_facecolor(DARK_BG)
+    colorbar.outline.set_edgecolor(DARK_GRID)
+    colorbar.ax.yaxis.label.set_color(DARK_MUTED)
+    colorbar.ax.tick_params(colors=DARK_MUTED)
 
 
 def write_metadata(path: Path, metadata: dict[str, Any]) -> None:
@@ -318,7 +376,7 @@ def save_skipped(path: Path, reason: str, context: dict[str, Any]) -> None:
 
 def write_comparison_csv(path: Path, rows: list[dict[str, Any]]) -> None:
     with path.open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=COMPARISON_FIELDS)
+        writer = csv.DictWriter(handle, fieldnames=COMPARISON_FIELDS, lineterminator="\n")
         writer.writeheader()
         for row in rows:
             writer.writerow({field: row.get(field) for field in COMPARISON_FIELDS})
@@ -336,25 +394,47 @@ def render_event_aligned_release_windows(
     metric_paths = available_metrics(rows, EVENT_METRICS)
     windows = collect_event_windows(rows, events, metric_paths, window)
     if not windows:
-        save_skipped(path, "No usable perturbation or pressure-peak event windows.", context)
+        save_skipped(
+            path,
+            "No usable perturbation or pressure-peak event windows.",
+            {
+                "palette_policy": "dark_background_categorical_lines",
+                "line_colors": list(CATEGORICAL_LINE_COLORS),
+                **context,
+            },
+        )
         return
-    plt, _power_norm, _matplotlib = _import_matplotlib()
+    plt, _power_norm, _linear_segmented_colormap, _two_slope_norm, _matplotlib = _import_matplotlib()
     offsets = np.arange(-window, window + 1)
     fig, ax = plt.subplots(figsize=(10.0, 5.2), constrained_layout=True)
-    for metric_path, matrix in windows.items():
+    style_dark_figure(fig, ax)
+    for index, (metric_path, matrix) in enumerate(windows.items()):
         mean = matrix.mean(axis=0)
         max_abs = float(np.max(np.abs(mean)))
         if max_abs > 1e-12:
             mean = mean / max_abs
-        ax.plot(offsets, mean, label=metric_path.replace("route_metrics.", ""))
-    ax.axvline(0, color="black", linewidth=0.8, alpha=0.55)
+        color = CATEGORICAL_LINE_COLORS[index % len(CATEGORICAL_LINE_COLORS)]
+        ax.plot(offsets, mean, color=color, linewidth=1.6, label=metric_path.replace("route_metrics.", ""))
+    ax.axvline(0, color=DARK_TEXT, linewidth=0.8, alpha=0.62)
     ax.set_title("Event-aligned release windows")
     ax.set_xlabel("step offset")
     ax.set_ylabel("mean, normalized per metric")
-    ax.legend(loc="best", fontsize=8)
+    legend = ax.legend(loc="best", fontsize=8, facecolor=DARK_PANEL, edgecolor=DARK_GRID)
+    for text in legend.get_texts():
+        text.set_color(DARK_TEXT)
     fig.savefig(path, dpi=dpi, bbox_inches="tight")
     plt.close(fig)
-    write_metadata(path, {"status": "rendered", "window": window, "metrics": list(windows), **context})
+    write_metadata(
+        path,
+        {
+            "status": "rendered",
+            "window": window,
+            "metrics": list(windows),
+            "palette_policy": "dark_background_categorical_lines",
+            "line_colors": list(CATEGORICAL_LINE_COLORS),
+            **context,
+        },
+    )
 
 
 def render_release_variant_comparison(
@@ -397,13 +477,22 @@ def render_release_variant_comparison(
         row_scaled.append(row / max_value if max_value > 1e-12 else row)
     display = np.asarray(row_scaled)
 
-    plt, _power_norm, _matplotlib = _import_matplotlib()
+    plt, _power_norm, linear_segmented_colormap, _two_slope_norm, _matplotlib = _import_matplotlib()
     fig, ax = plt.subplots(figsize=(max(8.5, len(variants) * 1.1), 4.8), constrained_layout=True)
-    image = ax.imshow(display, aspect="auto", interpolation="nearest", cmap="viridis", vmin=0.0, vmax=1.0)
+    style_dark_figure(fig, ax)
+    image = ax.imshow(
+        display,
+        aspect="auto",
+        interpolation="nearest",
+        cmap=unsigned_scientific_colormap(linear_segmented_colormap),
+        vmin=0.0,
+        vmax=1.0,
+    )
     ax.set_title("Release variant comparison, mean over seeds and perturb scales")
     ax.set_xticks(range(len(variants)), variants, rotation=35, ha="right")
     ax.set_yticks(range(len(metrics)), metrics)
-    fig.colorbar(image, ax=ax, shrink=0.78, label="row-scaled mean")
+    colorbar = fig.colorbar(image, ax=ax, shrink=0.78, label="row-scaled mean")
+    style_dark_colorbar(colorbar)
     fig.savefig(path, dpi=dpi, bbox_inches="tight")
     plt.close(fig)
     write_metadata(
@@ -413,6 +502,8 @@ def render_release_variant_comparison(
             "metrics": list(metrics),
             "variants": variants,
             "normalization": "row_scaled_mean_over_perturbed_runs",
+            "palette_policy": UNSIGNED_PALETTE_POLICY,
+            "colormap_family": "dark_to_red_sequential",
             "csv": str(csv_path),
             **context,
         },
@@ -425,22 +516,34 @@ def render_state_delta_heatmap(rows: list[dict[str, Any]], path: Path, context: 
         save_skipped(path, "No delta metrics found.", context)
         return
     matrix = row_scaled_matrix(rows, metric_paths)
-    plt, power_norm, _matplotlib = _import_matplotlib()
+    plt, power_norm, linear_segmented_colormap, _two_slope_norm, _matplotlib = _import_matplotlib()
     fig, ax = plt.subplots(figsize=(10.0, 4.8), constrained_layout=True)
+    style_dark_figure(fig, ax)
     image = ax.imshow(
         np.abs(matrix),
         aspect="auto",
         interpolation="nearest",
-        cmap="magma",
+        cmap=unsigned_scientific_colormap(linear_segmented_colormap),
         norm=power_norm(gamma=0.7, vmin=0.0, vmax=1.0),
     )
     ax.set_title("State delta heatmap, row-scaled")
     ax.set_xlabel("step")
     ax.set_yticks(range(len(metric_paths)), [metric.replace("route_metrics.", "") for metric in metric_paths])
-    fig.colorbar(image, ax=ax, shrink=0.78, label="within-row absolute fraction")
+    colorbar = fig.colorbar(image, ax=ax, shrink=0.78, label="within-row absolute fraction")
+    style_dark_colorbar(colorbar)
     fig.savefig(path, dpi=dpi, bbox_inches="tight")
     plt.close(fig)
-    write_metadata(path, {"status": "rendered", "metrics": metric_paths, "normalization": "row_abs_max", **context})
+    write_metadata(
+        path,
+        {
+            "status": "rendered",
+            "metrics": metric_paths,
+            "normalization": "row_abs_max",
+            "palette_policy": UNSIGNED_PALETTE_POLICY,
+            "colormap_family": "dark_to_red_sequential",
+            **context,
+        },
+    )
 
 
 def render_recurrence_distance(rows: list[dict[str, Any]], path: Path, context: dict[str, Any], *, dpi: int) -> None:
@@ -449,16 +552,32 @@ def render_recurrence_distance(rows: list[dict[str, Any]], path: Path, context: 
         save_skipped(path, "Need at least two steps and one metric for recurrence.", context)
         return
     matrix = recurrence_matrix(rows, metric_paths)
-    plt, _power_norm, _matplotlib = _import_matplotlib()
+    plt, _power_norm, linear_segmented_colormap, _two_slope_norm, _matplotlib = _import_matplotlib()
     fig, ax = plt.subplots(figsize=(6.2, 5.4), constrained_layout=True)
-    image = ax.imshow(matrix, aspect="equal", interpolation="nearest", cmap="viridis")
+    style_dark_figure(fig, ax)
+    image = ax.imshow(
+        matrix,
+        aspect="equal",
+        interpolation="nearest",
+        cmap=unsigned_scientific_colormap(linear_segmented_colormap),
+    )
     ax.set_title("Recurrence distance")
     ax.set_xlabel("step")
     ax.set_ylabel("step")
-    fig.colorbar(image, ax=ax, shrink=0.78, label="normalized metric distance")
+    colorbar = fig.colorbar(image, ax=ax, shrink=0.78, label="normalized metric distance")
+    style_dark_colorbar(colorbar)
     fig.savefig(path, dpi=dpi, bbox_inches="tight")
     plt.close(fig)
-    write_metadata(path, {"status": "rendered", "metrics": metric_paths, **context})
+    write_metadata(
+        path,
+        {
+            "status": "rendered",
+            "metrics": metric_paths,
+            "palette_policy": UNSIGNED_PALETTE_POLICY,
+            "colormap_family": "dark_to_red_sequential",
+            **context,
+        },
+    )
 
 
 def render_channel_separation_covariance(
@@ -482,17 +601,34 @@ def render_channel_separation_covariance(
         return
     matrix = np.column_stack([metric_series(rows, metric) for metric in metric_paths])
     corr = correlation_matrix(matrix)
-    plt, _power_norm, _matplotlib = _import_matplotlib()
+    plt, _power_norm, _linear_segmented_colormap, two_slope_norm, _matplotlib = _import_matplotlib()
     fig, ax = plt.subplots(figsize=(7.2, 6.4), constrained_layout=True)
-    image = ax.imshow(corr, vmin=-1.0, vmax=1.0, cmap="RdBu_r", interpolation="nearest")
+    style_dark_figure(fig, ax)
+    image = ax.imshow(
+        corr,
+        cmap=signed_scientific_colormap(_linear_segmented_colormap),
+        norm=two_slope_norm(vmin=-1.0, vcenter=0.0, vmax=1.0),
+        interpolation="nearest",
+    )
     labels = [metric.replace("route_metrics.", "") for metric in metric_paths]
     ax.set_xticks(range(len(labels)), labels, rotation=45, ha="right")
     ax.set_yticks(range(len(labels)), labels)
     ax.set_title("Channel separation correlation")
-    fig.colorbar(image, ax=ax, shrink=0.78, label="Pearson r")
+    colorbar = fig.colorbar(image, ax=ax, shrink=0.78, label="Pearson r")
+    style_dark_colorbar(colorbar)
     fig.savefig(path, dpi=dpi, bbox_inches="tight")
     plt.close(fig)
-    write_metadata(path, {"status": "rendered", "metrics": metric_paths, **context})
+    write_metadata(
+        path,
+        {
+            "status": "rendered",
+            "metrics": metric_paths,
+            "palette_policy": DIVERGING_PALETTE_POLICY,
+            "colormap_family": "berlin_red_blue_diverging",
+            "colormap_midpoint": 0.0,
+            **context,
+        },
+    )
 
 
 def summary_metric_rows(payload: dict[str, Any]) -> list[dict[str, Any]]:
@@ -551,16 +687,32 @@ def render_sweep_surface(payload: dict[str, Any], path: Path, context: dict[str,
         ],
         dtype=float,
     )
-    plt, _power_norm, _matplotlib = _import_matplotlib()
+    plt, _power_norm, linear_segmented_colormap, _two_slope_norm, _matplotlib = _import_matplotlib()
     fig, ax = plt.subplots(figsize=(max(7.0, len(usable) * 0.45), 3.8), constrained_layout=True)
-    image = ax.imshow(matrix, aspect="auto", interpolation="nearest", cmap="viridis")
+    style_dark_figure(fig, ax)
+    image = ax.imshow(
+        matrix,
+        aspect="auto",
+        interpolation="nearest",
+        cmap=unsigned_scientific_colormap(linear_segmented_colormap),
+    )
     ax.set_title("Release versus geometry summary surface")
     ax.set_yticks(range(3), ["release duty", "release effect", "phase/coherence"])
     ax.set_xticks(range(len(usable)), [str(row.get("candidate_id", row.get("substrate", idx))) for idx, row in enumerate(usable)], rotation=45, ha="right")
-    fig.colorbar(image, ax=ax, shrink=0.78)
+    colorbar = fig.colorbar(image, ax=ax, shrink=0.78)
+    style_dark_colorbar(colorbar)
     fig.savefig(path, dpi=dpi, bbox_inches="tight")
     plt.close(fig)
-    write_metadata(path, {"status": "rendered", "rows": len(usable), **context})
+    write_metadata(
+        path,
+        {
+            "status": "rendered",
+            "rows": len(usable),
+            "palette_policy": UNSIGNED_PALETTE_POLICY,
+            "colormap_family": "dark_to_red_sequential",
+            **context,
+        },
+    )
 
 
 def render_phase_portraits(rows: list[dict[str, Any]], path: Path, context: dict[str, Any], *, dpi: int) -> None:
@@ -570,19 +722,31 @@ def render_phase_portraits(rows: list[dict[str, Any]], path: Path, context: dict
     if not pairs:
         save_skipped(path, "No phase portrait metric pairs found.", context)
         return
-    plt, _power_norm, _matplotlib = _import_matplotlib()
+    plt, _power_norm, linear_segmented_colormap, _two_slope_norm, _matplotlib = _import_matplotlib()
     fig, axes = plt.subplots(1, len(pairs), figsize=(5.0 * len(pairs), 4.2), constrained_layout=True)
     axes_array = np.atleast_1d(axes)
+    style_dark_figure(fig, axes_array)
     steps = np.asarray([int(row.get("step", idx)) for idx, row in enumerate(rows)])
+    step_colormap = unsigned_scientific_colormap(linear_segmented_colormap)
     for ax, (x_metric, y_metric) in zip(axes_array, pairs):
-        image = ax.scatter(metric_series(rows, x_metric), metric_series(rows, y_metric), c=steps, cmap="viridis", s=18)
+        image = ax.scatter(metric_series(rows, x_metric), metric_series(rows, y_metric), c=steps, cmap=step_colormap, s=18)
         ax.set_xlabel(x_metric.replace("route_metrics.", ""))
         ax.set_ylabel(y_metric.replace("route_metrics.", ""))
         ax.set_title("Phase portrait")
-    fig.colorbar(image, ax=axes_array.tolist(), shrink=0.75, label="step")
+    colorbar = fig.colorbar(image, ax=axes_array.tolist(), shrink=0.75, label="step")
+    style_dark_colorbar(colorbar)
     fig.savefig(path, dpi=dpi, bbox_inches="tight")
     plt.close(fig)
-    write_metadata(path, {"status": "rendered", "pairs": pairs, **context})
+    write_metadata(
+        path,
+        {
+            "status": "rendered",
+            "pairs": pairs,
+            "palette_policy": UNSIGNED_PALETTE_POLICY,
+            "colormap_family": "dark_to_red_sequential",
+            **context,
+        },
+    )
 
 
 def render_pareto_frontier(payload: dict[str, Any], path: Path, context: dict[str, Any], *, dpi: int) -> None:
@@ -599,16 +763,35 @@ def render_pareto_frontier(payload: dict[str, Any], path: Path, context: dict[st
     y = np.asarray([summary_metric_value(row, "geometric_coherence") or 0.0 for row in rows])
     color = np.asarray([summary_metric_value(row, "release_duty_cycle") or 0.0 for row in rows])
     size = np.asarray([summary_metric_value(row, "phase_transition_score") or 0.0 for row in rows])
-    plt, _power_norm, _matplotlib = _import_matplotlib()
+    plt, _power_norm, linear_segmented_colormap, _two_slope_norm, _matplotlib = _import_matplotlib()
     fig, ax = plt.subplots(figsize=(6.8, 5.2), constrained_layout=True)
-    image = ax.scatter(x, y, c=color, s=50 + 160 * size, cmap="viridis", alpha=0.82)
+    style_dark_figure(fig, ax)
+    image = ax.scatter(
+        x,
+        y,
+        c=color,
+        s=50 + 160 * size,
+        cmap=unsigned_scientific_colormap(linear_segmented_colormap),
+        alpha=0.86,
+    )
     ax.set_xlabel("internal richness")
     ax.set_ylabel("geometric coherence")
     ax.set_title("Candidate frontier")
-    fig.colorbar(image, ax=ax, shrink=0.78, label="release duty cycle")
+    colorbar = fig.colorbar(image, ax=ax, shrink=0.78, label="release duty cycle")
+    style_dark_colorbar(colorbar)
     fig.savefig(path, dpi=dpi, bbox_inches="tight")
     plt.close(fig)
-    write_metadata(path, {"status": "rendered", "metrics": list(PARETO_METRICS), "rows": len(rows), **context})
+    write_metadata(
+        path,
+        {
+            "status": "rendered",
+            "metrics": list(PARETO_METRICS),
+            "rows": len(rows),
+            "palette_policy": UNSIGNED_PALETTE_POLICY,
+            "colormap_family": "dark_to_red_sequential",
+            **context,
+        },
+    )
 
 
 def render_spectral_channel_power(rows: list[dict[str, Any]], path: Path, context: dict[str, Any], *, dpi: int) -> None:
@@ -627,16 +810,33 @@ def render_spectral_channel_power(rows: list[dict[str, Any]], path: Path, contex
     for index, row in enumerate(spectra):
         max_value = float(np.max(row))
         matrix[index, : len(row)] = row / max_value if max_value > 1e-12 else row
-    plt, power_norm, _matplotlib = _import_matplotlib()
+    plt, power_norm, linear_segmented_colormap, _two_slope_norm, _matplotlib = _import_matplotlib()
     fig, ax = plt.subplots(figsize=(8.0, 4.2), constrained_layout=True)
-    image = ax.imshow(matrix, aspect="auto", interpolation="nearest", cmap="magma", norm=power_norm(gamma=0.5, vmin=0.0, vmax=1.0))
+    style_dark_figure(fig, ax)
+    image = ax.imshow(
+        matrix,
+        aspect="auto",
+        interpolation="nearest",
+        cmap=unsigned_scientific_colormap(linear_segmented_colormap),
+        norm=power_norm(gamma=0.5, vmin=0.0, vmax=1.0),
+    )
     ax.set_title("Spectral channel power")
     ax.set_xlabel("frequency bin")
     ax.set_yticks(range(len(metric_paths)), [metric.replace("route_metrics.", "") for metric in metric_paths])
-    fig.colorbar(image, ax=ax, shrink=0.78, label="within-row power fraction")
+    colorbar = fig.colorbar(image, ax=ax, shrink=0.78, label="within-row power fraction")
+    style_dark_colorbar(colorbar)
     fig.savefig(path, dpi=dpi, bbox_inches="tight")
     plt.close(fig)
-    write_metadata(path, {"status": "rendered", "metrics": metric_paths, **context})
+    write_metadata(
+        path,
+        {
+            "status": "rendered",
+            "metrics": metric_paths,
+            "palette_policy": UNSIGNED_PALETTE_POLICY,
+            "colormap_family": "dark_to_red_sequential",
+            **context,
+        },
+    )
 
 
 def render_all(args: argparse.Namespace) -> list[Path]:

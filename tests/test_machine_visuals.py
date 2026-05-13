@@ -8,6 +8,8 @@ import numpy as np
 import pytest
 
 from development.render_machine_visuals import (
+    DIVERGING_PALETTE_POLICY,
+    UNSIGNED_PALETTE_POLICY,
     comparison_rows,
     collect_event_windows,
     correlation_matrix,
@@ -160,6 +162,16 @@ def test_comparison_rows_summarize_release_and_post_event_delta():
     assert row["post_event_residual_delta_max"] == pytest.approx(0.8)
 
 
+def test_comparison_rows_use_release_open_for_duty_fraction():
+    payload = sample_payload()
+    payload["metrics"][4]["route_metrics"]["release_open_mean"] = 1.0
+    payload["metrics"][4]["route_metrics"]["release_strength_mean"] = 0.0
+    records = joined_records(payload)
+    rows = comparison_rows(group_runs(records), payload["events"])
+
+    assert rows[0]["release_duty_fraction"] == pytest.approx(2.0 / 8.0)
+
+
 def test_render_all_emits_pngs_and_skip_metadata(tmp_path):
     pytest.importorskip("matplotlib")
     payload_path = tmp_path / "trajectory_3d.json"
@@ -184,3 +196,20 @@ def test_render_all_emits_pngs_and_skip_metadata(tmp_path):
     assert any(path.read_bytes().startswith(b"\x89PNG\r\n\x1a\n") for path in rendered)
     assert (tmp_path / "assets" / "release_variant_comparison.csv").exists()
     assert all(path.with_suffix(path.suffix + ".json").exists() for path in outputs)
+
+    state_delta_metadata = json.loads(
+        (tmp_path / "assets" / "state_delta_heatmap.png.json").read_text(encoding="utf-8")
+    )
+    covariance_metadata = json.loads(
+        (tmp_path / "assets" / "channel_separation_covariance.png.json").read_text(encoding="utf-8")
+    )
+    event_metadata = json.loads(
+        (tmp_path / "assets" / "event_aligned_release_windows.png.json").read_text(encoding="utf-8")
+    )
+
+    assert state_delta_metadata["palette_policy"] == UNSIGNED_PALETTE_POLICY
+    assert state_delta_metadata["colormap_family"] == "dark_to_red_sequential"
+    assert covariance_metadata["palette_policy"] == DIVERGING_PALETTE_POLICY
+    assert covariance_metadata["colormap_family"] == "berlin_red_blue_diverging"
+    assert covariance_metadata["colormap_midpoint"] == 0.0
+    assert event_metadata["palette_policy"] == "dark_background_categorical_lines"

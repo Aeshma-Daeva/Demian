@@ -6,9 +6,9 @@ quadratic mapping: normalized magnitude is squared before being mapped to fill
 color. This keeps low-amplitude background activity visually quiet and makes
 strong neuron/gate activations visible without inventing categorical labels.
 
-The script also emits Matplotlib PNG heatmaps using standard colormaps. Those
-are useful for publication/export contexts where a real colormap and colorbar
-are clearer than hand-authored SVG cells.
+The script also emits Matplotlib PNG heatmaps using semantic scientific
+colormaps. Those are useful for publication/export contexts where a real
+colormap and colorbar are clearer than hand-authored SVG cells.
 """
 
 from __future__ import annotations
@@ -49,8 +49,9 @@ SVG_AXIS = "#c9d1d9"
 SVG_GRID = "#30363d"
 SIGNED_POSITIVE = (45, 212, 191)
 SIGNED_NEGATIVE = (251, 113, 133)
-UNSIGNED_HIGH = (96, 165, 250)
+UNSIGNED_HIGH = (255, 173, 173)
 SIGNED_OVERVIEW_COLORMAP = "berlin_r"
+UNSIGNED_SEQUENTIAL_COLORMAP = "demian_berlin_red_sequential"
 
 
 def clamp01(value: float) -> float:
@@ -99,8 +100,17 @@ def scientific_colormap(name: str) -> Any:
 
     matplotlib.use("Agg")
     from matplotlib import colormaps
+    from matplotlib.colors import LinearSegmentedColormap
 
-    return colormaps[name]
+    try:
+        return colormaps[name]
+    except KeyError:
+        if name == SIGNED_OVERVIEW_COLORMAP:
+            return LinearSegmentedColormap.from_list(
+                SIGNED_OVERVIEW_COLORMAP,
+                ["#ffadad", "#180c0a", "#9eb0ff"],
+            )
+        raise
 
 
 def percentile_abs_scale(values: list[float], percentile: float) -> float:
@@ -114,12 +124,21 @@ def percentile_abs_scale(values: list[float], percentile: float) -> float:
 
 
 def unsigned_quadratic_color(value: float, scale: float) -> str:
+    """Map unsigned magnitude to the README dark-to-red scientific palette."""
     if scale <= 1e-12:
         return SVG_CELL_BG
     strength = clamp01(value / scale) ** 2
     base = (32, 36, 43)
     target = UNSIGNED_HIGH
     return rgb_hex(tuple(mix_channel(base[i], target[i], strength) for i in range(3)))
+
+
+def scientific_sequential_red_colormap() -> Any:
+    """Return a Berlin-derived red sequential map for unsigned magnitude data."""
+    _plt, linear_segmented_colormap, _power_norm, _two_slope_norm = _import_matplotlib()
+    low = tuple(channel / 255.0 for channel in (32, 36, 43))
+    high = tuple(channel / 255.0 for channel in UNSIGNED_HIGH)
+    return linear_segmented_colormap.from_list(UNSIGNED_SEQUENTIAL_COLORMAP, [low, high])
 
 
 def escape_xml(value: object) -> str:
@@ -313,7 +332,7 @@ def render_neuron_heatmap_png(trace: dict[str, Any], path: Path, *, dpi: int = 2
 
 
 def render_gate_heatmap_png(trace: dict[str, Any], path: Path, *, dpi: int = 200) -> None:
-    """Render unsigned gate metrics with viridis and quadratic PowerNorm."""
+    """Render unsigned gate metrics with red sequential PowerNorm."""
     plt, _linear_segmented_colormap, power_norm, _two_slope_norm = _import_matplotlib()
     matrix = gate_heatmap_matrix(trace)
     max_value = max((value for row in matrix for value in row), default=0.0)
@@ -329,7 +348,7 @@ def render_gate_heatmap_png(trace: dict[str, Any], path: Path, *, dpi: int = 200
         matrix,
         aspect="auto",
         interpolation="nearest",
-        cmap="viridis",
+        cmap=scientific_sequential_red_colormap(),
         norm=power_norm(gamma=2.0, vmin=0.0, vmax=max_value),
     )
     ax.set_yticks(range(len(GATES)), [label for _name, label in GATES])
@@ -362,7 +381,7 @@ def render_gate_row_normalized_heatmap_png(
         matrix,
         aspect="auto",
         interpolation="nearest",
-        cmap="viridis",
+        cmap=scientific_sequential_red_colormap(),
         norm=power_norm(gamma=2.0, vmin=0.0, vmax=1.0),
     )
     ax.set_yticks(range(len(GATES)), [label for _name, label in GATES])
@@ -496,11 +515,11 @@ def render_gate_svg(trace: dict[str, Any]) -> str:
     parts = [
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}" role="img" aria-labelledby="title desc">',
         '<title id="title">v9 five-channel gate activation trace</title>',
-        '<desc id="desc">Quadratic-color heatmap of route and release gate metrics over time.</desc>',
+        '<desc id="desc">Quadratic-color heatmap of route and release gate metrics over time. Red means high unsigned intensity, and dark means low intensity.</desc>',
         f'<rect width="{width}" height="{height}" fill="{SVG_BG}"/>',
         f'<rect x="{left}" y="{top}" width="{plot_w}" height="{len(GATES) * row_h - 6}" fill="{SVG_CELL_BG}"/>',
         f'<text x="34" y="42" font-family="Arial, sans-serif" font-size="23" font-weight="700" fill="{SVG_TEXT}">Gating activations, quadratic color</text>',
-        f'<text x="34" y="70" font-family="Arial, sans-serif" font-size="13" fill="{SVG_MUTED}">v9 five-channel, seed={config["seed"]}, hidden={config["hidden_size"]}, steps={steps}; intensity=(metric/max)^2</text>',
+        f'<text x="34" y="70" font-family="Arial, sans-serif" font-size="13" fill="{SVG_MUTED}">v9 five-channel, seed={config["seed"]}, hidden={config["hidden_size"]}, steps={steps}; red means high unsigned intensity; intensity=(metric/max)^2</text>',
     ]
     for row_index, (name, label) in enumerate(GATES):
         y = top + row_index * row_h

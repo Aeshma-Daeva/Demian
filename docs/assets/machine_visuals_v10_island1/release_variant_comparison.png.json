@@ -1,4 +1,5 @@
 {
+  "colormap_family": "dark_to_red_sequential",
   "csv": "docs/assets/machine_visuals_v10_island1/release_variant_comparison.csv",
   "input": "data/substrate_lab/v10_0_frozen_evolution_island_1_trajectory_3d_20260511/trajectory_3d.json",
   "metrics": [
@@ -9,6 +10,7 @@
     "pressure_to_post_delta_ratio"
   ],
   "normalization": "row_scaled_mean_over_perturbed_runs",
+  "palette_policy": "unsigned magnitude uses a dark-to-red scientific sequential palette",
   "run_filter": "all",
   "seed": "all",
   "selected_run": [

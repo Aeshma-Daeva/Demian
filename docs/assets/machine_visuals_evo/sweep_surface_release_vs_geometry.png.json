@@ -1,5 +1,7 @@
 {
+  "colormap_family": "dark_to_red_sequential",
   "input": "data/substrate_lab/v9_5ch_evo_trajectory_3d_20260509_full/trajectory_3d.json",
+  "palette_policy": "unsigned magnitude uses a dark-to-red scientific sequential palette",
   "rows": 3,
   "run_filter": "all",
   "seed": "all",
