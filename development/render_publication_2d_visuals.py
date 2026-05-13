@@ -635,6 +635,7 @@ def main() -> None:
             "v9_5ch_gating_activations.svg": render_gate_svg(trace),
             "v9_5ch_gating_activations_dark.svg": render_gate_svg(trace),
             "v9_5ch_gating_activations_solid.svg": render_gate_svg(trace),
+            "v9_5ch_gating_activations_red_scientific.svg": render_gate_svg(trace),
             "v9_5ch_anatomy.svg": render_anatomy_svg(),
         }
         for name, svg in files.items():
@@ -649,8 +650,10 @@ def main() -> None:
             "v9_5ch_neuron_activity_overview.png": render_neuron_heatmap_png,
             "v9_5ch_gate_heatmap.png": render_gate_heatmap_png,
             "v9_5ch_gate_heatmap_solid.png": render_gate_heatmap_png,
+            "v9_5ch_gate_heatmap_red_scientific.png": render_gate_heatmap_png,
             "v9_5ch_gate_heatmap_row_normalized.png": render_gate_row_normalized_heatmap_png,
             "v9_5ch_gate_heatmap_row_normalized_solid.png": render_gate_row_normalized_heatmap_png,
+            "v9_5ch_gate_heatmap_row_normalized_red_scientific.png": render_gate_row_normalized_heatmap_png,
         }
         for name, renderer in png_files.items():
             path = out_dir / name
