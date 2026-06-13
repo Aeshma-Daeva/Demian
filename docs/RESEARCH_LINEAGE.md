@@ -307,7 +307,7 @@ Artifacts:
 - [development/probe_v9_message_carrier_strange.py](/home/xenith/demian/development/probe_v9_message_carrier_strange.py)
 - [development/evolve_v9_5ch_release.py](/home/xenith/demian/development/evolve_v9_5ch_release.py)
 - [data/evolution/v9_5ch_release_20260509_full/archive.json](/home/xenith/demian/data/evolution/v9_5ch_release_20260509_full/archive.json)
-- [docs/assets/v9_5ch_anatomy.svg](/home/xenith/demian/docs/assets/v9_5ch_anatomy.svg)
+- [docs/assets/v9_5ch_neuron_activity_overview.svg](/home/xenith/demian/docs/assets/v9_5ch_neuron_activity_overview.svg)
 - [docs/assets/v9_5ch_neuron_activations.svg](/home/xenith/demian/docs/assets/v9_5ch_neuron_activations.svg)
 - [docs/assets/v9_5ch_gating_activations.svg](/home/xenith/demian/docs/assets/v9_5ch_gating_activations.svg)
 

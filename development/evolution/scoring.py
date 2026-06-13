@@ -18,11 +18,13 @@ NATIVE_OBJECTIVE_GATE_STATE = "gate_state"
 NATIVE_OBJECTIVE_MORPHOLOGY_ONLY = "morphology_only"
 NATIVE_OBJECTIVE_MORPHOLOGY_LOW_DUTY = "morphology_low_duty"
 NATIVE_OBJECTIVE_COMBINED_DISCOVERY = "combined_discovery"
+NATIVE_OBJECTIVE_INTERNAL_CONSISTENCY = "internal_consistency"
 NATIVE_OBJECTIVES = (
     NATIVE_OBJECTIVE_GATE_STATE,
     NATIVE_OBJECTIVE_MORPHOLOGY_ONLY,
     NATIVE_OBJECTIVE_MORPHOLOGY_LOW_DUTY,
     NATIVE_OBJECTIVE_COMBINED_DISCOVERY,
+    NATIVE_OBJECTIVE_INTERNAL_CONSISTENCY,
 )
 DEFAULT_NATIVE_OBJECTIVE = NATIVE_OBJECTIVE_GATE_STATE
 CAUSAL_MODE_ROUTE_RELEASE = "route_release"
@@ -179,6 +181,11 @@ def native_rank_components(
             "release_causal_divergence_raw": 0.25 * causal,
             "release_geometric_event": 0.15 * float(metrics.get("release_geometric_event", 0.0)),
             "phase_transition": 0.15 * float(metrics.get("phase_transition_score", 0.0)),
+        }
+    if native_objective == NATIVE_OBJECTIVE_INTERNAL_CONSISTENCY:
+        return {
+            **morphology,
+            "internal_consistency": 1.5 * float(metrics.get("internal_consistency", 0.0)),
         }
     return {
         **morphology,

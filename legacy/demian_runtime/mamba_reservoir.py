@@ -514,7 +514,13 @@ def run_mamba_reservoir(
                 "  step {:>5} | E={:.3f} coh={:+.3f} "
                 "vel={:+.3f} dlt={:.3f} Lwr={:.3f} "
                 "cent={:.4f}{}{}".format(
-                    step_idx, energy, tcoh, vel_align, rdelta, lwr, sc,
+                    step_idx,
+                    step["energy"],
+                    step["temporal_coherence"],
+                    step["velocity_align"],
+                    step["residual_delta"],
+                    step["layer_work_ratio"],
+                    step["spectral_centroid"],
                     driver_str, hebb_str
                 )
             )

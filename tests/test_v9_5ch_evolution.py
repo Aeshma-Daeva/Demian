@@ -55,6 +55,7 @@ from development.evolution.scoring import (
     ENGINEERED_TARGET_RANK_MODE,
     NATIVE_OBJECTIVE_COMBINED_DISCOVERY,
     NATIVE_OBJECTIVE_GATE_STATE,
+    NATIVE_OBJECTIVE_INTERNAL_CONSISTENCY,
     NATIVE_OBJECTIVE_MORPHOLOGY_LOW_DUTY,
     NATIVE_OBJECTIVE_MORPHOLOGY_ONLY,
     scalar_rank,
@@ -715,6 +716,50 @@ def test_native_objective_variants_rank_expected_fixture_order():
     morphology_only = scalar_rank({**morphology, "native_objective": NATIVE_OBJECTIVE_MORPHOLOGY_ONLY})
 
     assert gate_state > combined > morphology_only
+
+
+def test_internal_consistency_objective_adds_consistency_pressure():
+    metrics = {
+        "internal_richness": 0.5,
+        "channel_separation": 0.5,
+        "mathematical_curiosity": 0.5,
+        "geometric_coherence": 0.5,
+        "internal_consistency": 0.8,
+        "release_causal_divergence": 0.0,
+        "release_gain_zero_release_causal_divergence": 0.0,
+        "gain_zero_clean_fraction": 0.0,
+    }
+    base = {
+        "rank_mode": NATIVE_EMERGENCE_RANK_MODE,
+        "native_objective": NATIVE_OBJECTIVE_INTERNAL_CONSISTENCY,
+        "metrics": metrics,
+    }
+
+    components = rank_components(base)
+
+    assert components["internal_consistency"] == pytest.approx(1.2)
+    assert scalar_rank(base) > scalar_rank({**base, "native_objective": NATIVE_OBJECTIVE_MORPHOLOGY_ONLY})
+
+
+def test_run_with_motif_control_condition_disables_control_channel():
+    genome = default_genome(8, rank=2)
+    motif = motif_suite(8, seed=94)[0]
+
+    run = run_with_motif(
+        genome,
+        hidden_size=8,
+        steps=8,
+        seed=94,
+        perturb_step=4,
+        perturb_scale=0.3,
+        motif=motif,
+        rank=2,
+        device="cpu",
+        control_condition="control_disabled",
+    )
+
+    assert all(row["control_state_norm"] == pytest.approx(0.0) for row in run["trajectory"])
+    assert run["metrics"]["internal_consistency"] >= 0.0
 
 
 def test_morphology_only_ignores_causal_divergence_when_present():

@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-05-11",
+  "updated": "2026-05-15",
   "policy": {
     "raw_data": "Keep raw run directories in place until manifest references and doc links are stable.",
     "status_values": ["active_evidence", "historical", "superseded", "baseline"],
@@ -70,10 +70,69 @@
         "data/diagnostics/gate_state_track_b_replication_summary_20260511/replication_summary.csv",
         "data/diagnostics/gate_state_parameter_signatures.csv",
         "data/diagnostics/gate_state_parameter_signatures.parquet",
-        "data/diagnostics/gate_state_parameter_signatures_summary.json"
+        "data/diagnostics/gate_state_parameter_signatures_summary.json",
+        "data/diagnostics/gate_state_control_nulls_20260515/control_null_summary.json",
+        "data/diagnostics/gate_state_control_nulls_20260515/control_null_aggregate.csv",
+        "data/diagnostics/gate_state_control_nulls_20260515/control_null_rows.csv",
+        "data/diagnostics/gate_state_truth_campaign_20260515/truth_campaign_summary.json",
+        "data/diagnostics/gate_state_truth_campaign_20260516_3trackb_multisurgery/truth_campaign_summary.json",
+        "data/diagnostics/gate_state_track_b_replication_summary_20260516_30/summary.json"
       ],
       "claim_ids": ["C20"],
-      "interpretation": "Replicated Gate-State Causal Propagation in 3/3 Track B native-emergence replications. Held-out classifications kept gain-zero clean, route/gain-zero divergence positive, full internal-state resume exact, surface-only resume gapped, and message/carrier as the repeated necessary-channel core."
+      "interpretation": "Replicated Gate-State Causal Propagation in 3/3 Track B native-emergence replications. Held-out classifications kept gain-zero clean, route/gain-zero divergence positive, full internal-state resume exact, surface-only resume gapped, and message/carrier as the repeated channel-clamping sensitivity core. A reduced matched control/null comparison found the binary gate was broad: Track B positives passed 3/3, default unselected passed 1/1, and random unselected controls passed 15/32. A strict Track-B-profile gate calibrated from the weakest Track B positive passed Track B positives 3/3, default unselected 0/1, and random unselected controls 2/32, supporting enrichment rather than final rarity. Treat as a machine-native discovery lead for explicit gate-state design in Demian v1, not as a finished mechanism theory."
+    },
+    {
+      "id": "identity_continuity_characterization_20260513",
+      "program": "demian-v1-track-b",
+      "date": "2026-05-13",
+      "family": "identity_continuity",
+      "status": "active_evidence",
+      "primary_summary": "data/diagnostics/identity_continuity_20260513/identity_summary.json",
+      "artifacts": [
+        "data/diagnostics/identity_continuity_20260513/README.md",
+        "data/diagnostics/identity_continuity_20260513/identity_summary.json",
+        "data/diagnostics/identity_continuity_20260513/identity_summary.csv",
+        "data/diagnostics/identity_continuity_20260513/identity_rows.jsonl",
+        "data/diagnostics/identity_continuity_20260513/identity_signatures.json",
+        "data/diagnostics/identity_continuity_replication_1_20260513/identity_summary.json",
+        "data/diagnostics/identity_continuity_replication_2_20260513/identity_summary.json",
+        "data/diagnostics/identity_continuity_replication_3_20260513/identity_summary.json",
+        "data/diagnostics/identity_continuity_replication_summary_20260513.json",
+        "data/diagnostics/identity_continuity_replication_summary_20260513.csv",
+        "data/diagnostics/identity_continuity_sparse_low_duty_20260513/README.md",
+        "data/diagnostics/identity_continuity_sparse_low_duty_20260513/identity_summary.json",
+        "data/diagnostics/identity_continuity_sparse_low_duty_20260513/identity_summary.csv",
+        "data/diagnostics/identity_continuity_sparse_low_duty_20260513/identity_rows.jsonl",
+        "data/diagnostics/identity_continuity_sparse_low_duty_20260513/identity_signatures.json",
+        "data/diagnostics/identity_continuity_sparse_low_duty_comparison_20260513.json",
+        "data/diagnostics/identity_continuity_sparse_low_duty_comparison_20260513.csv"
+      ],
+      "claim_ids": ["C21"],
+      "interpretation": "Identity-continuity instrumentation over candidate gen012_candidate000, three Track B top-candidate replications, and one sparse low-duty morphology contrast. Preserved-over-reset identity cosine is mixed across gate-state candidates and nearly absent in the sparse contrast; internal/external boundary probes are nearly indistinguishable; lesion probes do not yet support repair/self-maintenance."
+    },
+    {
+      "id": "control_capsule_setpoint_narrative_20260514",
+      "program": "demian-v1-track-b",
+      "date": "2026-05-14",
+      "family": "control_capsule_continuity",
+      "status": "active_evidence",
+      "primary_summary": "data/diagnostics/control_narrative_update_probe_20260514/control_narrative_summary.json",
+      "artifacts": [
+        "data/diagnostics/control_capsule_maintenance_20260514/README.md",
+        "data/diagnostics/control_capsule_maintenance_20260514/control_capsule_rows.jsonl",
+        "data/diagnostics/control_capsule_maintenance_20260514/control_capsule_summary.csv",
+        "data/diagnostics/control_capsule_maintenance_20260514/control_capsule_summary.json",
+        "data/diagnostics/control_setpoint_probe_20260514/README.md",
+        "data/diagnostics/control_setpoint_probe_20260514/control_setpoint_rows.jsonl",
+        "data/diagnostics/control_setpoint_probe_20260514/control_setpoint_summary.csv",
+        "data/diagnostics/control_setpoint_probe_20260514/control_setpoint_summary.json",
+        "data/diagnostics/control_narrative_update_probe_20260514/README.md",
+        "data/diagnostics/control_narrative_update_probe_20260514/control_narrative_rows.jsonl",
+        "data/diagnostics/control_narrative_update_probe_20260514/control_narrative_summary.csv",
+        "data/diagnostics/control_narrative_update_probe_20260514/control_narrative_summary.json"
+      ],
+      "claim_ids": ["C22"],
+      "interpretation": "Control is an active stabilizing contributor to capsule maintenance in the three replicated Track B top candidates. Directional setpoint probes show control-specific correction but low preserved-control asymmetry and setpoint bias; narrative-history probes do not classify perturbation histories and have negative separation margin. Treat as maintenance evidence, not homeostasis, setpoint, narrative self, or narrative-integration evidence."
     },
     {
       "id": "v9_3_cap_calibrated_20260510",
@@ -122,7 +181,7 @@
         "data/substrate_lab/v9_5ch_evo_trajectory_3d_20260509_full/trajectory_3d.json",
         "data/substrate_lab/v9_5ch_evo_trajectory_3d_20260509_full/blender_expression/expression.blend",
         "data/substrate_lab/v9_5ch_evo_trajectory_3d_20260509_full/blender_expression/expression_metadata.json",
-        "docs/assets/v9_5ch_anatomy.svg",
+        "docs/assets/v9_5ch_neuron_activity_overview.svg",
         "docs/assets/v9_5ch_neuron_activations.svg",
         "docs/assets/v9_5ch_gating_activations.svg",
         "docs/assets/machine_visuals/recurrence_distance.png",

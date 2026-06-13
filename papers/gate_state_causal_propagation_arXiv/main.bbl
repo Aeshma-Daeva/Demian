@@ -1,0 +1,45 @@
+\begin{thebibliography}{4}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Guilhot et~al.(2024)Guilhot, Wojcik, Achterberg, and
+  Costa]{guilhot2024dsa}
+Quentin Guilhot, Michal Wojcik, Jascha Achterberg, and Rui~Ponte Costa.
+\newblock Dynamical similarity analysis can identify compositional dynamics
+  developing in rnns.
+\newblock \emph{arXiv preprint arXiv:2410.24070}, 2024.
+\newblock \doi{10.48550/arXiv.2410.24070}.
+\newblock URL \url{https://arxiv.org/abs/2410.24070}.
+
+\bibitem[Huang et~al.(2024)Huang, Singh, Martinelli, and
+  Rajan]{huang2024degeneracy}
+Ann Huang, Satpreet~H. Singh, Flavio Martinelli, and Kanaka Rajan.
+\newblock Measuring and controlling solution degeneracy across task-trained
+  recurrent neural networks.
+\newblock \emph{arXiv preprint arXiv:2410.03972}, 2024.
+\newblock \doi{10.48550/arXiv.2410.03972}.
+\newblock URL \url{https://arxiv.org/abs/2410.03972}.
+
+\bibitem[Maheswaranathan et~al.(2019)Maheswaranathan, Williams, Golub, Ganguli,
+  and Sussillo]{maheswaranathan2019lineattractor}
+Niru Maheswaranathan, Alex Williams, Matthew~D. Golub, Surya Ganguli, and David
+  Sussillo.
+\newblock Reverse engineering recurrent networks for sentiment classification
+  reveals line attractor dynamics.
+\newblock \emph{arXiv preprint arXiv:1906.10720}, 2019.
+\newblock \doi{10.48550/arXiv.1906.10720}.
+\newblock URL \url{https://arxiv.org/abs/1906.10720}.
+
+\bibitem[Torre et~al.(2025)Torre, Viscione, Pompe, Grewe, and
+  Mante]{torre2025hmm}
+Elia Torre, Michele Viscione, Lucas Pompe, Benjamin~F. Grewe, and Valerio
+  Mante.
+\newblock Mechanistic interpretability of rnns emulating hidden markov models.
+\newblock \emph{arXiv preprint arXiv:2510.25674}, 2025.
+\newblock \doi{10.48550/arXiv.2510.25674}.
+\newblock URL \url{https://arxiv.org/abs/2510.25674}.
+
+\end{thebibliography}

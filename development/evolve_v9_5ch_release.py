@@ -62,6 +62,7 @@ from development.evolution.scoring import (
     NATIVE_EMERGENCE_RANK_MODE,
     NATIVE_OBJECTIVES,
     NATIVE_OBJECTIVE_GATE_STATE,
+    NATIVE_OBJECTIVE_INTERNAL_CONSISTENCY,
     archive_bins,
     causal_divergence_components,
     pareto_front,
@@ -72,6 +73,7 @@ from development.evolution.scoring import (
 from development.probe_v9_message_carrier_strange import ExperimentalV9MessageCarrier
 
 CUDA_LOCK_DIR = Path(os.environ.get("DEMIAN_CUDA_LOCK_DIR", "/tmp/demian_cuda_locks"))
+CONTROL_CONDITIONS = ("control_intact", "control_reset_each_perturbation", "control_disabled")
 
 
 @dataclass(frozen=True)
@@ -869,7 +871,10 @@ def run_with_motif(
     perturb_mode: str = "external",
     release_routes_disabled: bool = False,
     capture_channel_states: bool = False,
+    control_condition: str = "control_intact",
 ) -> dict[str, Any]:
+    if control_condition not in CONTROL_CONDITIONS:
+        raise ValueError(f"unknown control_condition: {control_condition}")
     torch.manual_seed(seed)
     np.random.seed(seed)
     model = AdaptiveV9FiveChannel(
@@ -879,6 +884,7 @@ def run_with_motif(
         release_routes_disabled=release_routes_disabled,
     ).to(device=device)
     state = model.initial_state(1, torch.device(device))
+    initial_control = state[2].detach().clone()
     signature = motif["vector"]
     trajectory = []
     surfaces: list[torch.Tensor] = []
@@ -891,6 +897,10 @@ def run_with_motif(
     with torch.no_grad():
         for step in range(1, steps + 1):
             if step == perturb_step and perturb_mode != "clean":
+                if control_condition == "control_reset_each_perturbation":
+                    values = list(state)
+                    values[2] = initial_control.detach().clone()
+                    state = tuple(values)
                 state = apply_signature(
                     state,
                     signature,
@@ -900,6 +910,10 @@ def run_with_motif(
                 )
                 model.record_perturbation(step, perturb_scale)
             state = model.step(state)
+            if control_condition == "control_disabled":
+                values = list(state)
+                values[2] = torch.zeros_like(values[2])
+                state = tuple(values)
             surface = model.state_vector(state).view(-1).detach().float().cpu()
             components = {
                 name: tensor.view(-1).detach().float().cpu()
@@ -938,6 +952,7 @@ def run_with_motif(
                 "layer_work_ratio": 0.5,
                 "fast_state_norm": float(fast.norm()) / math.sqrt(max(fast.shape[0], 1)),
                 "slow_state_norm": float(slow.norm()) / math.sqrt(max(slow.shape[0], 1)),
+                "control_state_norm": float(control.norm()) / math.sqrt(max(control.shape[0], 1)),
                 "message_state_norm": float(message.norm()) / math.sqrt(max(message.shape[0], 1)),
                 "carrier_state_norm": float(carrier.norm()) / math.sqrt(max(carrier.shape[0], 1)),
                 "message_signature_cosine": cosine_to_signature(message, signature),
@@ -1000,6 +1015,7 @@ def run_with_motif(
         "perturb_scale": perturb_scale,
         "perturb_channel": perturb_channel,
         "perturb_mode": perturb_mode,
+        "control_condition": control_condition,
         "summary": summary,
         "metrics": metrics,
         "trajectory": trajectory,
@@ -1117,6 +1133,7 @@ def paired_causal_run(
     device: str,
     perturb_channel: str = "fast",
     perturb_mode: str = "external",
+    control_condition: str = "control_intact",
 ) -> dict[str, Any]:
     """Run original, route-disabled, and gain-zero variants under one condition."""
     common = {
@@ -1130,6 +1147,7 @@ def paired_causal_run(
         "device": device,
         "perturb_channel": perturb_channel,
         "perturb_mode": perturb_mode,
+        "control_condition": control_condition,
         "capture_channel_states": True,
     }
     original = run_with_motif(genome, **common)
@@ -1162,6 +1180,21 @@ def component_delta(current: torch.Tensor, previous: torch.Tensor | None) -> flo
     if previous is None:
         return 0.0
     return float(torch.norm(current - previous)) / math.sqrt(max(current.numel(), 1))
+
+
+def internal_consistency_score(surfaces: list[torch.Tensor], *, perturb_step: int, tail_window: int = 16) -> float:
+    """Score how closely the tail state returns to the pre-perturbation state."""
+
+    if not surfaces:
+        return 0.0
+    pre_index = max(0, min(len(surfaces) - 1, int(perturb_step) - 2))
+    pre_state = surfaces[pre_index]
+    tail = surfaces[-max(1, min(int(tail_window), len(surfaces))):]
+    distances = [
+        float(torch.norm(state - pre_state)) / math.sqrt(max(state.numel(), 1))
+        for state in tail
+    ]
+    return float(math.exp(-mean(distances))) if distances else 0.0
 
 
 def path_metrics(
@@ -1236,6 +1269,7 @@ def path_metrics(
         "internal_richness": richness,
         "channel_separation": channel_sep,
         "boundedness": boundedness,
+        "internal_consistency": internal_consistency_score(surfaces, perturb_step=perturb_step),
         "geometric_coherence": boundedness * (0.5 + 0.5 * channel_sep) * (1.0 - min(1.0, float(mean(angles)) if angles else 0.0)),
     }
 
@@ -1647,6 +1681,7 @@ def aggregate_runs(runs: list[dict[str, Any]]) -> dict[str, Any]:
         "delayed_release_pressure": mean(m["delayed_release_pressure"] for m in metrics),
         "mathematical_curiosity": mathematical_curiosity,
         "boundedness": boundedness,
+        "internal_consistency": mean(m.get("internal_consistency", 0.0) for m in metrics),
         "geometric_coherence": geometric_coherence,
         "release_duty_cycle": mean(m["release_duty_cycle"] for m in metrics),
         "path_curvature_mean": path_curvature,
@@ -1670,6 +1705,7 @@ def evaluate_genome(
     perturb_modes: list[str] | None = None,
     keep_trajectories: bool = False,
     paired_causal: bool = False,
+    control_condition: str = "control_intact",
 ) -> dict[str, Any]:
     runs = []
     paired_runs = []
@@ -1694,6 +1730,7 @@ def evaluate_genome(
                                 device=device,
                                 perturb_channel=channel,
                                 perturb_mode=mode,
+                                control_condition=control_condition,
                             )
                             run = next(item for item in paired["runs"] if item["ablation"] == "original")
                             paired_runs.extend(paired["runs"])
@@ -1710,6 +1747,7 @@ def evaluate_genome(
                                 device=device,
                                 perturb_channel=channel,
                                 perturb_mode=mode,
+                                control_condition=control_condition,
                             )
                         if not keep_trajectories:
                             run.pop("trajectory", None)
@@ -1795,6 +1833,7 @@ def evaluate_candidate_job(job: dict[str, Any]) -> dict[str, Any]:
             perturb_modes=list(job.get("perturb_modes", ["external"])),
             keep_trajectories=False,
             paired_causal=bool(job.get("paired_causal", False)),
+            control_condition=str(job.get("control_condition", "control_intact")),
         )
     return {
         "id": job["candidate_id"],
@@ -1810,6 +1849,7 @@ def evaluate_candidate_job(job: dict[str, Any]) -> dict[str, Any]:
         "rank_mode": str(job.get("rank_mode", ENGINEERED_TARGET_RANK_MODE)),
         "causal_mode": str(job.get("causal_mode", DEFAULT_CAUSAL_MODE)),
         "native_objective": str(job.get("native_objective", DEFAULT_NATIVE_OBJECTIVE)),
+        "control_condition": str(job.get("control_condition", "control_intact")),
         "metrics": result["aggregate"],
         "runs": result["runs"],
         "paired_runs": result.get("paired_runs", []),
@@ -1968,6 +2008,7 @@ def candidate_jobs(
                 "rank_mode": getattr(args, "rank_mode", ENGINEERED_TARGET_RANK_MODE),
                 "causal_mode": getattr(args, "causal_mode", DEFAULT_CAUSAL_MODE),
                 "native_objective": getattr(args, "native_objective", DEFAULT_NATIVE_OBJECTIVE),
+                "control_condition": getattr(args, "control_condition", "control_intact"),
             }
         )
     return jobs
@@ -2106,6 +2147,12 @@ def parse_args() -> argparse.Namespace:
         help="Track B native objective variant; independent from causal_mode.",
     )
     parser.add_argument(
+        "--control-condition",
+        choices=CONTROL_CONDITIONS,
+        default="control_intact",
+        help="Control-channel handling for consistency searches.",
+    )
+    parser.add_argument(
         "--reproduction-mode",
         choices=("structured", "native"),
         default="structured",
@@ -2182,6 +2229,10 @@ def parse_args() -> argparse.Namespace:
         args.seed = 2026051291
         if args.out_dir == "data/evolution/v9_5ch_release_20260509":
             args.out_dir = "data/evolution/demian_v2_track_b_island_1_20260511"
+    if args.native_objective == NATIVE_OBJECTIVE_INTERNAL_CONSISTENCY:
+        args.rank_mode = NATIVE_EMERGENCE_RANK_MODE
+        args.causal_mode = CAUSAL_MODE_GATE_STATE
+        args.experiment_version = "control-internal-consistency"
     if args.dynamic_selection_probe:
         args.population = 16
         args.generations = 60
@@ -2276,6 +2327,7 @@ def main() -> None:
         "rank_mode": args.rank_mode,
         "causal_mode": args.causal_mode,
         "native_objective": args.native_objective,
+        "control_condition": args.control_condition,
         "reproduction_mode": args.reproduction_mode,
         "include_default_seed": include_default_seed,
         "elitism": elitism,
@@ -2327,6 +2379,7 @@ def main() -> None:
                     "morphology_only + 0.25*selected_causal_divergence_raw + "
                     "0.15*release_geometric_event + 0.15*phase_transition_score"
                 ),
+                "internal_consistency": "morphology_only + 1.5*internal_consistency",
                 "excluded": "no causal gate, duty band, timing score, regime bonus, or structured operators",
             },
             "dynamic_selection_probe": {

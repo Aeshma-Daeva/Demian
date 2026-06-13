@@ -8,3 +8,8 @@ data/*
 .openrouter/
 .codex
 .playwright-mcp/
+.texlive/
+*.aux
+*.blg
+*.log
+*.out

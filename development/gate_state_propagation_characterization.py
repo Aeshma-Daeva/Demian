@@ -136,6 +136,11 @@ class AblationRow(FlexibleSchema):
     control_state_norm: float
     message_state_norm: float
     carrier_state_norm: float
+    fast_state_vector: list[float] | None = None
+    slow_state_vector: list[float] | None = None
+    control_state_vector: list[float] | None = None
+    message_state_vector: list[float] | None = None
+    carrier_state_vector: list[float] | None = None
 
     @field_validator("*")
     @classmethod
@@ -376,6 +381,11 @@ def row_from_step(
         control_state_norm=float(metrics_row["control_state_norm"]),
         message_state_norm=float(metrics_row["message_state_norm"]),
         carrier_state_norm=float(metrics_row["carrier_state_norm"]),
+        fast_state_vector=[float(value) for value in fast.view(-1).detach().cpu().tolist()],
+        slow_state_vector=[float(value) for value in slow.view(-1).detach().cpu().tolist()],
+        control_state_vector=[float(value) for value in control.view(-1).detach().cpu().tolist()],
+        message_state_vector=[float(value) for value in message.view(-1).detach().cpu().tolist()],
+        carrier_state_vector=[float(value) for value in carrier.view(-1).detach().cpu().tolist()],
     )
     return output_row, metrics_row
 
