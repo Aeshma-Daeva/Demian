@@ -1,0 +1,22 @@
+{
+  "paper": "fixed_point_internal_structure",
+  "working_title": "Fixed Points Are Not Empty: Hidden Internal Structure Behind Apparently Static Recurrent Surfaces",
+  "claim_boundary": {
+    "claim": "Fixed-point surface classifications can hide nontrivial internal state structure and continuation-relevant information.",
+    "not_claimed": [
+      "fixed points are always useful",
+      "Demian is superior to baseline architectures",
+      "Demian v1 is complete",
+      "internal richness implies consciousness or general intelligence",
+      "Gate-State Causal Propagation is fully settled"
+    ]
+  },
+  "primary_artifacts": [
+    "data/substrate_lab/dual_gru_family_summary.json",
+    "data/substrate_lab/v9_capsule_continuity_20260511/summary.json",
+    "data/diagnostics/gate_state_truth_campaign_20260516_3trackb_multisurgery/baseline_comparison_summary.json",
+    "data/diagnostics/gate_state_truth_campaign_20260516_3trackb_multisurgery/truth_campaign_summary.json",
+    "data/mamba_batch/mamba_batch_summary.json",
+    "data/reservoir_batch/batch_summary.json"
+  ]
+}

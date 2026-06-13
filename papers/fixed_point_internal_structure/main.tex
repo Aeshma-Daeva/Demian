@@ -1,0 +1,346 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{natbib}
+\usepackage{url}
+\Urlmuskip=0mu plus 1mu\relax
+
+\title{Fixed Points Are Not Empty:\\Hidden Internal Structure Behind Apparently Static Recurrent Surfaces}
+\author{Author metadata to be supplied before submission}
+\date{June 13, 2026}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+Recurrent systems are often summarized by their exposed trajectory: fixed
+point, cycle, transient, or chaotic regime. This paper argues that such
+surface labels can be misleading. In Demian, a structured recurrent-substrate
+research program, we repeatedly observe apparently static surface behavior
+coexisting with differentiated internal state. Dual-GRU and native-substrate
+experiments show fixed-point surfaces that split into distinct basin
+interiors, including tight and accumulating fixed-point classes.
+Capsule-continuity probes further show that full internal-state restore can
+resume trajectories exactly while surface-only restore fails, implying that
+continuation-relevant information is not contained in the exposed surface
+alone. We compare these findings against plain RNN, GRU, LSTM, diagonal SSM,
+Transformer-reservoir, and Mamba-reservoir controls, and we use negative
+gate-state checks to bound mechanism claims. The result is not a claim of
+benchmark superiority or a finished architecture, but a measurement protocol:
+fixed-point behavior should be treated as a hypothesis about surface dynamics,
+not as evidence that the internal computation is empty.
+\end{abstract}
+
+\section{Introduction}
+
+Fixed points are often read as simple endpoints. In a recurrent system, a
+state appears to settle; the exposed readout changes little; the trajectory is
+classified as static. That label is useful, but it can also be destructive if
+it is treated as a verdict about the computation inside the system.
+
+The central claim of this paper is narrow: an apparently static surface can
+hide structured internal state. A surface fixed point can coexist with
+message-state accumulation, channel separation, route activity, and
+continuation-relevant memory. Therefore a fixed-point label should be treated
+as a surface classification, not as evidence that the internal computation is
+empty.
+
+This problem is not specific to one architecture. Prior work has used
+dynamical-systems tools to reverse-engineer trained recurrent networks,
+including fixed points and line-attractor structure
+\citep{maheswaranathan2019lineattractor}. Other work shows that networks with
+similar behavior can implement different internal solutions
+\citep{huang2024degeneracy}, and that comparing dynamics requires tools beyond
+static representation comparison \citep{guilhot2024dsa}. Adjacent work also
+frames modern sequence models, including Transformers and state-space models,
+as dynamical systems rather than only input-output maps
+\citep{fernando2025transformerdynamics,gu2023mamba}.
+
+Demian is a substrate-building research program whose laboratory artifacts
+make this surface/internal split unusually explicit. The experiments studied
+here include plain recurrent baselines, dual-GRU variants, native Demian
+substrates, five-channel evolved substrates, Transformer self-reference
+reservoirs, and Mamba self-reference reservoirs. The paper does not claim that
+Demian beats these baselines. It uses them to make a measurement point: fixed
+surface behavior is not enough.
+
+The contribution is a compact evidence discipline for separating surface
+collapse from internally structured fixed-point basins:
+
+\begin{itemize}
+  \item classify the exposed surface trajectory;
+  \item separately classify fixed-point interiors;
+  \item measure route and channel activity;
+  \item perturb or ablate internal state;
+  \item compare full internal-state resume against surface-only resume;
+  \item demote mechanism names when strict held-out checks fail.
+\end{itemize}
+
+\section{Terminology}
+
+We use \emph{surface} for the exposed readout vector of a recurrent system.
+We use \emph{internal state} for the recurrent variables that are not fully
+specified by that surface readout. A \emph{channel} is a named component of
+internal state, and a \emph{route} is a learned or designed transformation
+between state components.
+
+A \emph{surface fixed point} is an exposed trajectory whose readout converges
+or nearly converges under the classifier used by the experiment. An
+\emph{interior fixed point} is a finer label describing the hidden state under
+that surface class. The most important interior labels in this paper are:
+
+\begin{description}
+  \item[tight fixed point] a fixed surface with little measured internal
+  accumulation under the selected metrics;
+  \item[accumulating fixed point] a fixed surface with continuing internal
+  accumulation or differentiated internal activity;
+  \item[surface-only resume] a control that reconstructs only the exposed
+  surface and zeros or omits hidden state;
+  \item[full capsule resume] a control that restores the recurrent body and
+  full internal state before continuing.
+\end{description}
+
+These terms are operational. They describe what the diagnostics measured in
+the repository artifacts, not a claim of consciousness, agency, or global
+architectural superiority.
+
+\section{Methods}
+
+\subsection{Substrates and baselines}
+
+The evidence comes from five groups of runs:
+
+\begin{enumerate}
+  \item dual-GRU fixed-point interior maps;
+  \item canonical Demian v9 and v9 five-channel capsule-continuity probes;
+  \item matched plain recurrent and native-substrate perturbation baselines;
+  \item Transformer and Mamba self-reference reservoir runs;
+  \item gate-state truth-campaign checks used as negative controls.
+\end{enumerate}
+
+The artifact source is the Demian Lab repository \citep{demianlab2026}. The
+paper's tracked evidence summary is included in
+\path{papers/fixed_point_internal_structure/evidence_summary.csv}; the original
+source artifacts remain in the repository's \texttt{data/} tree.
+
+\subsection{Surface and interior measurements}
+
+The first measurement layer labels the exposed trajectory as a fixed point,
+cycle, transient, or related regime. The second layer asks whether fixed-point
+surfaces are internally homogeneous. Dual-GRU summaries report interior
+classes, message-state norms, bottleneck code counts, and bottleneck entropy.
+These quantities are not presented as universal metrics; they are the local
+measurement interface for this substrate family.
+
+\subsection{Capsule-continuity probe}
+
+Capsule continuity asks whether a paused trajectory can be resumed from
+different reconstructions of state. Let $s_t$ be the internal recurrent state
+and $y_t = R(s_t)$ be the exposed surface. The uninterrupted continuation is:
+\[
+  s_{t+k} = F^k(s_t).
+\]
+The full capsule control restores $s_t$ and compares its continuation with the
+uninterrupted trajectory. The surface-only control constructs a state
+$\hat{s}_t$ from $y_t$ alone, leaving the non-surface internal state empty or
+zeroed, and compares:
+\[
+  F^k(\hat{s}_t) \quad \textrm{against} \quad F^k(s_t).
+\]
+If full capsule resume matches and surface-only resume diverges, the exposed
+surface was not a sufficient state for continuation.
+
+\subsection{Claim discipline}
+
+The paper separates measurement claims from mechanism names. The gate-state
+truth campaign is included because it demoted a stronger mechanism label under
+stricter held-out checks. That negative result is part of the method: a
+surface/internal difference is evidence for hidden structure, but not
+automatically evidence for a named causal mechanism.
+
+\section{Results}
+
+\subsection{Fixed-point surfaces split into different interiors}
+
+Table~\ref{tab:dual-gru} shows the central fixed-point interior result. Every
+listed dual-GRU variant is classified as \texttt{FIXED\_POINT} in 8/8 runs at
+the exposed surface. The internal readings are not identical. Some variants
+split into both tight and accumulating fixed-point interiors, while
+\texttt{dual\_gru\_v3b:current} is entirely accumulating and has much larger
+mean message norm and bottleneck entropy.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{llllrr}
+\toprule
+Substrate & Surface & Interior counts & Classes & Message norm & Entropy \\
+\midrule
+\texttt{dual\_gru\_v3b:current} & 8/8 fixed & accumulating: 8 & 1 & 23.1086 & 1.7779 \\
+\texttt{dual\_gru\_v3b:tight} & 8/8 fixed & tight: 6; accumulating: 2 & 2 & 0.0624 & 0.3423 \\
+\texttt{dual\_gru\_v3b:threshold} & 8/8 fixed & tight: 5; accumulating: 3 & 2 & 0.0753 & 0.5120 \\
+\texttt{dual\_gru\_v3} & 8/8 fixed & tight: 6; accumulating: 2 & 2 & 0.0624 & 0.5069 \\
+\bottomrule
+\end{tabular}
+\caption{Dual-GRU fixed-point surfaces with different basin interiors.
+All rows share the same exposed surface attractor class, but differ in hidden
+interior class, message-state expression, and bottleneck entropy.}
+\label{tab:dual-gru}
+\end{table}
+
+This is the simplest evidence that a fixed-point label is not enough. The
+surface class is constant across the table, while the internal class and
+internal activity vary.
+
+\subsection{Surface-only resume fails where full capsules resume}
+
+Table~\ref{tab:capsule} shows capsule-continuity probes for canonical
+\texttt{demian\_native\_v9} and the v9 five-channel substrate. Across the
+reported sweep, full internal-state resume remains exact or near-exact, while
+surface-only resume remains worse than full capsule resume.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{lrrr}
+\toprule
+Substrate & Full capsule min cosine & Full capsule max gap & Surface-only min gap \\
+\midrule
+\texttt{demian\_native\_v9} & 0.99999988 & 0.0 & 0.22624873 \\
+\texttt{v9\_five\_channel} & 0.99999988 & 0.0 & 0.27455845 \\
+\bottomrule
+\end{tabular}
+\caption{Capsule-continuity summary. Full internal-state capsules resume
+the deterministic continuation, while surface-only reconstruction does not.}
+\label{tab:capsule}
+\end{table}
+
+This supports a direct operational claim: the visible surface is not a
+sufficient state for continuation in these probes. The hidden state contains
+continuation-relevant information.
+
+\subsection{Matched baselines bound the interpretation}
+
+Table~\ref{tab:baselines} summarizes matched pseudo-channel perturbation
+baselines from the truth-campaign comparison. Plain RNN, GRU, and LSTM
+baselines recover almost exactly under this protocol. Diagonal SSM and native
+Demian substrates show larger perturbation consequences.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{lrrr}
+\toprule
+Substrate & Runs & Final L2 gap mean & Recovery-window gap mean \\
+\midrule
+\texttt{rnn} & 3 & $1.19\times10^{-7}$ & 0.000111 \\
+\texttt{gru} & 3 & $5.18\times10^{-8}$ & 0.000144 \\
+\texttt{lstm} & 3 & $4.46\times10^{-8}$ & 0.000061 \\
+\texttt{diag\_ssm} & 3 & 0.0650 & 0.002366 \\
+\texttt{demian\_native\_v8} & 3 & 0.2206 & 0.003906 \\
+\texttt{demian\_native\_v9} & 3 & 0.00322 & 0.000531 \\
+\bottomrule
+\end{tabular}
+\caption{Matched perturbation/recovery baselines. The table is not a
+superiority ranking. It shows why baseline controls are necessary before
+promoting internal-structure claims.}
+\label{tab:baselines}
+\end{table}
+
+The conservative reading is that some perturbation effects are ordinary
+recurrent recovery behavior, while other effects require more careful
+mechanism tests. This is why the paper centers measurement discipline rather
+than global architecture claims.
+
+\subsection{Architecture context: Transformer and Mamba reservoirs}
+
+The Transformer and Mamba reservoir artifacts are useful context but not the
+main proof. The Transformer self-reference reservoir supported a deterministic
+period-2 attractor observation in the Demian claims ledger. Mamba
+self-reference runs did not simply reproduce that period-2 behavior; in the
+batch summary, cached Mamba runs have lag-2 autocorrelation 0.1495, while
+no-cache runs show 570 period-2 switches in 1000 steps. This supports a
+modest point: recurrence-like surface behavior depends on architecture, so
+surface classes should not be treated as architecture-independent evidence.
+
+\subsection{Negative gate-state checks keep the claim bounded}
+
+The 2026-05-16 truth campaign demoted the stronger gate-state mechanism name
+under strict held-out checks: the strict Track B profile pass rate was 0/2 in
+the inspected multisurgery summary. This does not weaken the fixed-point
+paper's main claim. It strengthens the paper's boundary. Hidden structure is
+not the same as settled causal mechanism naming.
+
+\section{Discussion}
+
+The results support a practical distinction: fixed point is a surface class,
+not a computational verdict. In the dual-GRU family, the same surface label
+contains different interior classes. In the capsule-continuity probes, a
+surface-only reconstruction fails to preserve continuation even when a full
+internal capsule resumes exactly. In the matched baseline comparison, plain
+recurrent models and native substrates behave differently under the same
+pseudo-channel perturbation protocol.
+
+The broader lesson is methodological. A recurrent system should not be judged
+only by the final or exposed trajectory. Surface labels should be paired with
+state-sensitive controls: interior class, route norms, channel separation,
+ablation response, and resume fidelity.
+
+This is also the design reason Demian v1 makes internal channels explicit. The
+claim is not that v1 is complete. The claim is that the experimental record
+made anonymous hidden state too weak an object of study. If continuation lives
+inside the state, then the state must be named, saved, ablated, and tested.
+
+\section{Limitations}
+
+The evidence is heterogeneous because it comes from a living research
+repository rather than a single polished benchmark suite. Some runs have small
+seed counts. Some metrics are local to Demian's substrate families. The
+Transformer and Mamba reservoir artifacts are architectural context rather
+than central evidence. The capsule-continuity result uses full internal-state
+restore, not a compressed state code. Finally, the paper does not prove that
+every fixed point is meaningful; it proves that fixed-point surface labels can
+be incomplete.
+
+\section{Reproducibility}
+
+The source repository is Demian Lab \citep{demianlab2026}. The primary
+artifact files used in this draft are:
+
+\begin{itemize}
+  \item \path{data/substrate_lab/dual_gru_family_summary.json}
+  \item \path{data/substrate_lab/v9_capsule_continuity_20260511/summary.json}
+  \item gate-state truth campaign multisurgery baseline-comparison summary
+  \item gate-state truth campaign multisurgery campaign summary
+  \item \path{data/mamba_batch/mamba_batch_summary.json}
+  \item \path{data/reservoir_batch/batch_summary.json}
+\end{itemize}
+
+The paper-local evidence table is stored beside this source as
+\path{evidence_summary.csv} and \path{evidence_summary.json}. The paper can be
+built with:
+
+\begin{verbatim}
+cd papers/fixed_point_internal_structure
+make
+\end{verbatim}
+
+\section{Conclusion}
+
+Fixed-point behavior is not empty by default. It is a statement about the
+observed surface under a particular classifier. The Demian artifacts show that
+fixed surfaces can hide accumulating interiors, differentiated state, and
+continuation-relevant internal information. The right response is not to
+promote every fixed point, but to stop treating the surface label as the whole
+system.
+
+\bibliographystyle{plainnat}
+\bibliography{references}
+
+\end{document}
