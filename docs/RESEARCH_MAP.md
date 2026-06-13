@@ -42,7 +42,7 @@ legacy-mode path.
 
 Archive note:
 
-- older notebooks, design logs, and plans now live under [docs/archive/README.md](/home/xenith/demian/docs/archive/README.md)
+- older notebooks, design logs, and plans now live under [docs/archive/README.md](https://github.com/Aeshma-Daeva/Demian-Archive/blob/main/docs/archive/README.md)
 
 ## Current Priority
 
@@ -73,8 +73,8 @@ Use:
 
 There is now also a small self-loop substrate lab for scratch-architecture work:
 
-- [docs/archive/plans/2026-04-16-substrate-next-phase.md](/home/xenith/demian/docs/archive/plans/2026-04-16-substrate-next-phase.md)
-- [docs/archive/plans/2026-04-17-fixed-point-interior-classes.md](/home/xenith/demian/docs/archive/plans/2026-04-17-fixed-point-interior-classes.md)
+- [docs/archive/plans/2026-04-16-substrate-next-phase.md](https://github.com/Aeshma-Daeva/Demian-Archive/blob/main/docs/archive/plans/2026-04-16-substrate-next-phase.md)
+- [docs/archive/plans/2026-04-17-fixed-point-interior-classes.md](https://github.com/Aeshma-Daeva/Demian-Archive/blob/main/docs/archive/plans/2026-04-17-fixed-point-interior-classes.md)
 - [development/substrate_lab.py](/home/xenith/demian/development/substrate_lab.py)
 
 Primary files:
@@ -85,17 +85,17 @@ Primary files:
 - [development/export_v9_5ch_evo_trajectory_3d.py](/home/xenith/demian/development/export_v9_5ch_evo_trajectory_3d.py)
 - [development/substrate_lab.py](/home/xenith/demian/development/substrate_lab.py)
 - [tests/test_substrate_lab.py](/home/xenith/demian/tests/test_substrate_lab.py)
-- [legacy/root_cli/run_competition.py](/home/xenith/demian/legacy/root_cli/run_competition.py)
-- [legacy/demian_runtime/competition.py](/home/xenith/demian/legacy/demian_runtime/competition.py)
-- [legacy/demian_runtime/machine_observables.py](/home/xenith/demian/legacy/demian_runtime/machine_observables.py)
-- [legacy/demian_runtime/hebbian.py](/home/xenith/demian/legacy/demian_runtime/hebbian.py)
-- [legacy/root_cli/run_mamba_batch.py](/home/xenith/demian/legacy/root_cli/run_mamba_batch.py)
-- [legacy/demian_runtime/mamba_reservoir.py](/home/xenith/demian/legacy/demian_runtime/mamba_reservoir.py)
+- [legacy/root_cli/run_competition.py](https://github.com/Aeshma-Daeva/Demian-Archive/blob/main/legacy/root_cli/run_competition.py)
+- [legacy/demian_runtime/competition.py](https://github.com/Aeshma-Daeva/Demian-Archive/blob/main/legacy/demian_runtime/competition.py)
+- [legacy/demian_runtime/machine_observables.py](https://github.com/Aeshma-Daeva/Demian-Archive/blob/main/legacy/demian_runtime/machine_observables.py)
+- [legacy/demian_runtime/hebbian.py](https://github.com/Aeshma-Daeva/Demian-Archive/blob/main/legacy/demian_runtime/hebbian.py)
+- [legacy/root_cli/run_mamba_batch.py](https://github.com/Aeshma-Daeva/Demian-Archive/blob/main/legacy/root_cli/run_mamba_batch.py)
+- [legacy/demian_runtime/mamba_reservoir.py](https://github.com/Aeshma-Daeva/Demian-Archive/blob/main/legacy/demian_runtime/mamba_reservoir.py)
 
 Secondary baseline files:
 
-- [legacy/root_cli/run_reservoir_batch.py](/home/xenith/demian/legacy/root_cli/run_reservoir_batch.py)
-- [legacy/demian_runtime/reservoir.py](/home/xenith/demian/legacy/demian_runtime/reservoir.py)
+- [legacy/root_cli/run_reservoir_batch.py](https://github.com/Aeshma-Daeva/Demian-Archive/blob/main/legacy/root_cli/run_reservoir_batch.py)
+- [legacy/demian_runtime/reservoir.py](https://github.com/Aeshma-Daeva/Demian-Archive/blob/main/legacy/demian_runtime/reservoir.py)
 
 ## Empirical Spine
 
@@ -137,7 +137,7 @@ Interpretation:
 - persistent SSM memory pushes the system toward a tighter, lower-energy fixed basin
 - removing cache increases movement but still does not create the transformer attractor class
 
-The more detailed interpretation in [docs/archive/notes/ai_thoughts.md](/home/xenith/demian/docs/archive/notes/ai_thoughts.md) reframes this as architecture-specific primitive behavior:
+The more detailed interpretation in [docs/archive/notes/ai_thoughts.md](https://github.com/Aeshma-Daeva/Demian-Archive/blob/main/docs/archive/notes/ai_thoughts.md) reframes this as architecture-specific primitive behavior:
 
 - transformer primitive: limit-cycle alternation
 - Mamba primitive: retention and fixed-point lock
@@ -154,7 +154,7 @@ Important artifacts:
 - [data/competition50_run2/competition_log.jsonl](/home/xenith/demian/data/competition50_run2/competition_log.jsonl)
 - [data/competition_v3/leaderboard.csv](/home/xenith/demian/data/competition_v3/leaderboard.csv)
 
-What Run 1 established, based on [docs/archive/notes/ai_thoughts.md](/home/xenith/demian/docs/archive/notes/ai_thoughts.md):
+What Run 1 established, based on [docs/archive/notes/ai_thoughts.md](https://github.com/Aeshma-Daeva/Demian-Archive/blob/main/docs/archive/notes/ai_thoughts.md):
 
 - competition selected for continuity depth more than for intrinsically better computation
 - death functioned as memory erasure more than annihilation
@@ -333,7 +333,7 @@ The correct pressure is:
 2. Run competition with one inheritance rule changed at a time.
 3. Summarize only structural outputs.
 4. Compare against previous run artifacts before interpreting.
-5. Record interpretation in the archive notebook at [docs/archive/notes/ai_thoughts.md](/home/xenith/demian/docs/archive/notes/ai_thoughts.md) only after checking raw summaries.
+5. Record interpretation in the archive notebook at [docs/archive/notes/ai_thoughts.md](https://github.com/Aeshma-Daeva/Demian-Archive/blob/main/docs/archive/notes/ai_thoughts.md) only after checking raw summaries.
 
 ## Operator Notes
 

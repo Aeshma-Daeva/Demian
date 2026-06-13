@@ -176,8 +176,6 @@ Examples:
 ./venv/bin/python -m pytest tests/test_v9_5ch_evolution.py
 ./venv/bin/python development/summarize_v9_5ch_evolution.py data/evolution/v10_0_frozen_evolution_island_*_20260510 --experiment v10.0-frozen-evolution --eval-seed 94 --out /tmp/demian_v1_predecessor_summary.json
 ./venv/bin/python -c "from development.substrates.current import compare_current_target; import json; print(json.dumps(compare_current_target(seeds=[94], steps=64), indent=2))"
-./venv/bin/python legacy/root_cli/run_mamba_batch.py --runs 3 --steps 1000
-./venv/bin/python legacy/root_cli/run_competition.py --n-agents 50 --rounds 500 --machine-driver
 ./venv/bin/python development/summarize_results.py
 ```
 

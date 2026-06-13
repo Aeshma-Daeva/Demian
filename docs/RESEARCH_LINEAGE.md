@@ -18,7 +18,7 @@ Use with:
 - [docs/CLAIMS.md](/home/xenith/demian/docs/CLAIMS.md)
 - [docs/NATIVE_MECHANISMS.md](/home/xenith/demian/docs/NATIVE_MECHANISMS.md)
 - [data/INDEX.md](/home/xenith/demian/data/INDEX.md)
-- [docs/archive/README.md](/home/xenith/demian/docs/archive/README.md)
+- [docs/archive/README.md](https://github.com/Aeshma-Daeva/Demian-Archive/blob/main/docs/archive/README.md)
 
 ## Reading Rule
 
@@ -61,8 +61,8 @@ What mattered:
 
 Primary trail:
 
-- [docs/archive/notes/PROJECT_DEMIAN.md](/home/xenith/demian/docs/archive/notes/PROJECT_DEMIAN.md)
-- [docs/archive/notes/ai_thoughts.md](/home/xenith/demian/docs/archive/notes/ai_thoughts.md)
+- [docs/archive/notes/PROJECT_DEMIAN.md](https://github.com/Aeshma-Daeva/Demian-Archive/blob/main/docs/archive/notes/PROJECT_DEMIAN.md)
+- [docs/archive/notes/ai_thoughts.md](https://github.com/Aeshma-Daeva/Demian-Archive/blob/main/docs/archive/notes/ai_thoughts.md)
 - [data/trajectory_kv_comparison.json](/home/xenith/demian/data/trajectory_kv_comparison.json)
 
 Status:
@@ -93,8 +93,8 @@ What mattered:
 
 Artifacts:
 
-- [legacy/root_cli/run_reservoir_batch.py](/home/xenith/demian/legacy/root_cli/run_reservoir_batch.py)
-- [legacy/demian_runtime/reservoir.py](/home/xenith/demian/legacy/demian_runtime/reservoir.py)
+- [legacy/root_cli/run_reservoir_batch.py](https://github.com/Aeshma-Daeva/Demian-Archive/blob/main/legacy/root_cli/run_reservoir_batch.py)
+- [legacy/demian_runtime/reservoir.py](https://github.com/Aeshma-Daeva/Demian-Archive/blob/main/legacy/demian_runtime/reservoir.py)
 - [data/reservoir_batch/batch_summary.json](/home/xenith/demian/data/reservoir_batch/batch_summary.json)
 - [data/reservoir/](/home/xenith/demian/data/reservoir)
 
@@ -127,8 +127,8 @@ What mattered:
 
 Artifacts:
 
-- [legacy/root_cli/run_mamba_batch.py](/home/xenith/demian/legacy/root_cli/run_mamba_batch.py)
-- [legacy/demian_runtime/mamba_reservoir.py](/home/xenith/demian/legacy/demian_runtime/mamba_reservoir.py)
+- [legacy/root_cli/run_mamba_batch.py](https://github.com/Aeshma-Daeva/Demian-Archive/blob/main/legacy/root_cli/run_mamba_batch.py)
+- [legacy/demian_runtime/mamba_reservoir.py](https://github.com/Aeshma-Daeva/Demian-Archive/blob/main/legacy/demian_runtime/mamba_reservoir.py)
 - [data/mamba_batch/mamba_batch_summary.json](/home/xenith/demian/data/mamba_batch/mamba_batch_summary.json)
 - [data/mamba_reservoir/](/home/xenith/demian/data/mamba_reservoir)
 
@@ -160,8 +160,8 @@ What mattered:
 
 Artifacts:
 
-- [legacy/root_cli/run_competition.py](/home/xenith/demian/legacy/root_cli/run_competition.py)
-- [legacy/demian_runtime/competition.py](/home/xenith/demian/legacy/demian_runtime/competition.py)
+- [legacy/root_cli/run_competition.py](https://github.com/Aeshma-Daeva/Demian-Archive/blob/main/legacy/root_cli/run_competition.py)
+- [legacy/demian_runtime/competition.py](https://github.com/Aeshma-Daeva/Demian-Archive/blob/main/legacy/demian_runtime/competition.py)
 - [data/competition50/](/home/xenith/demian/data/competition50)
 - [data/competition50_run2/](/home/xenith/demian/data/competition50_run2)
 - [data/competition_v3/](/home/xenith/demian/data/competition_v3)
@@ -235,9 +235,9 @@ Artifacts:
 
 - [development/substrate_lab.py](/home/xenith/demian/development/substrate_lab.py)
 - [tests/test_substrate_lab.py](/home/xenith/demian/tests/test_substrate_lab.py)
-- [docs/archive/plans/native-v2-memory-plan.md](/home/xenith/demian/docs/archive/plans/native-v2-memory-plan.md)
-- [docs/archive/plans/2026-04-24-native-controller-revision-blueprint.md](/home/xenith/demian/docs/archive/plans/2026-04-24-native-controller-revision-blueprint.md)
-- [docs/archive/plans/2026-04-29-v74-falsification-plan.md](/home/xenith/demian/docs/archive/plans/2026-04-29-v74-falsification-plan.md)
+- [docs/archive/plans/native-v2-memory-plan.md](https://github.com/Aeshma-Daeva/Demian-Archive/blob/main/docs/archive/plans/native-v2-memory-plan.md)
+- [docs/archive/plans/2026-04-24-native-controller-revision-blueprint.md](https://github.com/Aeshma-Daeva/Demian-Archive/blob/main/docs/archive/plans/2026-04-24-native-controller-revision-blueprint.md)
+- [docs/archive/plans/2026-04-29-v74-falsification-plan.md](https://github.com/Aeshma-Daeva/Demian-Archive/blob/main/docs/archive/plans/2026-04-29-v74-falsification-plan.md)
 
 Status:
 

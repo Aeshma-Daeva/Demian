@@ -15,7 +15,7 @@ from typing import Any, Dict, List, Mapping, Optional
 import numpy as np
 import torch
 
-from legacy.demian_runtime.machine_observables import classify_attractor, compute_observables
+from development.machine_observables import classify_attractor, compute_observables
 
 
 def _fft_spectrum(residual: np.ndarray) -> tuple[float, float]:

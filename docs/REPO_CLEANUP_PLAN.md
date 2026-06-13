@@ -35,14 +35,14 @@ is mistaken for active direction.
 
 ## Proposed Target Buckets
 
-- `legacy/demian_runtime/`: old importable runtime package and baseline mechanisms.
-- `legacy/root_cli/`: old root-level CLIs and config.
+- Demian Archive `legacy/demian_runtime/`: old importable runtime package and baseline mechanisms.
+- Demian Archive `legacy/root_cli/`: old root-level CLIs and config.
 - `development/substrates/`: active substrate implementations and focused helpers.
 - `development/evolution/`: current v9 five-channel and Demian v1 helpers plus extracted evolutionary search code.
 - `development/archive/`: old probes and one-off scripts retained for ancestry.
 - `scripts/`: operational launchers, renderers, dashboards, and model-routing utilities.
 - `docs/`: live restart docs, claims, experiment rules, routing, and cleanup notes.
-- `docs/archive/`: historical plans, notes, and superseded architecture logs.
+- Demian Archive `docs/archive/`: historical plans, notes, and superseded architecture logs.
 - `data/`: artifacts only, with summaries indexed in `data/INDEX.md`.
 - `visualization/`: browser/Blender visualization surfaces and static assets.
 - `tests/`: active tests matching active code surfaces.
@@ -83,3 +83,5 @@ is mistaken for active direction.
 - Root-era CLIs and the old `demian/` runtime package moved under `legacy/` so
   the GitHub front page starts with active research, docs, data, tests, and
   operational tools instead of historical entry points.
+- Repository split completed: historical runtime and archive notes now live in
+  Demian Archive, while the promoted runtime package lives in Demian Substrate.

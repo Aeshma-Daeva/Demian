@@ -10,7 +10,7 @@ requires-python = ">=3.11"
 dependencies = ["torch>=2.0"]
 
 [tool.setuptools.packages.find]
-include = ["demian_v1*", "development*", "legacy*"]
+include = ["development*"]
 
 [tool.ruff]
 target-version = "py312"

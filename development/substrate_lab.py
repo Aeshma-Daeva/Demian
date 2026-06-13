@@ -34,7 +34,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from legacy.demian_runtime.machine_observables import classify_attractor, compute_observables
+from development.machine_observables import classify_attractor, compute_observables
 
 
 def _fft_spectrum(residual: np.ndarray) -> tuple[float, float]:

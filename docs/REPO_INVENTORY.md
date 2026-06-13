@@ -26,8 +26,8 @@ Read these first:
 
 | Bucket | Current role | Cleanup direction |
 | --- | --- | --- |
-| `legacy/demian_runtime/` | Old importable runtime package and baseline mechanisms | Keep for ancestry and baseline reproduction; active code should not grow here. |
-| `legacy/root_cli/` | Old root-level CLIs and config | Keep runnable for historical baselines; do not put new front-page commands here. |
+| Demian Archive `legacy/demian_runtime/` | Old importable runtime package and baseline mechanisms | Keep for ancestry and baseline reproduction; active code should not grow in Lab. |
+| Demian Archive `legacy/root_cli/` | Old root-level CLIs and config | Keep runnable for historical baselines; do not put new front-page commands in Lab. |
 | `development/substrates/` | Compact active substrate workbench, runtime helpers, and focused import surfaces | Expand as the lightweight substrate lab facade. |
 | `development/evolution/` | v9 five-channel and Demian v1 helpers for metadata, artifact validation, scoring, lineage, and diagnostics | Keep as the active evolution package. |
 | `development/substrate_lab.py` | Legacy full substrate lineage and compatibility API | Keep stable until focused workbench coverage is complete. |
@@ -114,7 +114,7 @@ unless a raw artifact is explicitly the deliverable.
 | `REPO_INVENTORY.md` | File and responsibility map. |
 | `DEVELOPMENT_SCRIPT_MAP.md` | Classification of `development/*.py` before file movement. |
 | `SUBSTRATE_LAB_DEPENDENCIES.md` | Import map for scripts depending on `development/substrate_lab.py`. |
-| `docs/archive/` | Historical notes and superseded plans. |
+| Demian Archive `docs/archive/` | Historical notes and superseded plans. |
 
 ## Next Cleanup Slices
 

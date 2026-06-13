@@ -37,7 +37,7 @@ Promotion rule:
 - Type: `observation`
 - Evidence:
   - [data/reservoir_batch/batch_summary.json](/home/xenith/demian/data/reservoir_batch/batch_summary.json)
-  - [legacy/root_cli/run_reservoir_batch.py](/home/xenith/demian/legacy/root_cli/run_reservoir_batch.py)
+  - [legacy/root_cli/run_reservoir_batch.py](https://github.com/Aeshma-Daeva/Demian-Archive/blob/main/legacy/root_cli/run_reservoir_batch.py)
 - Notes:
   - `autocorr_lag2` and switch statistics are the main support
 - What would falsify this:
@@ -48,7 +48,7 @@ Promotion rule:
 - Type: `observation`
 - Evidence:
   - [data/mamba_batch/mamba_batch_summary.json](/home/xenith/demian/data/mamba_batch/mamba_batch_summary.json)
-  - [legacy/root_cli/run_mamba_batch.py](/home/xenith/demian/legacy/root_cli/run_mamba_batch.py)
+  - [legacy/root_cli/run_mamba_batch.py](https://github.com/Aeshma-Daeva/Demian-Archive/blob/main/legacy/root_cli/run_mamba_batch.py)
 - What would falsify this:
   - repeated matched runs showing persistent transformer-like period-2 dominance
 
@@ -183,7 +183,7 @@ Promotion rule:
 - Evidence:
   - [development/substrate_lab.py](/home/xenith/demian/development/substrate_lab.py)
   - [tests/test_substrate_lab.py](/home/xenith/demian/tests/test_substrate_lab.py)
-  - [docs/archive/plans/2026-04-29-v74-falsification-plan.md](/home/xenith/demian/docs/archive/plans/2026-04-29-v74-falsification-plan.md)
+  - [docs/archive/plans/2026-04-29-v74-falsification-plan.md](https://github.com/Aeshma-Daeva/Demian-Archive/blob/main/docs/archive/plans/2026-04-29-v74-falsification-plan.md)
 - Notes:
   - `v7.4` adds `self_potential`, `quarantine_state`, and `topology_shadow`
   - `v7.4` exposes ownership/viability tension, self-policy gates, dynamic step, and dynamic topology metrics

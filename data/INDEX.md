@@ -37,7 +37,7 @@ Use with:
 - Main artifact:
   - [trajectory_kv_comparison.json](/home/xenith/demian/data/trajectory_kv_comparison.json)
 - Context:
-  - [../docs/archive/notes/PROJECT_DEMIAN.md](/home/xenith/demian/docs/archive/notes/PROJECT_DEMIAN.md)
+  - [../docs/archive/notes/PROJECT_DEMIAN.md](https://github.com/Aeshma-Daeva/Demian-Archive/blob/main/docs/archive/notes/PROJECT_DEMIAN.md)
   - [../docs/RESEARCH_LINEAGE.md](/home/xenith/demian/docs/RESEARCH_LINEAGE.md)
 - Supports:
   - the original shift from text-quality evaluation to internal trajectory

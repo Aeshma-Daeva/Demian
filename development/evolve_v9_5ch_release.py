@@ -29,7 +29,7 @@ import torch
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from legacy.demian_runtime.machine_observables import classify_attractor, compute_observables
+from development.machine_observables import classify_attractor, compute_observables
 from development.evolution.config import (
     BASE_EXCLUDED_SCALARS,
     CHANNELS,
