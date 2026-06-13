@@ -1,10 +1,13 @@
 PDF=main.pdf
 
-.PHONY: all clean
+.PHONY: all figures clean
 
-all: $(PDF)
+all: figures $(PDF)
 
-$(PDF): main.tex references.bib
+figures:
+	../../venv/bin/python generate_figures.py
+
+$(PDF): main.tex references.bib figures
 	pdflatex -interaction=nonstopmode main.tex
 	bibtex main
 	pdflatex -interaction=nonstopmode main.tex

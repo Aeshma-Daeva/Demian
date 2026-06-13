@@ -15,6 +15,7 @@ make
 ```
 
 The build produces `main.pdf`. Build products are not part of the source bundle.
+The Makefile also regenerates the paper figures from the compact evidence table.
 
 ## Source Bundle
 
@@ -22,9 +23,9 @@ For arXiv, upload the source files that are needed to rebuild the paper:
 
 - `main.tex`
 - `references.bib`
-- any final figure files, if figures are added later
-- optional evidence summaries if they are kept as supplemental source files:
-  `evidence_summary.csv` and `evidence_summary.json`
+- final files under `figures/`
+- `evidence_summary.csv`
+- `evidence_summary.json`
 
 Do not upload temporary build outputs such as `.aux`, `.log`, `.out`, `.toc`,
 `.synctex.gz`, or local cache directories.
@@ -42,6 +43,9 @@ Likely metadata:
 
 - primary category: `cs.LG`
 - possible cross-list: `cs.NE`
+- author: `Azael`
+- affiliation: `Independent Researcher`
+- reproducibility tag: `v0.2-fixed-point-paper`
 
 The abstract in arXiv metadata must stay under arXiv's abstract limit. Keep the
 metadata abstract close to the paper abstract, but remove line breaks and avoid
@@ -59,3 +63,12 @@ scientific claim. The practical workflow is:
 - review diffs before committing.
 
 The author still owns the claim, scope, authorship, and submission metadata.
+
+## Release Checklist
+
+- Build from a clean tree with `make clean && make`.
+- Confirm the LaTeX log has no unresolved citations, undefined references, or
+  overfull boxes.
+- Commit the final source and figure files.
+- Tag the final commit as `v0.2-fixed-point-paper`.
+- Push the branch and tag before using the GitHub URL in arXiv metadata.
