@@ -172,7 +172,44 @@ Status:
 - Population-pressure ancestry. It explains why later substrate work cared
   about persistence and resume fidelity.
 
-## 5. GRU And Dual-GRU Message-State Ancestry
+## 5. Plain Recurrent Baseline Battery
+
+Question:
+
+- Before naming any native mechanism, how do simpler recurrent substrates
+  behave under the same self-loop battery?
+
+What was tried:
+
+- Vanilla RNN, GRU, LSTM, diagonal SSM, and selective SSM substrates.
+- Same self-only loop style where each substrate evolves from its own previous
+  state.
+- Matched measurements for rest-state discovery, basin structure,
+  perturbation recovery, memory persistence, residual motion, and spectral
+  structure.
+
+What mattered:
+
+- `observation`: the lab had a recurrent baseline battery before the native
+  line became the center.
+- `inference`: recurrent-family differences needed to be measured directly,
+  not inferred from architecture names.
+- `synthesis`: later native-substrate claims should be read against simpler
+  recurrent controls, not as isolated artifacts.
+
+Artifacts:
+
+- [development/substrate_lab.py](/home/xenith/demian/development/substrate_lab.py)
+- [development/run_substrate_tests.py](/home/xenith/demian/development/run_substrate_tests.py)
+- [tests/test_substrate_lab.py](/home/xenith/demian/tests/test_substrate_lab.py)
+- [data/substrate_lab/summary.json](/home/xenith/demian/data/substrate_lab/summary.json)
+
+Status:
+
+- Baseline measurement layer. It belongs before dual-GRU in the story because
+  it established the comparison surface for inherited recurrent cells.
+
+## 6. GRU And Dual-GRU Message-State Ancestry
 
 Question:
 
@@ -206,7 +243,7 @@ Status:
 - Method ancestry. Keep it as the bridge from inherited cells to explicit
   native substrates.
 
-## 6. Native Route Substrates v0-v7.4
+## 7. Native Route Substrates v0-v7.4
 
 Question:
 
@@ -244,7 +281,7 @@ Status:
 - Historical baseline and design ancestry. v7.4 remains the promoted
   organ-heavy reference line, but not the current active substrate.
 
-## 7. v8/v9 Simplification
+## 8. v8/v9 Simplification
 
 Question:
 
@@ -276,7 +313,7 @@ Status:
 - Active baseline context. It is the narrowed scaffold from which v9
   five-channel and Demian v1 emerge.
 
-## 8. v9 Five-Channel Message/Carrier Scaffold
+## 9. v9 Five-Channel Message/Carrier Scaffold
 
 Question:
 
@@ -315,7 +352,7 @@ Status:
 
 - Active scaffold and predecessor evidence, not a finished architecture claim.
 
-## 9. v10.0 Frozen Evolution As Predecessor Evidence
+## 10. v10.0 Frozen Evolution As Predecessor Evidence
 
 Question:
 
@@ -350,7 +387,7 @@ Status:
   interesting candidates, and because held-out failure clarified what not to
   claim.
 
-## 10. Track A / Track B Split
+## 11. Track A / Track B Split
 
 Question:
 
@@ -381,7 +418,7 @@ Status:
 
 - Current strongest empirical line.
 
-## 11. Gate-State Causal Propagation
+## 12. Gate-State Causal Propagation
 
 Question:
 
@@ -414,7 +451,7 @@ Status:
 
 - Replicated core mechanism. This is the strongest current publishable finding.
 
-## 12. Same-Island And Dynamic Selection Probes
+## 13. Same-Island And Dynamic Selection Probes
 
 Question:
 
@@ -449,7 +486,7 @@ Status:
 - Negative-result and interpretation layer. It protects the project from
   overclaiming sparse timed causality.
 
-## 13. Demian v1 Explicit Gate-State Synthesis
+## 14. Demian v1 Explicit Gate-State Synthesis
 
 Question:
 
@@ -499,6 +536,8 @@ Legacy-mode story:
 - The work began with transformer/KV-cache self-contact.
 - Mamba showed architecture-specific recurrence primitives.
 - Competition made continuity and memory survival central.
+- Vanilla RNN, GRU, LSTM, diagonal SSM, and selective SSM gave the first
+  matched recurrent baseline battery.
 - GRU/dual-GRU work made fixed-point interiors visible.
 - Native substrates made route ownership explicit.
 - v9 five-channel made message/carrier accumulation measurable.

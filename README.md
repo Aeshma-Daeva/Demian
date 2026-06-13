@@ -38,6 +38,7 @@ control, and gate-like state as the route toward Demian v1.
 | Transformer reservoir | Batch self-reference baseline | Saved runs showed a strong period-2 attractor signature. |
 | Mamba reservoir | Same style of self-reference on an SSM | Mamba did not match the transformer 2-cycle; architecture changed the recurrence primitive. |
 | Population pressure | Competition, continuity, inheritance-like survival | Continuity and memory survival became first-class measurements. |
+| Plain recurrent baselines | Vanilla RNN, GRU, LSTM, diagonal SSM, selective SSM | The lab needed matched recurrent controls before claiming native-substrate effects. |
 | GRU / dual-GRU lab | Message-state ablations and interior-class maps | Fixed point did not mean empty; basin interiors needed measurement. |
 | Native v0-v7.4 | Explicit owners for persistence, support, recruitment, control, boundary, memory | Rich but too many mechanisms at once; simplification became necessary. |
 | v8 / canonical v9 | Smaller native scaffolds and v9-v8 comparison | v9 was not proven better than v8; fixed-point surface behavior remained common. |
@@ -53,7 +54,8 @@ Full version: [Research Lineage](docs/RESEARCH_LINEAGE.md).
 | Finding | Evidence shape | Conservative read |
 | --- | --- | --- |
 | Transformer and Mamba self-loops differ | Reservoir summaries compare attractor signatures. | Recurrence behavior depends on architecture; do not assume one universal loop. |
-| Fixed point can hide internal structure | Dual-GRU, v8/v9, and v9 five-channel diagnostics expose basin-internal differences. | A flat surface label is not enough to judge a substrate. |
+| Plain recurrent baselines matter | Vanilla RNN, GRU, LSTM, diagonal SSM, and selective SSM run through the same self-loop battery. | Native results should be read against simpler recurrent controls, not in isolation. |
+| Fixed point can hide internal structure | GRU/dual-GRU, v8/v9, and v9 five-channel diagnostics expose basin-internal differences. | A flat surface label is not enough to judge a substrate. |
 | v9 is not proven superior to v8 | Saved v9-v8 comparison: both fixed-point in 4/4 seeds; v9 had lower covariance rank and weaker scale-1.0 recovery in that run. | v9 remains a useful simplified scaffold, not a victory claim. |
 | Capsule resume needs internal state | v9 and v9 five-channel full capsules resume almost exactly; surface-only replay fails. | Continuity lives inside the state, not only in the visible surface. |
 | v10.0 predecessor found but did not validate sparse release | 640 candidates across four islands; final winner had `duty=0.171875`, `event=0.7896`, `phase=0.9371`; held-out CPU checks weakened the claim. | Useful predecessor and falsification pressure, not a stable mechanism. |
