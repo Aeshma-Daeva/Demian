@@ -1,8 +1,8 @@
-# Demian
+# Demian Lab
 
-Demian is the target native recurrent substrate: a custom architecture program
-distilled from structured recurrence, gate-state causality, and substrate
-lineage experiments.
+Demian Lab is the active Native Substrate Research Lab for the Demian program.
+It holds the experiments, diagnostics, claims ledger, paper surfaces, and
+working evidence used to distill the target native recurrent substrate.
 
 [![Release](https://img.shields.io/github/v/release/Aeshma-Daeva/Demian?include_prereleases&label=release)](https://github.com/Aeshma-Daeva/Demian/releases)
 [![Tests](https://img.shields.io/badge/tests-pytest%20local-2f6f6a)](#environment)
@@ -10,12 +10,11 @@ lineage experiments.
 [![Python](https://img.shields.io/badge/python-3.12%2B-315f8f)](pyproject.toml)
 [![Technical Report](https://img.shields.io/badge/technical%20report-GitHub-3b5f7a)](docs/TECHNICAL_REPORT.md)
 
-The surrounding repo is the Native Substrate Research Lab. It is not aimed at
-productizing a chatbot, chasing benchmarks, or optimizing for human-facing
-output quality. The working goal is to study how frozen and semi-adaptive AI
-systems behave when their own internal state, recurrence, memory, and
-inter-agent coupling become the substrate of continued evolution, then extract
-the mechanisms that matter enough to build Demian.
+This repo is not aimed at productizing a chatbot, chasing benchmarks, or
+optimizing for human-facing output quality. The working goal is to study how
+frozen and semi-adaptive AI systems behave when their own internal state,
+recurrence, memory, and inter-agent coupling become the substrate of continued
+evolution, then extract the mechanisms that matter enough to build Demian.
 
 ## Plain-English Context
 
@@ -202,7 +201,7 @@ Older transformer experiments remain in the repo because they established an imp
 
 ## Main Tracks
 
-Top-level layout is intentionally small:
+Top-level layout is organized around active lab work:
 
 - `development/`: active substrate, evolution, diagnostics, and current
   research code.
@@ -212,6 +211,14 @@ Top-level layout is intentionally small:
   baseline reproduction.
 - `scripts/` and `visualization/`: operational renderers and viewers.
 - `tests/`: active verification surface.
+
+Repository boundary:
+
+- Demian Lab: active experiments, diagnostics, claims, papers, and workbench
+  code.
+- Demian Substrate: stable runtime/package boundary for promoted Demian
+  substrate code.
+- Demian Archive: historical runtime, superseded notes, and preserved ancestry.
 
 - `development/substrate_lab.py`
   Historical architecture lab. It still contains the full substrate lineage and compatibility API, but do not use it as the first read surface.
