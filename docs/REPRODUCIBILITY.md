@@ -6,7 +6,7 @@ These are compact CPU checks for orientation and artifact inspection. They do
 not rerun the full evolutionary searches. Use the repo virtual environment when
 available:
 
-Public repository: <https://github.com/Aeshma-Daeva/Demian>
+Public repository: <https://github.com/Aeshma-Daeva/Demian-Lab>
 
 ```bash
 ./venv/bin/python -m pytest tests/test_v9_capsule_continuity.py tests/test_gate_state_propagation_characterization.py tests/test_v9_5ch_evolution.py tests/test_demian_v1_gate_state.py -q

@@ -4,7 +4,7 @@ Working title: **Demian: Discovering Native Mechanisms in Structured Recurrent
 Substrates**
 
 Public repository for artifacts and reproducibility:
-<https://github.com/Aeshma-Daeva/Demian>
+<https://github.com/Aeshma-Daeva/Demian-Lab>
 
 ## Thesis
 

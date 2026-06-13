@@ -5,7 +5,7 @@ Last updated: 2026-05-12
 Working title: **Demian: Discovering Native Mechanisms in Structured Recurrent
 Substrates**
 
-Public repository: <https://github.com/Aeshma-Daeva/Demian>
+Public repository: <https://github.com/Aeshma-Daeva/Demian-Lab>
 
 ## Abstract
 

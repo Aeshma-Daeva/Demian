@@ -4,9 +4,9 @@ Demian Lab is the active Native Substrate Research Lab for the Demian program.
 It holds the experiments, diagnostics, claims ledger, paper surfaces, and
 working evidence used to distill the target native recurrent substrate.
 
-[![Release](https://img.shields.io/github/v/release/Aeshma-Daeva/Demian?include_prereleases&label=release)](https://github.com/Aeshma-Daeva/Demian/releases)
+[![Release](https://img.shields.io/github/v/release/Aeshma-Daeva/Demian-Lab?include_prereleases&label=release)](https://github.com/Aeshma-Daeva/Demian-Lab/releases)
 [![Tests](https://img.shields.io/badge/tests-pytest%20local-2f6f6a)](#environment)
-[![License](https://img.shields.io/github/license/Aeshma-Daeva/Demian)](LICENSE)
+[![License](https://img.shields.io/github/license/Aeshma-Daeva/Demian-Lab)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.12%2B-315f8f)](pyproject.toml)
 [![Technical Report](https://img.shields.io/badge/technical%20report-GitHub-3b5f7a)](docs/TECHNICAL_REPORT.md)
 
