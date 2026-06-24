@@ -23,7 +23,7 @@ git push origin main
 ```
 
 GitHub Actions builds and deploys automatically. Site goes live at:
-`https://aeshma-daeva.github.io/Demian-Substrate`
+`https://aeshma-daeva.github.io/Demian-Lab`
 
 ## Public blackboard and feeds
 
