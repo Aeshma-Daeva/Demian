@@ -1,0 +1,36 @@
+{
+  "phase": "v3 active",
+  "latestResult": "Lyapunov-style perturbation probe shows controlled nonlinear sensitivity across 250 seed-0 coupling streams.",
+  "updated": "2026-06-23",
+  "status": [
+    { "label": "recordings", "value": "250" },
+    { "label": "positive growth fraction", "value": "1.0" },
+    { "label": "reconvergent", "value": "101/250" },
+    { "label": "architecture", "value": "v3" }
+  ],
+  "objectives": [
+    "Keep public progress legible as narrow, test-backed research notes.",
+    "Expose generated feeds for Discord automation.",
+    "Separate real run artifacts from interpretation and claims."
+  ],
+  "artifacts": [
+    {
+      "label": "Lyapunov-style probe report",
+      "path": "adaptation_probes/eeg_demian_architecture_v3_all3264/lyapunov_style_probe_report.md"
+    },
+    {
+      "label": "Recording results",
+      "path": "adaptation_probes/eeg_demian_architecture_v3_all3264/lyapunov_style_recording_results.csv"
+    },
+    {
+      "label": "Curve points",
+      "path": "adaptation_probes/eeg_demian_architecture_v3_all3264/lyapunov_style_curve_points.csv"
+    }
+  ],
+  "claimBoundaries": [
+    "No brain simulation claim.",
+    "No decoding claim.",
+    "No consciousness claim.",
+    "No biomarker or medical claim."
+  ]
+}

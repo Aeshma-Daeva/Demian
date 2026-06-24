@@ -1,0 +1,142 @@
+---
+import Base from '../layouts/Base.astro';
+import blackboard from '../data/blackboard.json';
+import { getPublicPosts } from '../lib/feeds';
+
+const posts = (await getPublicPosts()).slice(0, 5);
+
+const base = import.meta.env.BASE_URL;
+---
+<Base title="Demian Lab — EEG Nonlinear Dynamics">
+  <style>
+    .hero { margin-bottom: 4rem; }
+    .eyebrow { font-family: var(--mono); font-size: 11px; color: var(--accent); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 1rem; }
+    h1 { font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 300; line-height: 1.2; color: var(--text); margin-bottom: 1.5rem; }
+    h1 em { font-style: normal; color: var(--accent); }
+    .tagline { font-size: 1rem; color: var(--muted); max-width: 520px; line-height: 1.7; }
+
+    .status-bar {
+      display: flex;
+      gap: 2rem;
+      margin: 3rem 0;
+      padding: 1.25rem 1.5rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      flex-wrap: wrap;
+    }
+
+    .stat { display: flex; flex-direction: column; gap: 2px; }
+    .stat-val { font-family: var(--mono); font-size: 1.1rem; color: var(--accent); }
+    .stat-label { font-family: var(--mono); font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+
+    .section-head {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 1.5rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .post-list { list-style: none; display: flex; flex-direction: column; gap: 0; }
+
+    .post-item {
+      display: grid;
+      grid-template-columns: 110px 1fr;
+      gap: 1rem;
+      padding: 1rem 0;
+      border-bottom: 1px solid var(--border);
+      align-items: start;
+    }
+
+    .post-item:last-child { border-bottom: none; }
+
+    .post-date { font-family: var(--mono); font-size: 11px; color: var(--muted); padding-top: 3px; }
+
+    .post-title { font-size: 0.95rem; color: var(--text); font-weight: 400; }
+    .post-title a { color: var(--text); }
+    .post-title a:hover { color: var(--accent); text-decoration: none; }
+
+    .post-tags { display: flex; gap: 6px; margin-top: 4px; flex-wrap: wrap; }
+    .tag {
+      font-family: var(--mono);
+      font-size: 10px;
+      padding: 2px 6px;
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+
+    .view-all {
+      margin-top: 2rem;
+      font-family: var(--mono);
+      font-size: 12px;
+    }
+
+    .about {
+      margin-top: 4rem;
+      padding: 1.5rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+    }
+
+    .about p { font-size: 0.9rem; color: var(--muted); line-height: 1.8; }
+    .about p + p { margin-top: 0.75rem; }
+  </style>
+
+  <div class="hero">
+    <p class="eyebrow">open research · {blackboard.phase}</p>
+    <h1>Demian Substrate<br /><em>EEG adaptation</em></h1>
+    <p class="tagline">
+      Adapting a chaos/order observer architecture to EEG signals.
+      Probing nonlinear dynamics without claiming brain simulation, decoding, or biomarkers.
+    </p>
+  </div>
+
+  <div class="status-bar">
+    {blackboard.status.map(item => (
+      <div class="stat">
+        <span class="stat-val">{item.value}</span>
+        <span class="stat-label">{item.label}</span>
+      </div>
+    ))}
+  </div>
+
+  <p class="section-head">recent log</p>
+
+  <ul class="post-list">
+    {posts.map(post => (
+      <li class="post-item">
+        <span class="post-date">
+          {post.data.date.toISOString().slice(0, 10)}
+        </span>
+        <div>
+          <p class="post-title">
+            <a href={`${base}log/${post.slug}`}>{post.data.title}</a>
+          </p>
+          {post.data.tags && (
+            <div class="post-tags">
+              {post.data.tags.map((t: string) => <span class="tag">{t}</span>)}
+            </div>
+          )}
+        </div>
+      </li>
+    ))}
+  </ul>
+
+  <p class="view-all"><a href={`${base}log`}>all entries -></a> · <a href={`${base}blackboard`}>blackboard -></a></p>
+
+  <div class="about">
+    <p>
+      This is an open research log for the Demian Substrate project — an architecture
+      originally designed as a chaos/order observer, now being adapted to EEG signal analysis.
+    </p>
+    <p>
+      All results are real runs. Claims are kept narrow. No brain simulation, no decoding,
+      no consciousness claims. Just controlled nonlinear perturbation sensitivity inside
+      bounded observer-route dynamics.
+    </p>
+  </div>
+</Base>

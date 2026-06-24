@@ -1,0 +1,85 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getPublicPosts } from '../../lib/feeds';
+
+export async function getStaticPaths() {
+  const posts = await getPublicPosts();
+  return posts.map(post => ({ params: { slug: post.slug }, props: { post } }));
+}
+
+const { post } = Astro.props;
+const { Content } = await post.render();
+---
+<Base title={`${post.data.title} — Demian Lab`} description={post.data.description}>
+  <style>
+    .back { font-family: var(--mono); font-size: 12px; color: var(--muted); margin-bottom: 2.5rem; display: inline-block; }
+    .back:hover { color: var(--accent); text-decoration: none; }
+
+    .post-meta { margin-bottom: 2.5rem; }
+    .post-date { font-family: var(--mono); font-size: 11px; color: var(--muted); margin-bottom: 0.5rem; }
+    h1 { font-size: clamp(1.4rem, 3vw, 2rem); font-weight: 400; line-height: 1.3; margin-bottom: 0.75rem; }
+    .post-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+    .tag { font-family: var(--mono); font-size: 10px; padding: 2px 6px; border: 1px solid var(--border); color: var(--muted); }
+
+    .divider { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
+
+    .content { font-size: 0.95rem; line-height: 1.8; color: #d0d0d0; }
+    .content h2 { font-size: 1.1rem; font-weight: 500; margin: 2.5rem 0 0.75rem; color: var(--text); }
+    .content h3 { font-size: 0.95rem; font-weight: 500; margin: 2rem 0 0.5rem; color: var(--text); font-family: var(--mono); }
+    .content p { margin-bottom: 1rem; }
+    .content ul, .content ol { padding-left: 1.5rem; margin-bottom: 1rem; }
+    .content li { margin-bottom: 0.25rem; }
+    .content code {
+      font-family: var(--mono);
+      font-size: 0.85em;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 1px 5px;
+      color: var(--accent);
+    }
+    .content pre {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      padding: 1.25rem;
+      overflow-x: auto;
+      margin: 1.5rem 0;
+    }
+    .content pre code {
+      background: none;
+      border: none;
+      padding: 0;
+      font-size: 0.85rem;
+      color: var(--text);
+    }
+    .content blockquote {
+      border-left: 3px solid var(--accent);
+      padding: 0.5rem 1rem;
+      margin: 1.5rem 0;
+      color: var(--muted);
+      font-style: italic;
+    }
+    .content table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-family: var(--mono); font-size: 0.82rem; }
+    .content th { border-bottom: 1px solid var(--accent); padding: 0.5rem; text-align: left; color: var(--accent); font-weight: 500; }
+    .content td { border-bottom: 1px solid var(--border); padding: 0.5rem; color: var(--muted); }
+    .content strong { color: var(--text); font-weight: 500; }
+  </style>
+
+  <a href={`${import.meta.env.BASE_URL}log`} class="back">← log</a>
+
+  <div class="post-meta">
+    <p class="post-date">{post.data.date.toISOString().slice(0, 10)}</p>
+    <h1>{post.data.title}</h1>
+    {post.data.tags && (
+      <div class="post-tags">
+        {post.data.tags.map((t: string) => <span class="tag">{t}</span>)}
+      </div>
+    )}
+  </div>
+
+  <hr class="divider" />
+
+  <div class="content">
+    <Content />
+  </div>
+</Base>
